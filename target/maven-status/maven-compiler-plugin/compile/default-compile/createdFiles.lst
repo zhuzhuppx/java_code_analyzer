@@ -15,7 +15,6 @@ com/projectassistant/model/ProjectStats.class
 com/projectassistant/spring/ApiEndpoint.class
 com/projectassistant/sql/SqlParser.class
 com/projectassistant/analyzer/ProjectAnalyzer.class
-com/projectassistant/knowledge/SkillGenerator.class
 com/projectassistant/spring/SpringScanner.class
 com/projectassistant/reporter/ReportGenerator.class
 com/projectassistant/sql/TableInfo$Column.class

@@ -1,6 +1,6 @@
 ---
 name: project-assistant
-description: "project-assistant 项目知识库 — 19 个类, 0 个 API, 0 张表"
+description: "project-assistant 项目知识库 — 18 个类, 0 个 API, 0 张表"
 metadata:
   copaw:
     emoji: "📦"
@@ -9,7 +9,7 @@ metadata:
 
 # project-assistant 项目知识库
 
-> 由 ProjectAssistant 自动生成 | 2026-06-10 18:13
+> 由 ProjectAssistant 自动生成 | 2026-06-10 18:14
 
 当用户询问本项目相关的任何问题时，优先使用以下信息回答。
 
@@ -21,14 +21,14 @@ metadata:
 | 构建 | maven |
 | Java | unknown |
 | Spring Boot | 否 |
-| 行数 | 3764 |
-| 类数 | 19 |
-| 方法数 | 249 |
+| 行数 | 3684 |
+| 类数 | 18 |
+| 方法数 | 247 |
 | API | 0 |
 | 数据库表 | 0 |
 | 依赖 | 3 |
 
-### 外部依赖
+### 依赖
 
 ```
 com.google.code.gson:gson:2.10.1
@@ -36,7 +36,7 @@ org.yaml:snakeyaml:2.0
 org.junit.jupiter:junit-jupiter:5.10.0 [test]
 ```
 
-## 2. 架构模式
+## 2. 架构
 
 **unknown**
 
@@ -50,7 +50,6 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
     [C] CallChainAnalyzer
   knowledge/
     [C] KnowledgeBaseGenerator
-    [C] SkillGenerator
   model/
     [C] ClassInfo
     [C] DependencyInfo
@@ -71,21 +70,21 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
     [C] TableInfo
 ```
 
-## 3. API 路由
+## 3. API
 
-（无 Spring MVC 端点）
+（无）
 
 ## 4. 数据库
 
-（未检测到 JPA/MyBatis 映射）
+（无）
 
-## 5. Bean 依赖
+## 5. Bean
 
-（未检测到 Spring Bean）
+（无）
 
 ## 6. 调用链
 
-（未检测到）
+（无）
 
 ## 7. 关键类
 
@@ -104,8 +103,7 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 ### com.projectassistant.knowledge
 
-- **KnowledgeBaseGenerator** (class) — 15 方法, 2 字段
-- **SkillGenerator** (class) — 4 方法, 1 字段
+- **KnowledgeBaseGenerator** (class) — 17 方法, 2 字段
 
 ### com.projectassistant.model
 
@@ -143,7 +141,7 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 **chain**: 2 个类
 
-**knowledge**: 2 个类
+**knowledge**: 1 个类
 
 **model**: 7 个类
 
@@ -157,19 +155,17 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 ## 9. 配置
 
-（未检测到配置文件）
+（无）
 
 ## 10. 对 Agent 的提示
-
-当用户询问以下类型问题时，参考对应章节回答：
 
 | 用户想问 | 看哪节 |
 |---|---|
 | 这是什么项目？ | 1. 概览 / 2. 架构 |
-| 有哪些接口？ | 3. API 路由 |
+| 有哪些接口？ | 3. API |
 | 数据库怎么设计的？ | 4. 数据库 |
-| 改这个字段影响哪？ | 5. Bean依赖 / 6. 调用链 |
-| 帮我加个接口 / 改个业务 | 8. 业务流 / 7. 关键类 |
+| 改这个字段影响哪？ | 5. Bean / 6. 调用链 |
+| 帮我加个接口 | 8. 业务流 / 7. 关键类 |
 | 这个配置是什么意思？ | 9. 配置 |
 
 ---

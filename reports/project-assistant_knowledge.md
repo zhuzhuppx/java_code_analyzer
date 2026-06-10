@@ -1,7 +1,7 @@
 # 项目知识库
 
 > 由 ProjectAssistant 自动生成，专为大模型理解优化
-> 生成时间: 2026-06-10 18:13:01
+> 生成时间: 2026-06-10 18:14:05
 
 ---
 
@@ -13,14 +13,14 @@
 | 构建工具 | maven |
 | Java 版本 | unknown |
 | Spring Boot | 否 |
-| 代码总行数 | 3764 |
-| 类/接口数 | 19 |
-| 方法数 | 249 |
+| 代码总行数 | 3684 |
+| 类/接口数 | 18 |
+| 方法数 | 247 |
 | API 端点 | 0 |
 | 数据库表 | 0 |
 | 外部依赖 | 3 |
-| 注释率 | 22.6% |
-| 平均方法行数 | 11.7 |
+| 注释率 | 22.7% |
+| 平均方法行数 | 11.5 |
 | 最大圈复杂度 | 7 |
 
 ### 外部依赖
@@ -47,7 +47,6 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
       +-- [C] CallChainAnalyzer.java
     knowledge/
       +-- [C] KnowledgeBaseGenerator.java
-      +-- [C] SkillGenerator.java
     model/
       +-- [C] ClassInfo.java
       +-- [C] DependencyInfo.java
@@ -101,8 +100,7 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 ### com.projectassistant.knowledge
 
-- **KnowledgeBaseGenerator** (class) — 15 方法, 2 字段
-- **SkillGenerator** (class) — 4 方法, 1 字段
+- **KnowledgeBaseGenerator** (class) — 17 方法, 2 字段
 
 ### com.projectassistant.model
 

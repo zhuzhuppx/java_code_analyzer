@@ -11,7 +11,6 @@ import com.projectassistant.sql.TableInfo;
 import com.projectassistant.chain.CallChainAnalyzer;
 import com.projectassistant.chain.CallChain;
 import com.projectassistant.knowledge.KnowledgeBaseGenerator;
-import com.projectassistant.knowledge.SkillGenerator;
 import com.projectassistant.reporter.ReportGenerator;
 import java.io.IOException;
 import java.nio.file.*;
@@ -161,9 +160,9 @@ public class Main {
             // 始终生成可安装的 Agent Skill
             System.out.println();
             System.out.println("生成项目 Skill...");
-            SkillGenerator skillGen = new SkillGenerator(project);
+            KnowledgeBaseGenerator kb2 = new KnowledgeBaseGenerator(project);
             Path skillDir = reportsDir.resolve("skills");
-            skillGen.save(skillDir.toString());
+            kb2.saveSkill(skillDir.toString());
 
         } catch (IOException e) {
             System.err.println("错误: 写入报告失败 - " + e.getMessage());

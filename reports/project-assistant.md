@@ -5,18 +5,18 @@
 | **项目名称** | project-assistant |
 | **项目路径** | /app/working/workspaces/D2GPcF/project-assistant |
 | **Java 版本** | unknown |
-| **生成时间** | 2026-06-10 18:13:01 |
-| **总类数** | 19 |
-| **总行数** | 3764 |
+| **生成时间** | 2026-06-10 18:14:05 |
+| **总类数** | 18 |
+| **总行数** | 3684 |
 
 ## 统计概要
 
 <div class="stats-grid">
-  <div class="stat-card"><div class="stat-value">19</div><div class="stat-label">Java 类</div></div>
-  <div class="stat-card"><div class="stat-value">3764</div><div class="stat-label">总行数</div></div>
-  <div class="stat-card"><div class="stat-value">249</div><div class="stat-label">方法数</div></div>
-  <div class="stat-card"><div class="stat-value">113</div><div class="stat-label">字段数</div></div>
-  <div class="stat-card"><div class="stat-value">11.7 行</div><div class="stat-label">平均方法长度</div></div>
+  <div class="stat-card"><div class="stat-value">18</div><div class="stat-label">Java 类</div></div>
+  <div class="stat-card"><div class="stat-value">3684</div><div class="stat-label">总行数</div></div>
+  <div class="stat-card"><div class="stat-value">247</div><div class="stat-label">方法数</div></div>
+  <div class="stat-card"><div class="stat-value">112</div><div class="stat-label">字段数</div></div>
+  <div class="stat-card"><div class="stat-value">11.5 行</div><div class="stat-label">平均方法长度</div></div>
   <div class="stat-card"><div class="stat-value">7</div><div class="stat-label">平均复杂度</div></div>
   <div class="stat-card"><div class="stat-value">3</div><div class="stat-label">上帝类</div></div>
   <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">长方法</div></div>
@@ -62,7 +62,6 @@ project-assistant/
   |   +-- [C] CallChainAnalyzer.java
   +-- com/projectassistant/knowledge/
   |   +-- [C] KnowledgeBaseGenerator.java
-  |   +-- [C] SkillGenerator.java
   +-- com/projectassistant/model/
   |   +-- [C] ClassInfo.java
   |   +-- [C] DependencyInfo.java
@@ -214,7 +213,7 @@ project-assistant/
 
 - **全称**: `com.projectassistant.knowledge.KnowledgeBaseGenerator`
 - **类型**: class
-- **行数**: 259
+- **行数**: 436
 - **包**: `com.projectassistant.knowledge`
 - **可见性**: public
 
@@ -225,7 +224,7 @@ project-assistant/
 | private | N | `project` | `ProjectModel` |
 | private | N | `m` | `return` |
 
-#### 方法 (15)
+#### 方法 (17)
 
 | 可见性 | 名称 | 返回 | 参数 | 行数 | 复杂度 |
 |---|---|---|---|---|---|
@@ -244,31 +243,8 @@ project-assistant/
 | private | `devGuide()` | `void` | - | 1 | 1 |
 | private | `shorten()` | `String` | `String` | 1 | 1 |
 | public | `save()` | `void` | `String` | 1 | 1 |
-
----
-
-### [C] SkillGenerator
-
-- **全称**: `com.projectassistant.knowledge.SkillGenerator`
-- **类型**: class
-- **行数**: 256
-- **包**: `com.projectassistant.knowledge`
-- **可见性**: public
-
-#### 字段 (1)
-
-| 可见性 | 静态 | 名称 | 类型 |
-|---|---|---|---|
-| private | N | `project` | `ProjectModel` |
-
-#### 方法 (4)
-
-| 可见性 | 名称 | 返回 | 参数 | 行数 | 复杂度 |
-|---|---|---|---|---|---|
-| public | `save()` | `void` | `String` | 1 | 1 |
+| public | `saveSkill()` | `void` | `String` | 1 | 3 |
 | private | `sanitize()` | `String` | `String` | 1 | 1 |
-| private | `buildSkillMd()` | `String` | - | 1 | 3 |
-| private | `shorten()` | `String` | `String` | 1 | 1 |
 
 ---
 
@@ -276,7 +252,7 @@ project-assistant/
 
 - **全称**: `com.projectassistant.Main`
 - **类型**: class
-- **行数**: 179
+- **行数**: 178
 - **包**: `com.projectassistant`
 - **可见性**: public
 
@@ -858,7 +834,7 @@ project-assistant/
 | 1 | 💩 上帝类 | com.projectassistant.analyzer.ProjectAnalyzer 有 26 个方法 | 建议拆分为多个职责单一的类 |
 | 2 | 💩 上帝类 | com.projectassistant.model.ClassInfo 有 21 个方法 | 建议拆分为多个职责单一的类 |
 
-### 重要问题 (21)
+### 重要问题 (20)
 
 | # | 分类 | 描述 | 建议 |
 |---|---|---|---|
@@ -867,22 +843,21 @@ project-assistant/
 | 3 | 低内聚 | ProjectAnalyzer 内聚度=0.00（仅 0/26 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
 | 4 | 低内聚 | CallChain 内聚度=0.00（仅 0/6 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
 | 5 | 低内聚 | CallChainAnalyzer 内聚度=0.00（仅 0/5 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 6 | 低内聚 | KnowledgeBaseGenerator 内聚度=0.00（仅 0/15 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 7 | 低内聚 | SkillGenerator 内聚度=0.00（仅 0/4 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 8 | 低内聚 | Main 内聚度=0.00（仅 0/1 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 9 | 低内聚 | ClassInfo 内聚度=0.00（仅 0/21 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 10 | 低内聚 | DependencyInfo 内聚度=0.00（仅 0/8 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 11 | 低内聚 | FieldInfo 内聚度=0.00（仅 0/9 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 12 | 低内聚 | MethodInfo 内聚度=0.00（仅 0/19 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 13 | 低内聚 | ModuleInfo 内聚度=0.00（仅 0/7 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 14 | 低内聚 | ProjectModel 内聚度=0.00（仅 0/20 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 15 | 低内聚 | ProjectStats 内聚度=0.00（仅 0/19 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 16 | 低内聚 | ReportGenerator 内聚度=0.00（仅 0/19 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 17 | 低内聚 | ProjectScanner 内聚度=0.00（仅 0/13 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 18 | 低内聚 | ApiEndpoint 内聚度=0.00（仅 0/10 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 19 | 低内聚 | SpringScanner 内聚度=0.00（仅 0/19 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 20 | 低内聚 | SqlParser 内聚度=0.00（仅 0/12 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
-| 21 | 低内聚 | TableInfo 内聚度=0.00（仅 0/16 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 6 | 低内聚 | KnowledgeBaseGenerator 内聚度=0.00（仅 0/17 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 7 | 低内聚 | Main 内聚度=0.00（仅 0/1 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 8 | 低内聚 | ClassInfo 内聚度=0.00（仅 0/21 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 9 | 低内聚 | DependencyInfo 内聚度=0.00（仅 0/8 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 10 | 低内聚 | FieldInfo 内聚度=0.00（仅 0/9 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 11 | 低内聚 | MethodInfo 内聚度=0.00（仅 0/19 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 12 | 低内聚 | ModuleInfo 内聚度=0.00（仅 0/7 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 13 | 低内聚 | ProjectModel 内聚度=0.00（仅 0/20 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 14 | 低内聚 | ProjectStats 内聚度=0.00（仅 0/19 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 15 | 低内聚 | ReportGenerator 内聚度=0.00（仅 0/19 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 16 | 低内聚 | ProjectScanner 内聚度=0.00（仅 0/13 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 17 | 低内聚 | ApiEndpoint 内聚度=0.00（仅 0/10 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 18 | 低内聚 | SpringScanner 内聚度=0.00（仅 0/19 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 19 | 低内聚 | SqlParser 内聚度=0.00（仅 0/12 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
+| 20 | 低内聚 | TableInfo 内聚度=0.00（仅 0/16 方法访问字段） | 方法不操作类字段，考虑是否应该放在其它类中 |
 
 ### 改进建议 (16)
 
@@ -893,7 +868,7 @@ project-assistant/
 | 3 | 可能的未使用方法 | CallChainAnalyzer.analyze() 在项目内部未被调用 | 考虑删除或标记为 @Deprecated |
 | 4 | 可能的未使用方法 | KnowledgeBaseGenerator.generate() 在项目内部未被调用 | 考虑删除或标记为 @Deprecated |
 | 5 | 可能的未使用方法 | KnowledgeBaseGenerator.save() 在项目内部未被调用 | 考虑删除或标记为 @Deprecated |
-| 6 | 可能的未使用方法 | SkillGenerator.save() 在项目内部未被调用 | 考虑删除或标记为 @Deprecated |
+| 6 | 可能的未使用方法 | KnowledgeBaseGenerator.saveSkill() 在项目内部未被调用 | 考虑删除或标记为 @Deprecated |
 | 7 | 可能的未使用方法 | Main.main() 在项目内部未被调用 | 考虑删除或标记为 @Deprecated |
 | 8 | 可能的未使用方法 | ReportGenerator.generateMarkdown() 在项目内部未被调用 | 考虑删除或标记为 @Deprecated |
 | 9 | 可能的未使用方法 | ReportGenerator.generateHtml() 在项目内部未被调用 | 考虑删除或标记为 @Deprecated |
@@ -903,7 +878,7 @@ project-assistant/
 | 13 | 可能的未使用方法 | SqlParser.scan() 在项目内部未被调用 | 考虑删除或标记为 @Deprecated |
 | 14 | 可能的未使用方法 | SqlParser.hasMyBatis() 在项目内部未被调用 | 考虑删除或标记为 @Deprecated |
 | 15 | 可能的未使用方法 | SqlParser.hasJPA() 在项目内部未被调用 | 考虑删除或标记为 @Deprecated |
-| 16 | 待办事项 | 项目中共有 19 处 TODO/FIXME | 定期清理待办事项，避免技术债务累积 |
+| 16 | 待办事项 | 项目中共有 18 处 TODO/FIXME | 定期清理待办事项，避免技术债务累积 |
 
 ### 信息提示 (1)
 
