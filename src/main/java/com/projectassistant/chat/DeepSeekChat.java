@@ -26,7 +26,7 @@ import java.util.Scanner;
 public class DeepSeekChat {
 
     private static final String BASE_URL = "https://api.deepseek.com";
-    private static final String MODEL = "deepseek-v4-pro";
+    private static final String MODEL = "deepseek-v4-flash";
     private static final Gson gson = new Gson();
     private final HttpClient http;
     private final String apiKey;
@@ -67,11 +67,6 @@ public class DeepSeekChat {
         JsonObject body = new JsonObject();
         body.addProperty("model", MODEL);
         body.add("messages", messages);
-
-        JsonObject thinking = new JsonObject();
-        thinking.addProperty("type", "enabled");
-        body.add("thinking", thinking);
-        body.addProperty("reasoning_effort", "high");
         body.addProperty("stream", false);
 
         HttpRequest req = HttpRequest.newBuilder()

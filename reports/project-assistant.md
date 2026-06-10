@@ -5,18 +5,18 @@
 | **项目名称** | project-assistant |
 | **项目路径** | /app/working/workspaces/D2GPcF/project-assistant |
 | **Java 版本** | unknown |
-| **生成时间** | 2026-06-10 18:39:36 |
+| **生成时间** | 2026-06-10 18:47:12 |
 | **总类数** | 19 |
-| **总行数** | 3984 |
+| **总行数** | 3987 |
 
 ## 统计概要
 
 <div class="stats-grid">
   <div class="stat-card"><div class="stat-value">19</div><div class="stat-label">Java 类</div></div>
-  <div class="stat-card"><div class="stat-value">3984</div><div class="stat-label">总行数</div></div>
+  <div class="stat-card"><div class="stat-value">3987</div><div class="stat-label">总行数</div></div>
   <div class="stat-card"><div class="stat-value">248</div><div class="stat-label">方法数</div></div>
   <div class="stat-card"><div class="stat-value">112</div><div class="stat-label">字段数</div></div>
-  <div class="stat-card"><div class="stat-value">12.4 行</div><div class="stat-label">平均方法长度</div></div>
+  <div class="stat-card"><div class="stat-value">12.5 行</div><div class="stat-label">平均方法长度</div></div>
   <div class="stat-card"><div class="stat-value">7</div><div class="stat-label">平均复杂度</div></div>
   <div class="stat-card"><div class="stat-value">4</div><div class="stat-label">上帝类</div></div>
   <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">长方法</div></div>
@@ -216,7 +216,7 @@ project-assistant/
 
 - **全称**: `com.projectassistant.chat.DeepSeekChat`
 - **类型**: class
-- **行数**: 126
+- **行数**: 129
 - **包**: `com.projectassistant.chat`
 - **可见性**: public
 
