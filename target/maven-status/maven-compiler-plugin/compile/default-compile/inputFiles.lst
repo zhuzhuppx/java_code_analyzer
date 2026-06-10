@@ -14,6 +14,8 @@
 /app/working/workspaces/D2GPcF/java_code_analyzer/src/main/java/com/projectassistant/reporter/ReportGenerator.java
 /app/working/workspaces/D2GPcF/java_code_analyzer/src/main/java/com/projectassistant/scanner/ProjectScanner.java
 /app/working/workspaces/D2GPcF/java_code_analyzer/src/main/java/com/projectassistant/spring/ApiEndpoint.java
+/app/working/workspaces/D2GPcF/java_code_analyzer/src/main/java/com/projectassistant/spring/BeanInfo.java
 /app/working/workspaces/D2GPcF/java_code_analyzer/src/main/java/com/projectassistant/spring/SpringScanner.java
+/app/working/workspaces/D2GPcF/java_code_analyzer/src/main/java/com/projectassistant/sql/SchemaParser.java
 /app/working/workspaces/D2GPcF/java_code_analyzer/src/main/java/com/projectassistant/sql/SqlParser.java
 /app/working/workspaces/D2GPcF/java_code_analyzer/src/main/java/com/projectassistant/sql/TableInfo.java

@@ -2,6 +2,8 @@ package com.projectassistant.knowledge;
 
 import com.projectassistant.model.*;
 import com.projectassistant.spring.ApiEndpoint;
+import com.projectassistant.spring.BeanInfo;
+import com.projectassistant.spring.BeanInfo.InjectionPoint;
 import com.projectassistant.sql.TableInfo;
 import java.io.*;
 import java.nio.file.*;
@@ -159,15 +161,64 @@ public class KnowledgeBaseGenerator {
     }
 
     private void beanGraph() {
-        Map<String, List<String>> deps = project.getBeanDependencies();
-        if (deps.isEmpty()) { sb.append("## 5. Bean 依赖\n\n无。\n\n"); return; }
-        sb.append("## 5. Bean 依赖\n\n```\n");
-        for (Map.Entry<String, List<String>> entry : deps.entrySet()) {
-            sb.append(shorten(entry.getKey())).append(" 依赖: ");
-            sb.append(entry.getValue().stream().map(this::shorten).collect(Collectors.joining(", ")));
+        List<BeanInfo> infos = project.getBeanInfos();
+        if (infos.isEmpty()) { sb.append("## 5. Bean 依赖图\n\n无（未检测到 Spring Bean）。\n\n"); return; }
+
+        sb.append("## 5. Bean 依赖图 (").append(infos.size()).append(" 个 Bean)\n\n");
+
+        // 按角色分组展示
+        Map<String, List<BeanInfo>> byRole = infos.stream()
+                .collect(Collectors.groupingBy(BeanInfo::getRole, LinkedHashMap::new, Collectors.toList()));
+        for (Map.Entry<String, List<BeanInfo>> roleEntry : byRole.entrySet()) {
+            sb.append("### ").append(capitalize(roleEntry.getKey())).append(" (").append(roleEntry.getValue().size()).append(")\n\n");
+            for (BeanInfo bi : roleEntry.getValue()) {
+                sb.append("- **").append(shorten(bi.getClassName())).append("**");
+                if (!bi.getBeanName().equals(shorten(bi.getSimpleName())))
+                    sb.append(" [@").append(capitalize(bi.getRole())).append("(\"").append(bi.getBeanName()).append("\")]");
+                if (bi.isPrimary()) sb.append(" 🏆 @Primary");
+                if (bi.getScope() != null && !"singleton".equals(bi.getScope()))
+                    sb.append(" [@Scope(\"").append(bi.getScope()).append("\")]");
+
+                // 注入的依赖
+                if (!bi.getInjections().isEmpty()) {
+                    sb.append(" 注入:");
+                    for (InjectionPoint ip : bi.getInjections()) {
+                        sb.append(" ").append(ip.getAnnotation()).append(" ");
+                        if (ip.getInjectionType().equals("constructor")) sb.append("构造器");
+                        else sb.append(ip.getFieldName());
+                        sb.append(" → ").append(shorten(ip.getTargetType()));
+                        if (ip.getTargetBeanName() != null && !ip.getTargetBeanName().equals(ip.getTargetType())) {
+                            sb.append(" [").append(shorten(ip.getTargetBeanName())).append("]");
+                        }
+                        if (ip.getQualifier() != null) sb.append(" @Qualifier(\"").append(ip.getQualifier()).append("\")");
+                    }
+                }
+                // 被谁注入
+                if (!bi.getInjectedBy().isEmpty()) {
+                    sb.append(" | 被: ");
+                    sb.append(bi.getInjectedBy().stream().map(this::shorten).collect(Collectors.joining(", ")));
+                }
+                sb.append("\n");
+            }
             sb.append("\n");
         }
-        sb.append("```\n\n");
+
+        // 依赖关系汇总图
+        Map<String, List<String>> deps = project.getBeanDependencies();
+        if (!deps.isEmpty()) {
+            sb.append("### 依赖关系（简图）\n\n```\n");
+            for (Map.Entry<String, List<String>> entry : deps.entrySet()) {
+                sb.append(shorten(entry.getKey())).append(" 依赖: ");
+                sb.append(entry.getValue().stream().map(this::shorten).collect(Collectors.joining(", ")));
+                sb.append("\n");
+            }
+            sb.append("```\n\n");
+        }
+    }
+
+    private String capitalize(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     private void callChains() {
@@ -481,14 +532,40 @@ public class KnowledgeBaseGenerator {
         }
 
         // === 5. Bean ===
-        Map<String, List<String>> deps = project.getBeanDependencies();
-        md.append("## 5. Bean\n\n");
-        if (deps.isEmpty()) { md.append("（无）\n\n"); }
-        else {
-            md.append("```\n");
-            for (Map.Entry<String, List<String>> e : deps.entrySet())
-                md.append(shorten(e.getKey())).append(" → ").append(e.getValue().stream().map(this::shorten).collect(Collectors.joining(", "))).append("\n");
-            md.append("```\n\n");
+        List<BeanInfo> binfs = project.getBeanInfos();
+        md.append("## 5. Bean 依赖图\n\n");
+        if (binfs.isEmpty()) {
+            md.append("（无）\n\n");
+        } else {
+            Map<String, List<BeanInfo>> byRole = binfs.stream()
+                    .collect(Collectors.groupingBy(BeanInfo::getRole, LinkedHashMap::new, Collectors.toList()));
+            for (Map.Entry<String, List<BeanInfo>> roleEntry : byRole.entrySet()) {
+                md.append("### ").append(capitalize(roleEntry.getKey())).append(" (").append(roleEntry.getValue().size()).append(")\n\n");
+                for (BeanInfo bi : roleEntry.getValue()) {
+                    md.append("- **").append(shorten(bi.getClassName())).append("**");
+                    if (bi.isPrimary()) md.append(" 🏆");
+                    if (!bi.getInjections().isEmpty()) {
+                        md.append(" 注入:");
+                        for (InjectionPoint ip : bi.getInjections()) {
+                            md.append(" ").append(ip.getAnnotation()).append(" ");
+                            if (ip.getInjectionType().equals("constructor")) md.append("构造器");
+                            else md.append(ip.getFieldName());
+                            md.append(" → ").append(shorten(ip.getTargetType()));
+                            if (ip.getTargetBeanName() != null && !ip.getTargetBeanName().equals(ip.getTargetType()))
+                                md.append(" [").append(shorten(ip.getTargetBeanName())).append("]");
+                        }
+                    }
+                    md.append("\n");
+                }
+                md.append("\n");
+            }
+            Map<String, List<String>> deps = project.getBeanDependencies();
+            if (!deps.isEmpty()) {
+                md.append("依赖关系:\n```\n");
+                for (Map.Entry<String, List<String>> e : deps.entrySet())
+                    md.append(shorten(e.getKey())).append(" → ").append(e.getValue().stream().map(this::shorten).collect(Collectors.joining(", "))).append("\n");
+                md.append("```\n\n");
+            }
         }
 
         // === 6. 调用链 ===

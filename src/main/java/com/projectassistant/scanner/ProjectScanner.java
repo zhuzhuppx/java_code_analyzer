@@ -470,7 +470,7 @@ public class ProjectScanner {
     }
 
     private void parseFields(String body, ClassInfo classInfo) {
-        FieldInfo currentField = null;
+        List<String> pendingAnnotations = new ArrayList<>();
 
         for (String line : body.split("\n")) {
             line = line.trim();
@@ -497,20 +497,40 @@ public class ProjectScanner {
                     fi.setStatic(before.contains("static") || line.contains("static"));
                     fi.setFinal(before.contains("final") || line.contains("final"));
 
+                    // 附加挂起的注解
+                    if (!pendingAnnotations.isEmpty()) {
+                        fi.setAnnotations(new ArrayList<>(pendingAnnotations));
+                        pendingAnnotations.clear();
+                    }
+
                     classInfo.getFields().add(fi);
+                    continue;
                 }
             }
 
-            // 提取注解（含参数）
+            // 提取注解（含参数），用于字段前的注解
             Matcher am = FULL_ANNOTATION.matcher(line);
+            boolean foundAnnot = false;
             while (am.find()) {
                 String full = am.group(0).trim();
-                // 去重：同名注解只保留第一个（含参数版本优先）
-                String name = full.replaceAll("\\(.*", "");
-                boolean hasExisting = classInfo.getAnnotations().stream()
-                        .anyMatch(a -> a.replaceAll("\\(.*", "").equals(name));
-                if (!hasExisting) {
-                    classInfo.getAnnotations().add(full);
+                // 检查是否是 Spring 相关字段注解
+                String bare = full.startsWith("@") ? full.substring(1) : full;
+                String name = bare.replaceAll("\\(.*", "");
+                if (name.equals("Autowired") || name.equals("Resource") || name.equals("Inject")
+                        || name.equals("Value") || name.equals("Qualifier")
+                        || name.equals("Lazy") || name.startsWith("Json")
+                        || name.equals("NotNull") || name.equals("NotBlank") || name.equals("NotEmpty")
+                        || name.equals("Size") || name.equals("Pattern") || name.equals("Valid")
+                        || name.equals("DateTimeFormat") || name.equals("NumberFormat")) {
+                    pendingAnnotations.add(full);
+                    foundAnnot = true;
+                }
+            }
+            if (!foundAnnot) {
+                // 非注解行，清空待定注解（避免错误的跨行关联）
+                // 但保留如果行看起来像字段声明的一部分（如多行声明）
+                if (!line.endsWith(",") && !line.endsWith("(") && !line.endsWith("{")) {
+                    pendingAnnotations.clear();
                 }
             }
         }

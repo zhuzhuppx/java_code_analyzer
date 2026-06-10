@@ -7,13 +7,16 @@ com/projectassistant/scanner/ProjectScanner.class
 com/projectassistant/chain/CallChainAnalyzer.class
 com/projectassistant/chain/CallChain.class
 com/projectassistant/model/ProjectModel.class
+com/projectassistant/spring/BeanInfo$InjectionPoint.class
 com/projectassistant/chat/DeepSeekChat.class
 com/projectassistant/model/ClassInfo.class
 com/projectassistant/knowledge/KnowledgeBaseGenerator.class
 com/projectassistant/sql/TableInfo.class
+com/projectassistant/spring/BeanInfo.class
 com/projectassistant/model/ModuleInfo.class
 com/projectassistant/model/ProjectStats.class
 com/projectassistant/spring/ApiEndpoint.class
+com/projectassistant/sql/SchemaParser.class
 com/projectassistant/sql/SqlParser.class
 com/projectassistant/analyzer/ProjectAnalyzer.class
 com/projectassistant/spring/SpringScanner.class

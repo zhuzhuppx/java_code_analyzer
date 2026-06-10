@@ -1,6 +1,7 @@
 package com.projectassistant.spring;
 
 import com.projectassistant.model.*;
+import com.projectassistant.spring.BeanInfo.InjectionPoint;
 import java.util.*;
 import java.util.regex.*;
 import java.util.stream.*;
@@ -18,7 +19,9 @@ public class SpringScanner {
     private final List<ClassInfo> classes;
     private final List<ApiEndpoint> endpoints = new ArrayList<>();
     private final Map<String, List<String>> beanDependencies = new HashMap<>(); // bean -> 它依赖的 beans
-    private final Map<String, String> beanTypeMap = new HashMap<>(); // bean 类名 -> 角色 (controller/service/repo/config)
+    private final Map<String, String> beanTypeMap = new HashMap<>(); // bean 类名/接口名 -> 角色 (controller/service/repo/config)
+    private final Map<String, List<String>> interfaceImplMap = new HashMap<>(); // 接口 -> 实现类列表
+    private final Map<String, BeanInfo> beanInfoMap = new LinkedHashMap<>();   // className -> BeanInfo
     private final Map<String, String> configProperties = new HashMap<>();
     private String projectPattern = "unknown"; // MVC / DDD / Hexagonal / 传统分层
     private boolean hasSpringBoot = false;
@@ -58,7 +61,7 @@ public class SpringScanner {
         scanBeanDependencies();
         scanConfigProperties();
         System.out.println("  [Spring] 发现 " + endpoints.size() + " 个 API 端点, "
-                + beanDependencies.size() + " 个 Bean");
+                + beanInfoMap.size() + " 个 Bean, " + countInjections() + " 条注入关系");
     }
 
     /** 识别项目架构模式 */
@@ -197,78 +200,232 @@ public class SpringScanner {
 
     /** 扫描 Bean 依赖注入关系 */
     private void scanBeanDependencies() {
+        // 第1步：识别所有 Bean（含实现接口映射）
         for (ClassInfo ci : classes) {
-            List<String> deps = new ArrayList<>();
+            String role = detectBeanRole(ci);
+            if (role == null) continue;
+
+            String className = ci.getFullyQualifiedName();
+            registerBean(ci, className, role);
+
+            // 识别 bean 的显式名称（如 @Service("myService")）
+            String explicitName = extractBeanName(ci);
+            if (explicitName != null && !explicitName.isEmpty()) {
+                beanTypeMap.put(explicitName, role);
+            }
+
+            // 扫描实现的接口，加入接口名 -> 实现类映射
+            for (String iface : ci.getInterfaces()) {
+                interfaceImplMap.computeIfAbsent(iface, k -> new ArrayList<>()).add(className);
+                beanTypeMap.put(iface, role);
+            }
+        }
+
+        // 第2步：解析每个 Bean 的注入点
+        for (ClassInfo ci : classes) {
+            String className = ci.getFullyQualifiedName();
+            if (!beanInfoMap.containsKey(className)) continue;
+            BeanInfo bi = beanInfoMap.get(className);
+
+            // 字段注入 @Autowired / @Resource / @Inject
             for (FieldInfo fi : ci.getFields()) {
-                // @Autowired / @Resource / @Inject
-                boolean hasInject = fi.getAnnotations().stream()
-                        .anyMatch(a -> a.equals("Autowired") || a.equals("Resource") || a.equals("Inject"));
-                if (hasInject) {
-                    deps.add(fi.getType());
+                InjectionPoint ip = resolveFieldInjection(ci, fi);
+                if (ip != null) {
+                    bi.addInjection(ip);
+                    if (ip.getTargetBeanName() != null && beanInfoMap.containsKey(ip.getTargetBeanName())) {
+                        beanInfoMap.get(ip.getTargetBeanName()).addInjectedBy(className);
+                    }
+                    beanDependencies.computeIfAbsent(className, k -> new ArrayList<>())
+                            .add(ip.getTargetType());
                 }
             }
-            // 构造器注入检测
+
+            // 构造器注入（检测构造方法的参数类型）
             for (MethodInfo mi : ci.getMethods()) {
-                if (mi.isConstructor()) {
-                    for (String param : mi.getParameters()) {
-                        // 构造器参数如果没有 @Autowired 但类本身是 Spring Bean，也视为注入
-                        String cleanParam = param.replaceAll("\\[.*\\]", "").trim();
-                        if (isSpringBean(cleanParam)) {
-                            deps.add(cleanParam);
+                if (!mi.getName().equals(ci.getSimpleName())) continue;
+                List<String> params = mi.getParameters();
+                if (params == null || params.isEmpty()) continue;
+                for (String param : params) {
+                    String paramType = param.replaceAll("\\s+final\\s+", "").replaceAll("\\bfinal\\s+", "").trim();
+                    String resolved = resolveBeanForType(paramType);
+                    if (resolved != null) {
+                        InjectionPoint ip = new InjectionPoint("constructor-arg", paramType, "constructor", "Autowired");
+                        ip.setTargetBeanName(resolved);
+                        bi.addInjection(ip);
+                        beanDependencies.computeIfAbsent(className, k -> new ArrayList<>()).add(paramType);
+                        if (beanInfoMap.containsKey(resolved)) {
+                            beanInfoMap.get(resolved).addInjectedBy(className);
                         }
                     }
                 }
             }
-            if (!deps.isEmpty()) {
-                beanDependencies.put(ci.getFullyQualifiedName(), deps);
+        }
+
+        // 第3步：检测循环依赖
+        detectCircularDependencies();
+    }
+
+    /** 检查类是否是 Spring Bean，返回角色 */
+    private String detectBeanRole(ClassInfo ci) {
+        for (String ann : ci.getAnnotations()) {
+            String clean = ann.replace("@", "");
+            if (clean.startsWith("Service")) return "service";
+            if (clean.startsWith("Repository")) return "repository";
+            if (clean.startsWith("Component")) return "component";
+            if (clean.startsWith("Controller") || clean.startsWith("RestController")) return "controller";
+            if (clean.startsWith("Configuration")) return "configuration";
+        }
+        return null;
+    }
+
+    /** 注册一个 Bean */
+    private void registerBean(ClassInfo ci, String className, String role) {
+        if (beanInfoMap.containsKey(className)) return;
+        BeanInfo bi = new BeanInfo(className, ci.getSimpleName(), role);
+        for (String ann : ci.getAnnotations()) {
+            if (ann.startsWith("Scope")) {
+                Matcher m = Pattern.compile("value\\s*=\\s*\"([^\"]+)\"").matcher(ann);
+                if (m.find()) bi.setScope(m.group(1));
+                else bi.setScope("singleton");
+            }
+            if (ann.startsWith("Primary") || ann.equals("Primary")) bi.setPrimary(true);
+            if (ann.startsWith("Lazy")) bi.setLazy(true);
+        }
+        beanInfoMap.put(className, bi);
+        beanTypeMap.put(className, role);
+    }
+
+    /** 提取 @Service("xx") 中的显式 bean 名称 */
+    private String extractBeanName(ClassInfo ci) {
+        for (String ann : ci.getAnnotations()) {
+            Matcher m = Pattern.compile("@(Service|Component|Repository|Controller|RestController)\\s*\\(\"([^\"]+)\"\\)").matcher(ann);
+            if (m.find()) return m.group(2);
+            m = Pattern.compile("@(Service|Component|Repository|Controller|RestController)\\s*\\(\\s*value\\s*=\\s*\"([^\"]+)\"\\s*\\)").matcher(ann);
+            if (m.find()) return m.group(2);
+        }
+        return null;
+    }
+
+    /** 解析字段注入 */
+    private InjectionPoint resolveFieldInjection(ClassInfo ci, FieldInfo fi) {
+        String injectionAnn = null;
+        String qualifier = null;
+        for (String ann : fi.getAnnotations()) {
+            String clean = ann.replace("@", "");
+            if (clean.equals("Autowired") || clean.equals("Resource") || clean.equals("Inject")) {
+                injectionAnn = clean;
+            }
+            if (clean.startsWith("Qualifier")) {
+                Matcher m = Pattern.compile("\"([^\"]+)\"").matcher(ann);
+                if (m.find()) qualifier = m.group(1);
+            }
+        }
+        if (injectionAnn == null) return null;
+
+        String targetType = fi.getType();
+        if (targetType != null && targetType.contains("<")) {
+            Matcher m = Pattern.compile("<([^>]+)>").matcher(targetType);
+            if (m.find()) targetType = m.group(1);
+        }
+
+        InjectionPoint ip = new InjectionPoint(fi.getName(), targetType, "field", injectionAnn);
+        if (qualifier != null) ip.setQualifier(qualifier);
+
+        String resolved = resolveBeanForType(targetType);
+        if (resolved != null) ip.setTargetBeanName(resolved);
+        return ip;
+    }
+
+    /** 根据类型查找匹配的 Bean（支持接口 -> 实现类映射） */
+    private String resolveBeanForType(String type) {
+        if (type == null) return null;
+        String cleanType = type.replaceAll("[\\[\\]]", "").split("<")[0].trim();
+        String simpleName = cleanType.contains(".") ? cleanType.substring(cleanType.lastIndexOf('.') + 1) : cleanType;
+
+        if (beanInfoMap.containsKey(cleanType)) return cleanType;
+        if (beanTypeMap.containsKey(cleanType)) return cleanType;
+
+        if (interfaceImplMap.containsKey(cleanType)) {
+            List<String> impls = interfaceImplMap.get(cleanType);
+            if (impls.size() == 1) return impls.get(0);
+            for (String impl : impls) {
+                BeanInfo bi = beanInfoMap.get(impl);
+                if (bi != null && bi.isPrimary()) return impl;
+            }
+            return impls.get(0) + " (注意: 有" + impls.size() + "个实现)";
+        }
+
+        for (String beanClass : beanInfoMap.keySet()) {
+            String beanSimple = beanClass.contains(".") ? beanClass.substring(beanClass.lastIndexOf('.') + 1) : beanClass;
+            if (beanSimple.equals(simpleName)) return beanClass;
+        }
+        return cleanType;
+    }
+
+    /** 检测循环依赖 */
+    private void detectCircularDependencies() {
+        for (String beanName : beanDependencies.keySet()) {
+            Set<String> path = new LinkedHashSet<>();
+            if (hasCycle(beanName, new HashSet<>(), path)) {
+                System.out.println("  [Spring] ⚠️ 循环依赖: " + String.join(" -> ", path));
             }
         }
     }
 
-    private boolean isSpringBean(String className) {
-        return beanTypeMap.containsKey(className) ||
-               className.contains("Service") ||
-               className.contains("Repository") ||
-               className.contains("Mapper") ||
-               className.contains("Component") ||
-               className.contains("Dao") ||
-               className.contains("Client") ||
-               className.contains("Util") ||
-               className.contains("Helper") ||
-               className.contains("Manager");
+    private boolean hasCycle(String current, Set<String> visited, Set<String> path) {
+        if (path.contains(current)) return true;
+        if (visited.contains(current)) return false;
+        visited.add(current);
+        path.add(current);
+        List<String> deps = beanDependencies.get(current);
+        if (deps != null) {
+            for (String dep : deps) {
+                for (String bean : beanDependencies.keySet()) {
+                    if (bean.endsWith("." + dep) || bean.equals(dep)) {
+                        if (hasCycle(bean, visited, path)) return true;
+                    }
+                }
+            }
+        }
+        path.remove(current);
+        return false;
+    }
+
+    private int countInjections() {
+        return (int) beanInfoMap.values().stream()
+                .flatMap(bi -> bi.getInjections().stream())
+                .count();
     }
 
     /** 扫描配置属性 */
     private void scanConfigProperties() {
-        // 从 application.yml / application.properties 解析
-        // 这里从类注解中的 @Value 和 @ConfigurationProperties 提取
         for (ClassInfo ci : classes) {
             for (String ann : ci.getAnnotations()) {
                 if (ann.startsWith("ConfigurationProperties")) {
                     Matcher m = Pattern.compile("\"([^\"]+)\"").matcher(ann);
-                    if (m.find()) {
-                        configProperties.put("config.prefix", m.group(1));
-                    }
+                    if (m.find()) configProperties.put("config.prefix", m.group(1));
                 }
             }
             for (MethodInfo mi : ci.getMethods()) {
                 for (String ann : mi.getAnnotations()) {
                     if (ann.startsWith("Value")) {
                         Matcher m = Pattern.compile("\"([^\"]+)\"").matcher(ann);
-                        if (m.find()) {
-                            configProperties.put(m.group(1), mi.getReturnType());
-                        }
+                        if (m.find()) configProperties.put(m.group(1), mi.getReturnType());
                     }
                 }
             }
         }
     }
 
+    // ============ 新增公开访问 ============
+
+    public Map<String, BeanInfo> getBeanInfoMap() { return beanInfoMap; }
+    public Map<String, String> getBeanTypeMap() { return beanTypeMap; }
+
     // ==================== 对外输出 ====================
 
     public List<ApiEndpoint> getEndpoints() { return endpoints; }
     public Map<String, List<String>> getBeanDependencies() { return beanDependencies; }
-    public Map<String, String> getBeanTypeMap() { return beanTypeMap; }
     public Map<String, String> getConfigProperties() { return configProperties; }
     public String getProjectPattern() { return projectPattern; }
     public boolean isSpringBoot() { return hasSpringBoot; }

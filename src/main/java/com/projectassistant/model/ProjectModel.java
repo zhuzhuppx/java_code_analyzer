@@ -32,6 +32,7 @@ public class ProjectModel {
     private List<CallChain> callChains = new ArrayList<>();
     private List<String> criticalChains = new ArrayList<>();
     private Map<String, String> configProperties = new HashMap<>();
+    private List<BeanInfo> beanInfos = new ArrayList<>();
 
     // ==================== 基本属性 ====================
 
@@ -84,6 +85,9 @@ public class ProjectModel {
 
     public Map<String, String> getConfigProperties() { return configProperties; }
     public void setConfigProperties(Map<String, String> props) { this.configProperties = props; }
+
+    public List<BeanInfo> getBeanInfos() { return beanInfos; }
+    public void setBeanInfos(List<BeanInfo> infos) { this.beanInfos = infos; }
 
     @Override
     public String toString() {

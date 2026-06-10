@@ -7,6 +7,7 @@ import com.projectassistant.analyzer.ProjectAnalyzer.AnalysisResult;
 import com.projectassistant.spring.SpringScanner;
 import com.projectassistant.spring.ApiEndpoint;
 import com.projectassistant.sql.SqlParser;
+import com.projectassistant.sql.SchemaParser;
 import com.projectassistant.sql.TableInfo;
 import com.projectassistant.chain.CallChainAnalyzer;
 import com.projectassistant.chain.CallChain;
@@ -91,10 +92,12 @@ public class Main {
             project.setProjectPattern(springScanner.getProjectPattern());
             project.setSpringBoot(springScanner.isSpringBoot());
             project.setConfigProperties(springScanner.getConfigProperties());
+            project.setBeanInfos(new ArrayList<>(springScanner.getBeanInfoMap().values()));
             List<ApiEndpoint> endpoints = project.getApiEndpoints();
             System.out.println("  + 项目模式: " + project.getProjectPattern());
             System.out.println("  + API 端点: " + endpoints.size());
-            System.out.println("  + Bean 依赖: " + project.getBeanDependencies().size());
+            System.out.println("  + Bean: " + springScanner.getBeanInfoMap().size()
+                    + " (注入关系: " + project.getBeanDependencies().size() + ")");
         } catch (Exception e) {
             System.out.println("  ⚠️ Spring 扫描跳过: " + e.getMessage());
         }
@@ -123,6 +126,12 @@ public class Main {
             project.setDatabaseTables(tables);
             project.setMapperSql(sqlParser.getMapperSql());
             System.out.println("  + 数据库表: " + tables.size());
+
+            // Schema 逆向：从 @Entity + MyBatis resultMap 推断表结构
+            SchemaParser schemaParser = new SchemaParser(project.getClasses(), xmlFiles);
+            List<TableInfo> schemaTables = schemaParser.parse();
+            if (!schemaTables.isEmpty()) project.setDatabaseTables(schemaTables);
+
             System.out.println("  + Mapper: " + sqlParser.getMapperSql().size());
             System.out.println("  + ORM: " + (sqlParser.hasJPA() ? "JPA" : sqlParser.hasMyBatis() ? "MyBatis" : "无"));
         } catch (Exception e) {
