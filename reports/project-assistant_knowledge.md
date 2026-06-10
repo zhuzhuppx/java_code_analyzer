@@ -1,7 +1,7 @@
 # 项目知识库
 
 > 由 ProjectAssistant 自动生成，专为大模型理解优化
-> 生成时间: 2026-06-10 18:22:14
+> 生成时间: 2026-06-10 18:24:19
 
 ---
 
@@ -13,14 +13,14 @@
 | 构建工具 | maven |
 | Java 版本 | unknown |
 | Spring Boot | 否 |
-| 代码总行数 | 3686 |
-| 类/接口数 | 18 |
-| 方法数 | 247 |
+| 代码总行数 | 3854 |
+| 类/接口数 | 19 |
+| 方法数 | 248 |
 | API 端点 | 0 |
 | 数据库表 | 0 |
 | 外部依赖 | 3 |
-| 注释率 | 22.7% |
-| 平均方法行数 | 11.5 |
+| 注释率 | 22.8% |
+| 平均方法行数 | 12.0 |
 | 最大圈复杂度 | 7 |
 
 ### 外部依赖
@@ -45,6 +45,8 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
     chain/
       +-- [C] CallChain.java
       +-- [C] CallChainAnalyzer.java
+    chat/
+      +-- [C] DeepSeekChat.java
     knowledge/
       +-- [C] KnowledgeBaseGenerator.java
     model/
@@ -87,7 +89,7 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 ### com.projectassistant
 
-- **Main** (class) — 1 方法, 2 字段
+- **Main** (class) — 2 方法, 2 字段
 
 ### com.projectassistant.analyzer
 
@@ -97,6 +99,10 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 - **CallChain** (class) — 6 方法, 2 字段, @Override
 - **CallChainAnalyzer** (class) — 5 方法, 2 字段
+
+### com.projectassistant.chat
+
+- **DeepSeekChat** (class) — 0 方法, 0 字段
 
 ### com.projectassistant.knowledge
 

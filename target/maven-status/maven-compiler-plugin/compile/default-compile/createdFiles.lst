@@ -7,6 +7,7 @@ com/projectassistant/scanner/ProjectScanner.class
 com/projectassistant/chain/CallChainAnalyzer.class
 com/projectassistant/chain/CallChain.class
 com/projectassistant/model/ProjectModel.class
+com/projectassistant/chat/DeepSeekChat.class
 com/projectassistant/model/ClassInfo.class
 com/projectassistant/knowledge/KnowledgeBaseGenerator.class
 com/projectassistant/sql/TableInfo.class

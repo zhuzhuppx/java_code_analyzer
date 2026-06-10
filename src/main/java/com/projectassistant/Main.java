@@ -11,6 +11,7 @@ import com.projectassistant.sql.TableInfo;
 import com.projectassistant.chain.CallChainAnalyzer;
 import com.projectassistant.chain.CallChain;
 import com.projectassistant.knowledge.KnowledgeBaseGenerator;
+import com.projectassistant.chat.DeepSeekChat;
 import com.projectassistant.reporter.ReportGenerator;
 import java.io.IOException;
 import java.nio.file.*;
@@ -19,26 +20,43 @@ import java.util.List;
 /**
  * ProjectAssistant - 主入口
  *
- * 升级版：彻底理解 Java 项目，像老狗一样熟悉代码
+ * 彻底理解 Java 项目，像老狗一样熟悉代码
  *
  * 用法:
- *   java com.projectassistant.Main <项目路径> [markdown|html|knowledge]
+ *   java com.projectassistant.Main <项目路径> [格式|--ask "问题"|--chat]
  *
- * 输出格式:
- *   markdown  - Markdown 报告 (默认)
- *   html      - HTML 报告
- *   knowledge - 大模型知识库 (专为 LLM 优化的项目知识文档)
+ * 格式:
+ *   markdown          - Markdown 报告 (默认)
+ *   html              - HTML 报告
+ *   knowledge         - 知识库 (专为大模型优化)
+ *   --ask "问题"      - 扫描后用 DeepSeek 回答
+ *   --chat            - 扫描后进入交互式问答
  */
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         if (args.length < 1) {
-            System.out.println("用法: java com.projectassistant.Main <项目路径> [markdown|html|knowledge]");
+            System.out.println("用法: java com.projectassistant.Main <项目路径> [格式|--ask \"问题\"|--chat]");
             System.exit(1);
         }
 
         String projectPath = args[0];
-        String format = args.length >= 2 ? args[1] : "markdown";
+        String mode = args.length >= 2 ? args[1] : "markdown";
+        String askQuestion = null;
+        boolean chatMode = false;
+
+        // 解析模式
+        if (mode.equals("--ask")) {
+            if (args.length < 3) {
+                System.err.println("错误: --ask 需要提供问题内容");
+                System.exit(1);
+            }
+            askQuestion = args[2];
+            mode = "knowledge";  // 先扫，生成知识库，再问
+        } else if (mode.equals("--chat")) {
+            chatMode = true;
+            mode = "knowledge";
+        }
 
         // 验证路径
         Path path = Paths.get(projectPath);
@@ -126,7 +144,7 @@ public class Main {
             String extension;
             String content;
 
-            switch (format) {
+            switch (mode) {
                 case "html":
                     ReportGenerator reporter = new ReportGenerator(project, results);
                     content = reporter.generateHtml();
@@ -146,10 +164,10 @@ public class Main {
 
             Path outputFile = reportsDir.resolve(projectName + extension);
             Files.writeString(outputFile, content);
-            System.out.println("  ✅ " + (format.equals("knowledge") ? "知识库" : "报告") + "已保存: " + outputFile);
+            System.out.println("  ✅ " + (mode.equals("knowledge") ? "知识库" : "报告") + "已保存: " + outputFile);
 
             // 同时也生成知识库（如果选了其他模式）
-            if (!format.equals("knowledge")) {
+            if (!mode.equals("knowledge")) {
                 KnowledgeBaseGenerator kb = new KnowledgeBaseGenerator(project);
                 String kbContent = kb.generate();
                 Path kbFile = reportsDir.resolve(projectName + "_knowledge.md");
@@ -176,5 +194,31 @@ public class Main {
         System.out.println("  扫描完成! 耗时: " + (totalElapsed / 1000.0) + " 秒");
         System.out.println("  报告: reports/");
         System.out.println("============================================");
+
+        // ==================== 7. DeepSeek 问答 ====================
+        if (chatMode || askQuestion != null) {
+            System.out.println("\n[5/4] 启动 DeepSeek 问答...");
+            try {
+                // 用知识库内容作为 system prompt
+                KnowledgeBaseGenerator kbForChat = new KnowledgeBaseGenerator(project);
+                String knowledge = kbForChat.generate();
+                String systemPrompt = "你是一个 Java 老狗，对以下项目了如指掌。\n" +
+                    "用项目知识回答问题，如果不知道就说不知道。\n\n" +
+                    "=== 项目知识 ===\n" + knowledge;
+
+                DeepSeekChat chat = new DeepSeekChat(systemPrompt);
+
+                if (askQuestion != null) {
+                    System.out.println("你: " + askQuestion);
+                    System.out.println("🐋 DeepSeek 思考中...\n");
+                    String reply = chat.ask(askQuestion);
+                    System.out.println(reply);
+                } else {
+                    chat.interactiveChat();
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ DeepSeek 问答失败: " + e.getMessage());
+            }
+        }
     }
 }

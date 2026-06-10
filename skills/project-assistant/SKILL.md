@@ -1,6 +1,6 @@
 ---
 name: project-assistant
-description: "project-assistant 项目知识库 — 18 个类, 0 个 API, 0 张表"
+description: "project-assistant 项目知识库 — 19 个类, 0 个 API, 0 张表"
 metadata:
   copaw:
     emoji: "📦"
@@ -9,7 +9,7 @@ metadata:
 
 # project-assistant 项目知识库
 
-> 由 ProjectAssistant 自动生成 | 2026-06-10 18:22
+> 由 ProjectAssistant 自动生成 | 2026-06-10 18:24
 
 当用户询问本项目相关的任何问题时，优先使用以下信息回答。
 
@@ -21,9 +21,9 @@ metadata:
 | 构建 | maven |
 | Java | unknown |
 | Spring Boot | 否 |
-| 行数 | 3686 |
-| 类数 | 18 |
-| 方法数 | 247 |
+| 行数 | 3854 |
+| 类数 | 19 |
+| 方法数 | 248 |
 | API | 0 |
 | 数据库表 | 0 |
 | 依赖 | 3 |
@@ -48,6 +48,8 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
   chain/
     [C] CallChain
     [C] CallChainAnalyzer
+  chat/
+    [C] DeepSeekChat
   knowledge/
     [C] KnowledgeBaseGenerator
   model/
@@ -90,7 +92,7 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 ### com.projectassistant
 
-- **Main** (class) — 1 方法, 2 字段
+- **Main** (class) — 2 方法, 2 字段
 
 ### com.projectassistant.analyzer
 
@@ -100,6 +102,10 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 - **CallChain** (class) — 6 方法, 2 字段, @Override
 - **CallChainAnalyzer** (class) — 5 方法, 2 字段
+
+### com.projectassistant.chat
+
+- **DeepSeekChat** (class) — 0 方法, 0 字段
 
 ### com.projectassistant.knowledge
 
@@ -140,6 +146,8 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 **analyzer**: 1 个类
 
 **chain**: 2 个类
+
+**chat**: 1 个类
 
 **knowledge**: 1 个类
 

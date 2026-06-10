@@ -2,6 +2,7 @@
 /app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/analyzer/ProjectAnalyzer.java
 /app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/chain/CallChain.java
 /app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/chain/CallChainAnalyzer.java
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/chat/DeepSeekChat.java
 /app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/knowledge/KnowledgeBaseGenerator.java
 /app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/model/ClassInfo.java
 /app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/model/DependencyInfo.java
