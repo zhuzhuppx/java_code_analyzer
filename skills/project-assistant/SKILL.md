@@ -9,7 +9,7 @@ metadata:
 
 # project-assistant 项目知识库
 
-> 由 ProjectAssistant 自动生成 | 2026-06-10 18:14
+> 由 ProjectAssistant 自动生成 | 2026-06-10 18:22
 
 当用户询问本项目相关的任何问题时，优先使用以下信息回答。
 
@@ -21,7 +21,7 @@ metadata:
 | 构建 | maven |
 | Java | unknown |
 | Spring Boot | 否 |
-| 行数 | 3684 |
+| 行数 | 3686 |
 | 类数 | 18 |
 | 方法数 | 247 |
 | API | 0 |

@@ -5,15 +5,15 @@
 | **项目名称** | project-assistant |
 | **项目路径** | /app/working/workspaces/D2GPcF/project-assistant |
 | **Java 版本** | unknown |
-| **生成时间** | 2026-06-10 18:14:05 |
+| **生成时间** | 2026-06-10 18:22:14 |
 | **总类数** | 18 |
-| **总行数** | 3684 |
+| **总行数** | 3686 |
 
 ## 统计概要
 
 <div class="stats-grid">
   <div class="stat-card"><div class="stat-value">18</div><div class="stat-label">Java 类</div></div>
-  <div class="stat-card"><div class="stat-value">3684</div><div class="stat-label">总行数</div></div>
+  <div class="stat-card"><div class="stat-value">3686</div><div class="stat-label">总行数</div></div>
   <div class="stat-card"><div class="stat-value">247</div><div class="stat-label">方法数</div></div>
   <div class="stat-card"><div class="stat-value">112</div><div class="stat-label">字段数</div></div>
   <div class="stat-card"><div class="stat-value">11.5 行</div><div class="stat-label">平均方法长度</div></div>
@@ -252,7 +252,7 @@ project-assistant/
 
 - **全称**: `com.projectassistant.Main`
 - **类型**: class
-- **行数**: 178
+- **行数**: 180
 - **包**: `com.projectassistant`
 - **可见性**: public
 

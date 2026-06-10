@@ -161,7 +161,9 @@ public class Main {
             System.out.println();
             System.out.println("生成项目 Skill...");
             KnowledgeBaseGenerator kb2 = new KnowledgeBaseGenerator(project);
-            Path skillDir = reportsDir.resolve("skills");
+            // 输出到工具自身目录下的 skills/（方便提交到仓库）
+            Path toolDir = Paths.get("").toAbsolutePath().normalize();
+            Path skillDir = toolDir.resolve("skills");
             kb2.saveSkill(skillDir.toString());
 
         } catch (IOException e) {
