@@ -18,9 +18,10 @@ import java.util.Scanner;
  * API 兼容 OpenAI 格式，不需要额外依赖。
  *
  * 用法:
- *   export DEEPSEEK_API_KEY=sk-xxx
  *   java ... --ask "这个项目有什么接口？"
  *   java ... --chat        (交互模式)
+ *
+ * API Key 会在启动时从命令行输入读取。
  */
 public class DeepSeekChat {
 
@@ -30,14 +31,16 @@ public class DeepSeekChat {
     private final HttpClient http;
     private final String apiKey;
     private final JsonArray messages;
+    private final Scanner scanner;
 
-    public DeepSeekChat(String systemPrompt) {
-        this.apiKey = System.getenv("DEEPSEEK_API_KEY");
-        if (apiKey == null || apiKey.isEmpty()) {
-            throw new IllegalStateException(
-                "请设置环境变量 DEEPSEEK_API_KEY\n" +
-                "  export DEEPSEEK_API_KEY=sk-xxx");
+    public DeepSeekChat(String systemPrompt, Scanner scanner) {
+        System.out.print("请输入 DeepSeek API Key: ");
+        String inputKey = scanner.nextLine().trim();
+        if (inputKey.isEmpty()) {
+            throw new IllegalArgumentException("API Key 不能为空");
         }
+        this.apiKey = inputKey;
+        this.scanner = scanner;
         this.http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
@@ -100,7 +103,6 @@ public class DeepSeekChat {
      * 交互式聊天模式
      */
     public void interactiveChat() throws IOException, InterruptedException {
-        Scanner scanner = new Scanner(System.in);
         System.out.println("\n💬 进入对话模式（输入 /bye 退出）\n");
 
         while (true) {

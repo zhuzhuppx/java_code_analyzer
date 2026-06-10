@@ -16,6 +16,7 @@ import com.projectassistant.reporter.ReportGenerator;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
+import java.util.Scanner;
 
 /**
  * ProjectAssistant - 主入口
@@ -206,7 +207,7 @@ public class Main {
                     "用项目知识回答问题，如果不知道就说不知道。\n\n" +
                     "=== 项目知识 ===\n" + knowledge;
 
-                DeepSeekChat chat = new DeepSeekChat(systemPrompt);
+                DeepSeekChat chat = new DeepSeekChat(systemPrompt, new Scanner(System.in));
 
                 if (askQuestion != null) {
                     System.out.println("你: " + askQuestion);
