@@ -35,6 +35,7 @@ public class KnowledgeBaseGenerator {
         beanGraph();
         callChains();
         keyClasses();
+        rawClassDetails();
         businessFlow();
         configurations();
         devGuide();
@@ -173,9 +174,95 @@ public class KnowledgeBaseGenerator {
         }
     }
 
+    /**
+     * 类全量信息 — 让大模型自己推理出实体、表结构、业务逻辑
+     */
+    private void rawClassDetails() {
+        sb.append("## 8. 类全量信息\n\n");
+        sb.append("> 以下为每个类的详细字段和注解信息，大模型可据此自行推断数据库结构、业务逻辑等。\n\n");
+
+        // 按包分组，优先展示可能包含实体的包
+        Map<String, List<ClassInfo>> pkgMap = project.getClasses().stream()
+                .collect(Collectors.groupingBy(ClassInfo::getPackageName, TreeMap::new, Collectors.toList()));
+
+        // 先把可能包含 entity/domain/model/pojo 的包排在前面
+        List<String> priorityPkgs = new ArrayList<>();
+        List<String> otherPkgs = new ArrayList<>();
+        for (String pkg : pkgMap.keySet()) {
+            String lower = pkg.toLowerCase();
+            if (lower.contains("entity") || lower.contains("domain") || lower.contains("model")
+                    || lower.contains("pojo") || lower.contains("dto") || lower.contains("vo")) {
+                priorityPkgs.add(pkg);
+            } else {
+                otherPkgs.add(pkg);
+            }
+        }
+
+        List<String> orderedPkgs = new ArrayList<>(priorityPkgs);
+        orderedPkgs.addAll(otherPkgs);
+
+        for (String pkg : orderedPkgs) {
+            List<ClassInfo> classes = pkgMap.get(pkg);
+            sb.append("### ").append(pkg).append("\n\n");
+
+            for (ClassInfo ci : classes) {
+                // 类头：注解 + 类型 + 类名
+                if (!ci.getAnnotations().isEmpty()) {
+                    sb.append("```\n");
+                    for (String ann : ci.getAnnotations()) {
+                        sb.append("@").append(ann).append("\n");
+                    }
+                    sb.append(ci.getType()).append(" ").append(ci.getSimpleName());
+                    if (ci.getSuperClassName() != null && !ci.getSuperClassName().equals("java.lang.Object")) {
+                        sb.append(" extends ").append(shorten(ci.getSuperClassName()));
+                    }
+                    sb.append(" {\n");
+                } else {
+                    sb.append("```\n");
+                    sb.append(ci.getType()).append(" ").append(ci.getSimpleName());
+                    if (ci.getSuperClassName() != null && !ci.getSuperClassName().equals("java.lang.Object")) {
+                        sb.append(" extends ").append(shorten(ci.getSuperClassName()));
+                    }
+                    sb.append(" {\n");
+                }
+
+                // 字段
+                for (FieldInfo f : ci.getFields()) {
+                    String indent = ci.getMethods().size() > 5 ? "    // " : "    ";
+                    if (!f.getAnnotations().isEmpty()) {
+                        for (String ann : f.getAnnotations()) {
+                            sb.append("    @").append(ann).append("\n");
+                        }
+                    }
+                    sb.append("    ").append(f.getType()).append(" ").append(f.getName());
+                    if ("" != null && !"".isEmpty()) {
+                        sb.append(" = ").append("");
+                    }
+                    sb.append(";\n");
+                }
+
+                // 方法名摘要（不展开方法体）
+                if (!ci.getMethods().isEmpty()) {
+                    sb.append("\n    // --- ").append(ci.getMethods().size()).append(" 个方法 ---\n");
+                    for (MethodInfo m : ci.getMethods()) {
+                        sb.append("    ").append(m.getReturnType()).append(" ")
+                          .append(m.getName()).append("(");
+                        if (m.getParameters() != null && !m.getParameters().isEmpty()) {
+                            sb.append(String.join(", ", m.getParameters()));
+                        }
+                        sb.append(");\n");
+                    }
+                }
+
+                sb.append("}\n");
+                sb.append("```\n\n");
+            }
+        }
+    }
+
     private void businessFlow() {
         List<ApiEndpoint> endpoints = project.getApiEndpoints();
-        sb.append("## 8. 业务流\n\n");
+        sb.append("## 9. 业务流\n\n");
         if (endpoints.isEmpty()) { sb.append("无法推断。\n\n"); return; }
         Map<String, List<ApiEndpoint>> byPrefix = new TreeMap<>();
         for (ApiEndpoint ep : endpoints) {
@@ -217,7 +304,7 @@ public class KnowledgeBaseGenerator {
 
     private void configurations() {
         Map<String, String> config = project.getConfigProperties();
-        sb.append("## 9. 配置\n\n");
+        sb.append("## 10. 配置\n\n");
         if (config.isEmpty()) { sb.append("无。\n\n"); return; }
         for (Map.Entry<String, String> e : config.entrySet())
             sb.append("- `").append(e.getKey()).append("`: ").append(e.getValue()).append("\n");
@@ -225,7 +312,7 @@ public class KnowledgeBaseGenerator {
     }
 
     private void devGuide() {
-        sb.append("## 10. 开发指南\n\n");
+        sb.append("## 11. 开发指南\n\n");
         sb.append("**启动类**: ");
         project.getClasses().stream()
                 .filter(ci -> ci.getAnnotations().contains("SpringBootApplication"))
@@ -238,8 +325,9 @@ public class KnowledgeBaseGenerator {
         sb.append("| 有哪些接口？ | 3. API 路由 |\n");
         sb.append("| 数据库怎么设计的？ | 4. 数据库 |\n");
         sb.append("| 改这个字段影响哪？ | 5. Bean依赖 / 6. 调用链 |\n");
-        sb.append("| 帮我加个接口 | 8. 业务流 / 7. 关键类 |\n");
-        sb.append("| 这个配置是什么意思？ | 9. 配置 |\n\n");
+        sb.append("| 帮我加个接口 | 9. 业务流 / 7. 关键类 |\n");
+        sb.append("| 这个类的字段和注解？ | 8. 类全量信息 |\n");
+        sb.append("| 这个配置是什么意思？ | 10. 配置 |\n\n");
         sb.append("---\n> 知识库由 ProjectAssistant 生成 | 配合大模型使用效果更佳\n");
     }
 
@@ -385,8 +473,47 @@ public class KnowledgeBaseGenerator {
             md.append("\n");
         }
 
-        // === 8. 业务流 ===
-        md.append("## 8. 业务流\n\n");
+        // === 8. 类全量信息 ===
+        md.append("## 8. 类全量信息\n\n");
+        md.append("> 以下为每个类的详细字段和注解信息，大模型可据此自行推断数据库结构、业务逻辑。\n\n");
+        for (String pkg : pkgMap.keySet()) {
+            List<ClassInfo> classes = pkgMap.get(pkg);
+            md.append("### ").append(pkg).append("\n\n");
+            for (ClassInfo ci : classes) {
+                if (!ci.getAnnotations().isEmpty()) {
+                    md.append("```\n");
+                    for (String ann : ci.getAnnotations()) md.append("@").append(ann).append("\n");
+                    md.append(ci.getType()).append(" ").append(ci.getSimpleName());
+                    if (ci.getSuperClassName() != null && !ci.getSuperClassName().equals("java.lang.Object"))
+                        md.append(" extends ").append(shorten(ci.getSuperClassName()));
+                    md.append(" {\n");
+                } else {
+                    md.append("```\n").append(ci.getType()).append(" ").append(ci.getSimpleName());
+                    if (ci.getSuperClassName() != null && !ci.getSuperClassName().equals("java.lang.Object"))
+                        md.append(" extends ").append(shorten(ci.getSuperClassName()));
+                    md.append(" {\n");
+                }
+                for (FieldInfo f : ci.getFields()) {
+                    if (!f.getAnnotations().isEmpty()) {
+                        for (String ann : f.getAnnotations()) md.append("    @").append(ann).append("\n");
+                    }
+                    md.append("    ").append(f.getType()).append(" ").append(f.getName()).append(";\n");
+                }
+                if (!ci.getMethods().isEmpty()) {
+                    md.append("\n    // --- ").append(ci.getMethods().size()).append(" 个方法 ---\n");
+                    for (MethodInfo m : ci.getMethods()) {
+                        md.append("    ").append(m.getReturnType()).append(" ").append(m.getName()).append("(");
+                        if (m.getParameters() != null && !m.getParameters().isEmpty())
+                            md.append(String.join(", ", m.getParameters()));
+                        md.append(");\n");
+                    }
+                }
+                md.append("}\n").append("```\n\n");
+            }
+        }
+
+        // === 9. 业务流 ===
+        md.append("## 9. 业务流\n\n");
         if (!eps.isEmpty()) {
             Map<String, List<ApiEndpoint>> byPrefix = new TreeMap<>();
             for (ApiEndpoint ep : eps) {
@@ -408,14 +535,14 @@ public class KnowledgeBaseGenerator {
             }
         }
 
-        // === 9. 配置 ===
+        // === 10. 配置 ===
         Map<String, String> config = project.getConfigProperties();
-        md.append("## 9. 配置\n\n");
+        md.append("## 10. 配置\n\n");
         if (config.isEmpty()) { md.append("（无）\n\n"); }
         else { for (Map.Entry<String, String> e : config.entrySet()) md.append("- `").append(e.getKey()).append("`: ").append(e.getValue()).append("\n"); md.append("\n"); }
 
-        // === 10. Agent 提示 ===
-        md.append("## 10. 对 Agent 的提示\n\n");
+        // === 11. Agent 提示 ===
+        md.append("## 11. 对 Agent 的提示\n\n");
         md.append("| 用户想问 | 看哪节 |\n|---|---|\n");
         md.append("| 这是什么项目？ | 1. 概览 / 2. 架构 |\n");
         md.append("| 有哪些接口？ | 3. API |\n");
