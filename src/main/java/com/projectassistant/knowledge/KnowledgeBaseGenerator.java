@@ -118,20 +118,43 @@ public class KnowledgeBaseGenerator {
 
     private void databaseSchema() {
         List<TableInfo> tables = project.getDatabaseTables();
-        if (tables.isEmpty()) { sb.append("## 4. 数据库\n\n无数据库映射。\n\n"); return; }
-        sb.append("## 4. 数据库结构 (").append(tables.size()).append(" 张表)\n\n");
-        for (TableInfo table : tables) {
-            sb.append("### ").append(table.getTableName()).append("\n\n");
-            if (table.getEntityClass() != null) sb.append("Entity: ").append(table.getEntityClass()).append("\n\n");
-            sb.append("| 字段 | 列名 | 类型 | 主键 |\n|---|---|---|---|\n");
-            for (TableInfo.Column col : table.getColumns()) {
-                sb.append("| `").append(col.getFieldName()).append("`")
-                  .append(" | `").append(col.getColumnName()).append("`")
-                  .append(" | ").append(col.getJavaType())
-                  .append(" | ").append(col.isPrimaryKey() ? "PK" : "")
-                  .append(" |\n");
+        sb.append("## 4. 数据库\n\n");
+
+        // 表结构
+        if (tables.isEmpty()) {
+            sb.append("### 表结构\n\n（无结构化表信息）\n\n");
+        } else {
+            sb.append("### 表结构 (").append(tables.size()).append(" 张表)\n\n");
+            for (TableInfo table : tables) {
+                sb.append("#### ").append(table.getTableName()).append("\n\n");
+                if (table.getEntityClass() != null) sb.append("Entity: ").append(table.getEntityClass()).append("\n\n");
+                sb.append("| 字段 | 列名 | 类型 | 主键 | 自增 | 可空 | 默认值 |\n");
+                sb.append("|---|---|---|---|---|---|---|\n");
+                for (TableInfo.Column col : table.getColumns()) {
+                    sb.append("| `").append(col.getFieldName()).append("`")
+                      .append(" | `").append(col.getColumnName()).append("`")
+                      .append(" | ").append(col.getJavaType())
+                      .append(" | ").append(col.isPrimaryKey() ? "PK" : "")
+                      .append(" | ").append(col.isAutoIncrement() ? "自增" : "")
+                      .append(" | ").append(!col.isNullable() ? "NOT NULL" : "")
+                      .append(" | ").append(col.getDefaultValue() != null ? col.getDefaultValue() : "")
+                      .append(" |\n");
+                }
+                sb.append("\n");
             }
-            sb.append("\n");
+        }
+
+        // Mapper SQL 原文
+        Map<String, String> mapperSql = project.getMapperSql();
+        if (!mapperSql.isEmpty()) {
+            sb.append("### Mapper SQL (").append(mapperSql.size()).append(" 条)\n\n");
+            sb.append("> 以下为 Mapper XML 或注解中的原始 SQL，大模型可直接分析 SQL 正确性、性能、注入风险。\n\n");
+            for (Map.Entry<String, String> entry : mapperSql.entrySet()) {
+                sb.append("**").append(entry.getKey()).append("**\n\n");
+                sb.append("```sql\n").append(entry.getValue()).append("\n```\n\n");
+            }
+        } else {
+            sb.append("### Mapper SQL\n\n（未检测到 Mapper SQL）\n\n");
         }
     }
 
@@ -431,17 +454,30 @@ public class KnowledgeBaseGenerator {
 
         // === 4. 数据库 ===
         List<TableInfo> tables = project.getDatabaseTables();
+        Map<String, String> mapperSql = project.getMapperSql();
         md.append("## 4. 数据库\n\n");
-        if (tables.isEmpty()) { md.append("（无）\n\n"); }
-        else {
+
+        if (!tables.isEmpty()) {
+            md.append("### 表结构 (").append(tables.size()).append(" 张表)\n\n");
             for (TableInfo t : tables) {
-                md.append("### ").append(t.getTableName()).append("\n\n");
+                md.append("#### ").append(t.getTableName()).append("\n\n");
                 if (t.getEntityClass() != null) md.append("Entity: ").append(t.getEntityClass()).append("\n\n");
-                md.append("| 字段 | 列 | 类型 | PK |\n|---|---|---|---|\n");
+                md.append("| 字段 | 列 | 类型 | PK | 自增 | 可空 |\n|---|---|---|---|---|---|\n");
                 for (TableInfo.Column col : t.getColumns())
-                    md.append("| `").append(col.getFieldName()).append("` | `").append(col.getColumnName()).append("` | ").append(col.getJavaType()).append(" | ").append(col.isPrimaryKey() ? "PK" : "").append(" |\n");
+                    md.append("| `").append(col.getFieldName()).append("` | `").append(col.getColumnName()).append("` | ").append(col.getJavaType()).append(" | ").append(col.isPrimaryKey() ? "PK" : "").append(" | ").append(col.isAutoIncrement() ? "自增" : "").append(" | ").append(!col.isNullable() ? "NOT NULL" : "").append(" |\n");
                 md.append("\n");
             }
+        }
+
+        if (!mapperSql.isEmpty()) {
+            md.append("### Mapper SQL (").append(mapperSql.size()).append(" 条)\n\n");
+            for (Map.Entry<String, String> entry : mapperSql.entrySet()) {
+                md.append("**").append(entry.getKey()).append("**\n\n```sql\n").append(entry.getValue()).append("\n```\n\n");
+            }
+        }
+
+        if (tables.isEmpty() && mapperSql.isEmpty()) {
+            md.append("（无）\n\n");
         }
 
         // === 5. Bean ===
