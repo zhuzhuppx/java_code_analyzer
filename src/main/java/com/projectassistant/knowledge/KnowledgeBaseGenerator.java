@@ -79,6 +79,52 @@ public class KnowledgeBaseGenerator {
             }
             sb.append("```\n\n");
         }
+
+        // 依赖漏洞摘要
+        List<ProjectModel.VulnFinding> vulns = project.getVulnFindings();
+        if (!vulns.isEmpty()) {
+            sb.append("### ⚠️ 已知安全漏洞 (").append(vulns.size()).append(")\n\n");
+            long crit = vulns.stream().filter(v -> "CRITICAL".equals(v.severity)).count();
+            long high = vulns.stream().filter(v -> "HIGH".equals(v.severity)).count();
+            sb.append("> CRITICAL: ").append(crit).append(" | HIGH: ").append(high)
+              .append(" | 其他: ").append(vulns.size() - crit - high).append("\n\n");
+            sb.append("| 组件 | 当前版本 | CVE | 严重程度 | 说明 |\n|---|---|---|---|---|\n");
+            for (ProjectModel.VulnFinding v : vulns) {
+                sb.append("| ").append(v.artifactId).append(" | ").append(v.currentVersion)
+                  .append(" | ").append(v.cve).append(" | **").append(v.severity).append("**")
+                  .append(" | ").append(v.description).append(" |\n");
+            }
+            sb.append("\n");
+        }
+
+        // 健康评分
+        sb.append("### 健康评分: **").append(calculateHealthScore()).append("/100**\n\n");
+    }
+
+    /** 计算项目健康评分 */
+    private int calculateHealthScore() {
+        int score = 80;
+        List<ProjectModel.VulnFinding> vulns = project.getVulnFindings();
+        if (!vulns.isEmpty()) {
+            long crit = vulns.stream().filter(v -> "CRITICAL".equals(v.severity)).count();
+            long high = vulns.stream().filter(v -> "HIGH".equals(v.severity)).count();
+            score -= crit * 8 + high * 4;
+        }
+        if (project.getDatabaseTables().isEmpty() && !project.getMapperSql().isEmpty()) score -= 5;
+        int totalMethods = project.getStats().getTotalMethods();
+        if (totalMethods > 0) {
+            double avgComplexity = project.getClasses().stream()
+                    .flatMap(c -> c.getMethods().stream())
+                    .filter(m -> m.getCyclomaticComplexity() > 0)
+                    .mapToInt(m -> m.getCyclomaticComplexity())
+                    .average().orElse(0);
+            if (avgComplexity > 10) score -= 10;
+            else if (avgComplexity > 5) score -= 5;
+        }
+        if (!project.getDatabaseTables().isEmpty()) score += 5;
+        if (!project.getBeanInfos().isEmpty()) score += 5;
+        if (!project.getCallChains().isEmpty()) score += 5;
+        return Math.max(0, Math.min(100, score));
     }
 
     private void architecture() {
@@ -214,6 +260,26 @@ public class KnowledgeBaseGenerator {
             }
             sb.append("```\n\n");
         }
+
+        // 依赖漏洞摘要
+        List<ProjectModel.VulnFinding> vulns = project.getVulnFindings();
+        if (!vulns.isEmpty()) {
+            sb.append("### ⚠️ 已知安全漏洞 (").append(vulns.size()).append(")\n\n");
+            long crit = vulns.stream().filter(v -> "CRITICAL".equals(v.severity)).count();
+            long high = vulns.stream().filter(v -> "HIGH".equals(v.severity)).count();
+            sb.append("> CRITICAL: ").append(crit).append(" | HIGH: ").append(high)
+              .append(" | 其他: ").append(vulns.size() - crit - high).append("\n\n");
+            sb.append("| 组件 | 当前版本 | CVE | 严重程度 | 说明 |\n|---|---|---|---|---|\n");
+            for (ProjectModel.VulnFinding v : vulns) {
+                sb.append("| ").append(v.artifactId).append(" | ").append(v.currentVersion)
+                  .append(" | ").append(v.cve).append(" | **").append(v.severity).append("**")
+                  .append(" | ").append(v.description).append(" |\n");
+            }
+            sb.append("\n");
+        }
+
+        // 健康评分
+        sb.append("### 健康评分: **").append(calculateHealthScore()).append("/100**\n\n");
     }
 
     private String capitalize(String s) {

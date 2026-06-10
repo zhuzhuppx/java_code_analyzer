@@ -33,6 +33,21 @@ public class ProjectModel {
     private List<String> criticalChains = new ArrayList<>();
     private Map<String, String> configProperties = new HashMap<>();
     private List<BeanInfo> beanInfos = new ArrayList<>();
+    private List<VulnFinding> vulnFindings = new ArrayList<>();
+
+    public static class VulnFinding {
+        public final String groupId;
+        public final String artifactId;
+        public final String currentVersion;
+        public final String cve;
+        public final String severity;
+        public final String description;
+
+        public VulnFinding(String g, String a, String v, String c, String s, String d) {
+            this.groupId = g; this.artifactId = a; this.currentVersion = v;
+            this.cve = c; this.severity = s; this.description = d;
+        }
+    }
 
     // ==================== 基本属性 ====================
 
@@ -88,6 +103,9 @@ public class ProjectModel {
 
     public List<BeanInfo> getBeanInfos() { return beanInfos; }
     public void setBeanInfos(List<BeanInfo> infos) { this.beanInfos = infos; }
+
+    public List<VulnFinding> getVulnFindings() { return vulnFindings; }
+    public void setVulnFindings(List<VulnFinding> v) { this.vulnFindings = v; }
 
     @Override
     public String toString() {

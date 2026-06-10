@@ -138,6 +138,38 @@ public class Main {
             System.out.println("  ⚠️ SQL 扫描跳过: " + e.getMessage());
         }
 
+        // ==================== 3b. 配置文件解析 ====================
+        try {
+            com.projectassistant.config.ConfigParser cfgParser =
+                    new com.projectassistant.config.ConfigParser(projectPath);
+            cfgParser.parse();
+            java.util.Map<String, String> mergedProps = new java.util.LinkedHashMap<>(cfgParser.getProperties());
+            mergedProps.putAll(project.getConfigProperties());
+            project.setConfigProperties(mergedProps);
+
+            // 更新 springScanner 中的端口信息
+            if (mergedProps.containsKey("server.port"))
+                System.out.println("  + 端口: " + mergedProps.get("server.port"));
+        } catch (Exception e) {
+            System.out.println("  ⚠️ 配置解析跳过: " + e.getMessage());
+        }
+
+        // ==================== 3c. 依赖漏洞扫描 ====================
+        try {
+            com.projectassistant.scanner.VulnScanner vulnScanner =
+                    new com.projectassistant.scanner.VulnScanner(project.getDependencies());
+            List<com.projectassistant.scanner.VulnScanner.VulnFinding> vulns = vulnScanner.scan();
+            // 转换为 ProjectModel.VulnFinding
+            List<com.projectassistant.model.ProjectModel.VulnFinding> vf = new java.util.ArrayList<>();
+            for (var v : vulns) {
+                vf.add(new com.projectassistant.model.ProjectModel.VulnFinding(
+                        v.groupId, v.artifactId, v.currentVersion, v.cve, v.severity, v.description));
+            }
+            project.setVulnFindings(vf);
+        } catch (Exception e) {
+            System.out.println("  ⚠️ 漏洞扫描跳过: " + e.getMessage());
+        }
+
         // ==================== 4. 调用链追踪 ====================
         System.out.println("\n[4/4] 调用链追踪...");
         try {
