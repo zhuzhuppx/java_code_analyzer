@@ -29,17 +29,17 @@
 <tr><td><b>项目名称</b></td><td>project-assistant</td></tr>
 <tr><td><b>项目路径</b></td><td>/app/working/workspaces/D2GPcF/project-assistant</td></tr>
 <tr><td><b>Java 版本</b></td><td>unknown</td></tr>
-<tr><td><b>生成时间</b></td><td>2026-06-10 17:24:10</td></tr>
-<tr><td><b>总类数</b></td><td>17</td></tr>
-<tr><td><b>总行数</b></td><td>3203</td></tr>
+<tr><td><b>生成时间</b></td><td>2026-06-10 17:59:42</td></tr>
+<tr><td><b>总类数</b></td><td>18</td></tr>
+<tr><td><b>总行数</b></td><td>3481</td></tr>
 </table>
 <h2>统计概要</h2>
 <div class="stats-grid">
-  <div class="stat-card"><div class="stat-value">17</div><div class="stat-label">Java 类</div></div>
-  <div class="stat-card"><div class="stat-value">3203</div><div class="stat-label">总行数</div></div>
-  <div class="stat-card"><div class="stat-value">229</div><div class="stat-label">方法数</div></div>
-  <div class="stat-card"><div class="stat-value">108</div><div class="stat-label">字段数</div></div>
-  <div class="stat-card"><div class="stat-value">10.6 行</div><div class="stat-label">平均方法长度</div></div>
+  <div class="stat-card"><div class="stat-value">18</div><div class="stat-label">Java 类</div></div>
+  <div class="stat-card"><div class="stat-value">3481</div><div class="stat-label">总行数</div></div>
+  <div class="stat-card"><div class="stat-value">245</div><div class="stat-label">方法数</div></div>
+  <div class="stat-card"><div class="stat-value">110</div><div class="stat-label">字段数</div></div>
+  <div class="stat-card"><div class="stat-value">10.9 行</div><div class="stat-label">平均方法长度</div></div>
   <div class="stat-card"><div class="stat-value">7</div><div class="stat-label">平均复杂度</div></div>
   <div class="stat-card"><div class="stat-value">3</div><div class="stat-label">上帝类</div></div>
   <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">长方法</div></div>
@@ -71,6 +71,8 @@
   +-- com/projectassistant/chain/
   |   +-- [C] CallChain.java
   |   +-- [C] CallChainAnalyzer.java
+  +-- com/projectassistant/knowledge/
+  |   +-- [C] KnowledgeBaseGenerator.java
   +-- com/projectassistant/model/
   |   +-- [C] ClassInfo.java
   |   +-- [C] DependencyInfo.java
@@ -97,6 +99,7 @@
 <tr><td><code>com.projectassistant.sql</code></td><td><code>com.projectassistant.sql</code></td></tr>
 <tr><td><code>com.projectassistant.chain</code></td><td>-</td></tr>
 <tr><td><code>com.projectassistant</code></td><td>-</td></tr>
+<tr><td><code>com.projectassistant.knowledge</code></td><td>-</td></tr>
 <tr><td><code>com.projectassistant.reporter</code></td><td>-</td></tr>
 <tr><td><code>com.projectassistant.model</code></td><td>-</td></tr>
 <tr><td><code>com.projectassistant.spring</code></td><td>-</td></tr>
@@ -196,10 +199,41 @@
 <tr><td>private</td><td><code>inferRole()</code></td><td><code>String</code></td><td><code>String</code></td><td>1</td><td>1</td></tr>
 <tr><td>public</td><td><code>getChains()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
 </table>
+<h3>[C] KnowledgeBaseGenerator</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.knowledge.KnowledgeBaseGenerator</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 266</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant.knowledge</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<h4>字段 (2)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>project</code></td><td><code>ProjectModel</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>m</code></td><td><code>return</code></td></tr>
+</table>
+<h4>方法 (15)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>generate()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>writePreamble()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>writeOverview()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>4</td></tr>
+<tr><td>private</td><td><code>writeArchitecture()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>writeApiCatalog()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>writeDatabaseSchema()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>4</td></tr>
+<tr><td>private</td><td><code>writeBeanGraph()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>writeCallChains()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>2</td></tr>
+<tr><td>private</td><td><code>writeKeyClasses()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>writeBusinessFlow()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>4</td></tr>
+<tr><td>private</td><td><code>inferAction()</code></td><td><code>String</code></td><td><code>ApiEndpoint</code></td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>writeConfiguration()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>2</td></tr>
+<tr><td>private</td><td><code>writeDevelopmentGuide()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>shorten()</code></td><td><code>String</code></td><td><code>String</code></td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>save()</code></td><td><code>void</code></td><td><code>String</code></td><td>1</td><td>1</td></tr>
+</table>
 <h3>[C] Main</h3>
 <p>\u2022 <b>全称</b>: <code>com.projectassistant.Main</code></p>
 <p>\u2022 <b>类型</b>: class</p>
-<p>\u2022 <b>行数</b>: 137</p>
+<p>\u2022 <b>行数</b>: 145</p>
 <p>\u2022 <b>包</b>: <code>com.projectassistant</code></p>
 <p>\u2022 <b>可见性</b>: public</p>
 <h4>方法 (1)</h4>
@@ -394,7 +428,7 @@
 <h3>[C] ProjectModel</h3>
 <p>\u2022 <b>全称</b>: <code>com.projectassistant.model.ProjectModel</code></p>
 <p>\u2022 <b>类型</b>: class</p>
-<p>\u2022 <b>行数</b>: 90</p>
+<p>\u2022 <b>行数</b>: 94</p>
 <p>\u2022 <b>包</b>: <code>com.projectassistant.model</code></p>
 <p>\u2022 <b>可见性</b>: public</p>
 <p>\u2022 <b>注解</b>: <code>Override</code></p>
@@ -405,7 +439,7 @@
 <tr><td>private</td><td>N</td><td><code>rootPath</code></td><td><code>String</code></td></tr>
 <tr><td>private</td><td>N</td><td><code>buildType</code></td><td><code>String</code></td></tr>
 </table>
-<h4>方法 (19)</h4>
+<h4>方法 (20)</h4>
 <table>
 <tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
 <tr><td>public</td><td><code>getProjectName()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
@@ -426,6 +460,7 @@
 <tr><td>public</td><td><code>getMapperSql()</code></td><td><code>Map</code></td><td>-</td><td>1</td><td>1</td></tr>
 <tr><td>public</td><td><code>getCallChains()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
 <tr><td>public</td><td><code>getCriticalChains()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getConfigProperties()</code></td><td><code>Map</code></td><td>-</td><td>1</td><td>1</td></tr>
 <tr><td>public</td><td><code>toString()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
 </table>
 <h3>[C] ProjectStats</h3>
@@ -689,7 +724,7 @@
 <tr><td>1</td><td>💩 上帝类</td><td>com.projectassistant.analyzer.ProjectAnalyzer 有 26 个方法</td><td>建议拆分为多个职责单一的类</td></tr>
 <tr><td>2</td><td>💩 上帝类</td><td>com.projectassistant.model.ClassInfo 有 21 个方法</td><td>建议拆分为多个职责单一的类</td></tr>
 </table>
-<h3>重要问题 (18)</h3>
+<h3>重要问题 (19)</h3>
 <table>
 <tr><td>#</td><td>分类</td><td>描述</td><td>建议</td></tr>
 <tr><td>1</td><td>💩 大类别</td><td>com.projectassistant.analyzer.ProjectAnalyzer 有 541 行</td><td>建议拆分为多个小类</td></tr>
@@ -697,41 +732,44 @@
 <tr><td>3</td><td>低内聚</td><td>ProjectAnalyzer 内聚度=0.00（仅 0/26 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
 <tr><td>4</td><td>低内聚</td><td>CallChain 内聚度=0.00（仅 0/6 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
 <tr><td>5</td><td>低内聚</td><td>CallChainAnalyzer 内聚度=0.00（仅 0/5 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>6</td><td>低内聚</td><td>ClassInfo 内聚度=0.00（仅 0/21 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>7</td><td>低内聚</td><td>DependencyInfo 内聚度=0.00（仅 0/8 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>8</td><td>低内聚</td><td>FieldInfo 内聚度=0.00（仅 0/9 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>9</td><td>低内聚</td><td>MethodInfo 内聚度=0.00（仅 0/19 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>10</td><td>低内聚</td><td>ModuleInfo 内聚度=0.00（仅 0/7 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>11</td><td>低内聚</td><td>ProjectModel 内聚度=0.00（仅 0/19 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>12</td><td>低内聚</td><td>ProjectStats 内聚度=0.00（仅 0/19 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>13</td><td>低内聚</td><td>ReportGenerator 内聚度=0.00（仅 0/19 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>14</td><td>低内聚</td><td>ProjectScanner 内聚度=0.00（仅 0/13 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>15</td><td>低内聚</td><td>ApiEndpoint 内聚度=0.00（仅 0/10 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>16</td><td>低内聚</td><td>SpringScanner 内聚度=0.00（仅 0/19 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>17</td><td>低内聚</td><td>SqlParser 内聚度=0.00（仅 0/12 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
-<tr><td>18</td><td>低内聚</td><td>TableInfo 内聚度=0.00（仅 0/16 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>6</td><td>低内聚</td><td>KnowledgeBaseGenerator 内聚度=0.00（仅 0/15 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>7</td><td>低内聚</td><td>ClassInfo 内聚度=0.00（仅 0/21 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>8</td><td>低内聚</td><td>DependencyInfo 内聚度=0.00（仅 0/8 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>9</td><td>低内聚</td><td>FieldInfo 内聚度=0.00（仅 0/9 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>10</td><td>低内聚</td><td>MethodInfo 内聚度=0.00（仅 0/19 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>11</td><td>低内聚</td><td>ModuleInfo 内聚度=0.00（仅 0/7 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>12</td><td>低内聚</td><td>ProjectModel 内聚度=0.00（仅 0/20 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>13</td><td>低内聚</td><td>ProjectStats 内聚度=0.00（仅 0/19 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>14</td><td>低内聚</td><td>ReportGenerator 内聚度=0.00（仅 0/19 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>15</td><td>低内聚</td><td>ProjectScanner 内聚度=0.00（仅 0/13 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>16</td><td>低内聚</td><td>ApiEndpoint 内聚度=0.00（仅 0/10 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>17</td><td>低内聚</td><td>SpringScanner 内聚度=0.00（仅 0/19 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>18</td><td>低内聚</td><td>SqlParser 内聚度=0.00（仅 0/12 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>19</td><td>低内聚</td><td>TableInfo 内聚度=0.00（仅 0/16 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
 </table>
-<h3>改进建议 (13)</h3>
+<h3>改进建议 (15)</h3>
 <table>
 <tr><td>#</td><td>分类</td><td>描述</td><td>建议</td></tr>
-<tr><td>1</td><td>架构分层</td><td>架构分层概览:&lt;br&gt;  - Entity/Domain 层: 1 个包&lt;br&gt;  - 其他: 7 个包&lt;br&gt;</td><td>清晰的层次结构有助于维护和扩展</td></tr>
+<tr><td>1</td><td>架构分层</td><td>架构分层概览:&lt;br&gt;  - Entity/Domain 层: 1 个包&lt;br&gt;  - 其他: 8 个包&lt;br&gt;</td><td>清晰的层次结构有助于维护和扩展</td></tr>
 <tr><td>2</td><td>可能的未使用方法</td><td>ProjectAnalyzer.analyze() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
 <tr><td>3</td><td>可能的未使用方法</td><td>CallChainAnalyzer.analyze() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
-<tr><td>4</td><td>可能的未使用方法</td><td>Main.main() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
-<tr><td>5</td><td>可能的未使用方法</td><td>ReportGenerator.generateMarkdown() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
-<tr><td>6</td><td>可能的未使用方法</td><td>ReportGenerator.generateHtml() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
-<tr><td>7</td><td>可能的未使用方法</td><td>ReportGenerator.saveReport() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
-<tr><td>8</td><td>可能的未使用方法</td><td>ProjectScanner.scan() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
-<tr><td>9</td><td>可能的未使用方法</td><td>SpringScanner.scan() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
-<tr><td>10</td><td>可能的未使用方法</td><td>SqlParser.scan() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
-<tr><td>11</td><td>可能的未使用方法</td><td>SqlParser.hasMyBatis() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
-<tr><td>12</td><td>可能的未使用方法</td><td>SqlParser.hasJPA() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
-<tr><td>13</td><td>待办事项</td><td>项目中共有 17 处 TODO/FIXME</td><td>定期清理待办事项，避免技术债务累积</td></tr>
+<tr><td>4</td><td>可能的未使用方法</td><td>KnowledgeBaseGenerator.generate() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>5</td><td>可能的未使用方法</td><td>KnowledgeBaseGenerator.save() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>6</td><td>可能的未使用方法</td><td>Main.main() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>7</td><td>可能的未使用方法</td><td>ReportGenerator.generateMarkdown() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>8</td><td>可能的未使用方法</td><td>ReportGenerator.generateHtml() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>9</td><td>可能的未使用方法</td><td>ReportGenerator.saveReport() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>10</td><td>可能的未使用方法</td><td>ProjectScanner.scan() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>11</td><td>可能的未使用方法</td><td>SpringScanner.scan() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>12</td><td>可能的未使用方法</td><td>SqlParser.scan() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>13</td><td>可能的未使用方法</td><td>SqlParser.hasMyBatis() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>14</td><td>可能的未使用方法</td><td>SqlParser.hasJPA() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>15</td><td>待办事项</td><td>项目中共有 18 处 TODO/FIXME</td><td>定期清理待办事项，避免技术债务累积</td></tr>
 </table>
 <h3>信息提示 (1)</h3>
 <table>
 <tr><td>#</td><td>分类</td><td>描述</td><td>建议</td></tr>
-<tr><td>1</td><td>Public API 规模</td><td>项目共有 164 个 public 方法</td><td>public API 是项目的对外契约，变更需谨慎</td></tr>
+<tr><td>1</td><td>Public API 规模</td><td>项目共有 167 个 public 方法</td><td>public API 是项目的对外契约，变更需谨慎</td></tr>
 </table>
 <p>&gt; *由 ProjectAssistant 扫描器自动生成 *</p>
 

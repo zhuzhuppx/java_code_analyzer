@@ -31,6 +31,7 @@ public class ProjectModel {
     private Map<String, String> mapperSql = new HashMap<>();
     private List<CallChain> callChains = new ArrayList<>();
     private List<String> criticalChains = new ArrayList<>();
+    private Map<String, String> configProperties = new HashMap<>();
 
     // ==================== 基本属性 ====================
 
@@ -80,6 +81,9 @@ public class ProjectModel {
 
     public List<String> getCriticalChains() { return criticalChains; }
     public void setCriticalChains(List<String> chains) { this.criticalChains = chains; }
+
+    public Map<String, String> getConfigProperties() { return configProperties; }
+    public void setConfigProperties(Map<String, String> props) { this.configProperties = props; }
 
     @Override
     public String toString() {

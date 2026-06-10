@@ -73,6 +73,7 @@ public class Main {
             project.setBeanDependencies(springScanner.getBeanDependencies());
             project.setProjectPattern(springScanner.getProjectPattern());
             project.setSpringBoot(springScanner.isSpringBoot());
+            project.setConfigProperties(springScanner.getConfigProperties());
 
             System.out.println("  + 项目模式: " + project.getProjectPattern());
             System.out.println("  + API 端点: " + project.getApiEndpoints().size());
@@ -109,9 +110,16 @@ public class Main {
 
             System.out.println("  + 调用链: " + project.getCriticalChains().size() + " 条关键路径");
 
-            // Step 5: 深度分析 + 报告
+            // Step 5: 知识库生成（专为大模型优化）
             System.out.println();
-            System.out.println("生成报告...");
+            System.out.println("生成知识库...");
+            com.projectassistant.knowledge.KnowledgeBaseGenerator kbGen =
+                    new com.projectassistant.knowledge.KnowledgeBaseGenerator(project);
+            kbGen.save("reports/" + project.getProjectName() + "_knowledge.md");
+
+            // Step 6: 深度分析 + 报告
+            System.out.println();
+            System.out.println("生成分析报告...");
             ProjectAnalyzer analyzer = new ProjectAnalyzer(project);
             List<AnalysisResult> results = analyzer.analyze();
 
