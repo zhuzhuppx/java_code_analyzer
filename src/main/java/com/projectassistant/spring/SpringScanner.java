@@ -68,15 +68,15 @@ public class SpringScanner {
 
         for (ClassInfo ci : classes) {
             String pkg = ci.getPackageName();
-            if (ci.getAnnotations().contains("RestController") || ci.getAnnotations().contains("Controller")) {
+            if (hasAnnotation(ci, "RestController") || hasAnnotation(ci, "Controller")) {
                 hasController = true;
                 beanTypeMap.put(ci.getFullyQualifiedName(), "controller");
             }
-            if (ci.getAnnotations().contains("Service")) {
+            if (hasAnnotation(ci, "Service")) {
                 hasService = true;
                 beanTypeMap.put(ci.getFullyQualifiedName(), "service");
             }
-            if (ci.getAnnotations().contains("Repository")) {
+            if (hasAnnotation(ci, "Repository")) {
                 hasRepo = true;
                 beanTypeMap.put(ci.getFullyQualifiedName(), "repository");
             }
@@ -93,19 +93,24 @@ public class SpringScanner {
 
         // Spring Boot 检测
         for (ClassInfo ci : classes) {
-            if (ci.getAnnotations().contains("SpringBootApplication") ||
-                ci.getAnnotations().contains("EnableAutoConfiguration")) {
+            if (hasAnnotation(ci, "SpringBootApplication") ||
+                hasAnnotation(ci, "EnableAutoConfiguration")) {
                 hasSpringBoot = true;
                 break;
             }
         }
     }
 
+    /** 辅助：检查类注解（兼容 @Name 和 Name 两种格式） */
+    private boolean hasAnnotation(ClassInfo ci, String name) {
+        return ci.getAnnotations().stream()
+                .anyMatch(a -> a.equals(name) || a.equals("@" + name) || a.startsWith("@" + name + "("));
+    }
+
     /** 扫描所有 @RestController/@Controller 提取 API 路由 */
     private void scanControllers() {
         for (ClassInfo ci : classes) {
-            boolean isController = ci.getAnnotations().contains("RestController") ||
-                                   ci.getAnnotations().contains("Controller");
+            boolean isController = hasAnnotation(ci, "RestController") || hasAnnotation(ci, "Controller");
             if (!isController) continue;
 
             String classPath = extractClassLevelPath(ci);

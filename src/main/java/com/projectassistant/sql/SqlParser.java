@@ -1,48 +1,51 @@
 package com.projectassistant.sql;
 
 import com.projectassistant.model.*;
+import java.io.*;
+import java.nio.file.*;
 import java.util.*;
 import java.util.regex.*;
 
 /**
  * SQL 理解引擎
- * 解析 MyBatis XML Mapper、JPA Entity、原生 SQL
+ * 解析 MyBatis XML Mapper、JPA Entity、注解 SQL
  */
 public class SqlParser {
 
     private final List<ClassInfo> classes;
+    private final List<Path> xmlFiles;
     private final List<TableInfo> tables = new ArrayList<>();
-    private final Map<String, String> mapperSql = new HashMap<>();  // mapper方法 -> SQL
-    private final Map<String, String> entityTableMap = new HashMap<>(); // entity类 -> 表名
+    private final Map<String, String> mapperSql = new HashMap<>();
+    private final Map<String, String> entityTableMap = new HashMap<>();
     private boolean hasMyBatis = false;
     private boolean hasJPA = false;
 
-    // SQL 正则
-    private static final Pattern SELECT_PATTERN = Pattern.compile(
-            "(SELECT\\s+.+?\\s+FROM\\s+[^\\s]+(?:\\s+WHERE\\s+[^;]*)?)",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-    private static final Pattern TABLE_NAME = Pattern.compile(
-            "(?:FROM|JOIN|INTO|UPDATE|TABLE)\\s+([`\"']?)(\\w+)\\1",
+    // XML Mapper SQL 标签
+    private static final Pattern XML_SQL_TAG = Pattern.compile(
+            "<(select|insert|update|delete)\\s+[^>]*?id\\s*=\\s*\"([^\"]+)\"[^>]*?>\\s*" +
+            "(.*?)\\s*</\\1>",
+            Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+    // XML <sql> 片段
+    private static final Pattern XML_SQL_FRAGMENT = Pattern.compile(
+            "<sql\\s+[^>]*?id\\s*=\\s*\"([^\"]+)\"[^>]*?>\\s*(.*?)\\s*</sql>",
+            Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+    // MyBatis 注解 SQL: @Select("sql"), @Insert("sql"), @Update("sql"), @Delete("sql")
+    private static final Pattern ANNOTATION_SQL = Pattern.compile(
+            "(Select|Insert|Update|Delete)\\(\\s*\"([^\"]*)\"\\s*\\)",
             Pattern.CASE_INSENSITIVE);
+
     private static final Pattern ENTITY_TABLE = Pattern.compile(
             "@Table\\s*\\(\\s*(?:name\\s*=\\s*)?\"([^\"]+)\"");
     private static final Pattern COLUMN_ANN = Pattern.compile(
             "@Column\\s*\\(\\s*name\\s*=\\s*\"([^\"]+)\"");
-    private static final Pattern MYBATIS_SELECT = Pattern.compile(
-            "<select\\s+[^>]*id\\s*=\\s*\"([^\"]+)\"[^>]*>\\s*(.*?)\\s*</select>",
-            Pattern.DOTALL);
-    private static final Pattern MYBATIS_INSERT = Pattern.compile(
-            "<insert\\s+[^>]*id\\s*=\\s*\"([^\"]+)\"[^>]*>\\s*(.*?)\\s*</insert>",
-            Pattern.DOTALL);
-    private static final Pattern MYBATIS_UPDATE = Pattern.compile(
-            "<update\\s+[^>]*id\\s*=\\s*\"([^\"]+)\"[^>]*>\\s*(.*?)\\s*</update>",
-            Pattern.DOTALL);
-    private static final Pattern MYBATIS_DELETE = Pattern.compile(
-            "<delete\\s+[^>]*id\\s*=\\s*\"([^\"]+)\"[^>]*>\\s*(.*?)\\s*</delete>",
-            Pattern.DOTALL);
 
     public SqlParser(List<ClassInfo> classes) {
+        this(classes, new ArrayList<>());
+    }
+
+    public SqlParser(List<ClassInfo> classes, List<Path> xmlFiles) {
         this.classes = classes;
+        this.xmlFiles = xmlFiles != null ? xmlFiles : new ArrayList<>();
     }
 
     /**
@@ -128,22 +131,57 @@ public class SqlParser {
     }
 
     /**
-     * 解析 MyBatis XML Mapper（从源码原始内容中提取）
+     * 解析 MyBatis Mapper：从注解 SQL + XML 文件中提取真实 SQL
      */
     private void scanMyBatisMappers() {
+        // 1. 从注解中提取 SQL（@Select, @Insert, @Update, @Delete）
         for (ClassInfo ci : classes) {
-            boolean isMapper = ci.getAnnotations().stream()
-                    .anyMatch(a -> a.equals("Mapper") || a.startsWith("Mapper("));
-            if (!isMapper && !ci.getSimpleName().endsWith("Mapper")) continue;
-
-            // 从类的接口方法名 + 可能的 XML 内嵌 SQL 提取
             for (MethodInfo mi : ci.getMethods()) {
-                String sqlType = detectSqlType(mi.getName());
-                if (sqlType != null) {
-                    mapperSql.put(ci.getSimpleName() + "." + mi.getName(),
-                            sqlType + " " + mi.getReturnType() + "(" +
-                            String.join(", ", mi.getParameters()) + ")");
+                for (String ann : mi.getAnnotations()) {
+                    Matcher m = ANNOTATION_SQL.matcher(ann);
+                    if (m.find()) {
+                        String sql = m.group(2).trim();
+                        String key = ci.getSimpleName() + "." + mi.getName();
+                        sql = sql.replaceAll("\\s+", " ").trim();
+                        mapperSql.put(key, sql);
+                        hasMyBatis = true;
+                    }
                 }
+            }
+        }
+
+        // 2. 从 XML 文件中提取 SQL
+        Map<String, String> xmlFragments = new HashMap<>();
+        for (Path xmlFile : xmlFiles) {
+            try {
+                String content = Files.readString(xmlFile);
+                // 提取 <sql> 片段
+                Matcher fm = XML_SQL_FRAGMENT.matcher(content);
+                while (fm.find()) {
+                    xmlFragments.put(fm.group(1), fm.group(2).trim());
+                }
+                // 提取 <select/insert/update/delete>
+                Matcher m = XML_SQL_TAG.matcher(content);
+                while (m.find()) {
+                    String sqlType = m.group(1).toUpperCase();
+                    String id = m.group(2);
+                    String sql = m.group(3).trim();
+                    // 替换引用的 <include refid="..."/>
+                    for (Map.Entry<String, String> frag : xmlFragments.entrySet()) {
+                        sql = sql.replaceAll(
+                                "<include\\s+[^>]*?refid\\s*=\\s*\"?" + Pattern.quote(frag.getKey()) + "\"?[^>]*?/>",
+                                Matcher.quoteReplacement(frag.getValue()));
+                    }
+                    // 清理 XML 标签和多余空白
+                    sql = sql.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim();
+                    // SQL 本身已含关键字（SELECT/INSERT/UPDATE/DELETE），不再重复加前缀
+                    if (!sql.isEmpty()) {
+                        mapperSql.put(id, sql);
+                        hasMyBatis = true;
+                    }
+                }
+            } catch (IOException e) {
+                // 跳过无法读取的 XML
             }
         }
     }

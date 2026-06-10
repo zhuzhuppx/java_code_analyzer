@@ -37,6 +37,8 @@ public class ProjectScanner {
     private static final Pattern EXTENDS_PATTERN = Pattern.compile("extends\\s+([a-zA-Z_][\\w.]*(?:<[^>]*>)?)");
     private static final Pattern IMPLEMENTS_PATTERN = Pattern.compile("implements\\s+([a-zA-Z_][\\w.<>, ]*(?:\\{[^}]*\\})?)");
     private static final Pattern ANNOTATION_PATTERN = Pattern.compile("@([a-zA-Z_][\\w.]+)");
+    private static final Pattern FULL_ANNOTATION = Pattern.compile(
+            "@([a-zA-Z_][\\w.]+)(\\s*\\([^)]*\\))?\\s*");
     private static final Pattern METHOD_PATTERN = Pattern.compile(
             "(?:(public|private|protected)\\s+)?" +
             "(?:abstract\\s+)?(?:static\\s+)?(?:final\\s+)?(?:synchronized\\s+)?" +
@@ -404,13 +406,13 @@ public class ProjectScanner {
                         mi.setStatic(line.substring(0, Math.min(mm.start(), line.length())).contains("static"));
                         mi.setFinal(line.substring(0, Math.min(mm.start(), line.length())).contains("final"));
 
-                        // 提取注解
+                        // 提取注解（含参数，如 @RequestMapping("/bizCustomer")）
                         for (int j = methodStartLine; j < i; j++) {
-                            Matcher an = ANNOTATION_PATTERN.matcher(lines[j]);
+                            Matcher an = FULL_ANNOTATION.matcher(lines[j]);
                             while (an.find()) {
-                                String ann = an.group(1);
-                                mi.getAnnotations().add(ann);
-                                if (ann.equals("Override")) mi.setOverride(true);
+                                String full = an.group(0).trim();
+                                mi.getAnnotations().add(full);
+                                if (full.startsWith("Override")) mi.setOverride(true);
                             }
                         }
 
@@ -499,11 +501,16 @@ public class ProjectScanner {
                 }
             }
 
-            // 提取注解
-            Matcher am = ANNOTATION_PATTERN.matcher(line);
+            // 提取注解（含参数）
+            Matcher am = FULL_ANNOTATION.matcher(line);
             while (am.find()) {
-                if (!classInfo.getAnnotations().contains(am.group(1))) {
-                    classInfo.getAnnotations().add(am.group(1));
+                String full = am.group(0).trim();
+                // 去重：同名注解只保留第一个（含参数版本优先）
+                String name = full.replaceAll("\\(.*", "");
+                boolean hasExisting = classInfo.getAnnotations().stream()
+                        .anyMatch(a -> a.replaceAll("\\(.*", "").equals(name));
+                if (!hasExisting) {
+                    classInfo.getAnnotations().add(full);
                 }
             }
         }

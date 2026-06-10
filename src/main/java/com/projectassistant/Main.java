@@ -13,8 +13,10 @@ import com.projectassistant.chain.CallChain;
 import com.projectassistant.knowledge.KnowledgeBaseGenerator;
 import com.projectassistant.chat.DeepSeekChat;
 import com.projectassistant.reporter.ReportGenerator;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -100,7 +102,20 @@ public class Main {
         // ==================== 3. 数据库理解 ====================
         System.out.println("\n[3/4] 数据库与 SQL 理解...");
         try {
-            SqlParser sqlParser = new SqlParser(project.getClasses());
+            // 扫描 Mapper XML 文件
+            Path projectRootBound = Paths.get(projectPath);
+            List<Path> xmlFiles = new ArrayList<>();
+            try (var paths = java.nio.file.Files.walk(projectRootBound)) {
+                paths.filter(p -> p.toString().endsWith(".xml"))
+                     .filter(p -> !p.toString().contains("target" + File.separator))
+                     .filter(p -> !p.toString().contains(".mvn" + File.separator))
+                     .filter(p -> p.toString().contains("mapper") || p.toString().contains("mybatis") ||
+                                  p.toString().contains("sqlmap") || p.toString().contains("resources"))
+                     .forEach(xmlFiles::add);
+            }
+            System.out.println("  📄 XML 文件: " + xmlFiles.size());
+
+            SqlParser sqlParser = new SqlParser(project.getClasses(), xmlFiles);
             sqlParser.scan();
             List<TableInfo> tables = sqlParser.getTables();
             project.setDatabaseTables(tables);
