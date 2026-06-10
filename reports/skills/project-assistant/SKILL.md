@@ -1,27 +1,32 @@
-# 项目知识库
-
-> 由 ProjectAssistant 自动生成，专为大模型理解优化
-> 生成时间: 2026-06-10 18:13:01
-
 ---
+name: project-assistant
+description: "project-assistant 项目知识库 — 19 个类, 0 个 API, 0 张表"
+metadata:
+  copaw:
+    emoji: "📦"
+    requires: {}
+---
+
+# project-assistant 项目知识库
+
+> 由 ProjectAssistant 自动生成 | 2026-06-10 18:13
+
+当用户询问本项目相关的任何问题时，优先使用以下信息回答。
 
 ## 1. 项目概览
 
 | 属性 | 值 |
 |---|---|
-| 项目名称 | project-assistant |
-| 构建工具 | maven |
-| Java 版本 | unknown |
+| 项目 | project-assistant |
+| 构建 | maven |
+| Java | unknown |
 | Spring Boot | 否 |
-| 代码总行数 | 3764 |
-| 类/接口数 | 19 |
+| 行数 | 3764 |
+| 类数 | 19 |
 | 方法数 | 249 |
-| API 端点 | 0 |
+| API | 0 |
 | 数据库表 | 0 |
-| 外部依赖 | 3 |
-| 注释率 | 22.6% |
-| 平均方法行数 | 11.7 |
-| 最大圈复杂度 | 7 |
+| 依赖 | 3 |
 
 ### 外部依赖
 
@@ -33,56 +38,54 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 ## 2. 架构模式
 
-**架构类型**: unknown
-
-### 模块结构
+**unknown**
 
 ```
   projectassistant/
-    +-- [C] Main.java
-    analyzer/
-      +-- [C] ProjectAnalyzer.java
-    chain/
-      +-- [C] CallChain.java
-      +-- [C] CallChainAnalyzer.java
-    knowledge/
-      +-- [C] KnowledgeBaseGenerator.java
-      +-- [C] SkillGenerator.java
-    model/
-      +-- [C] ClassInfo.java
-      +-- [C] DependencyInfo.java
-      +-- [C] FieldInfo.java
-      +-- [C] MethodInfo.java
-      +-- [C] ModuleInfo.java
-      +-- [C] ProjectModel.java
-      +-- [C] ProjectStats.java
-    reporter/
-      +-- [C] ReportGenerator.java
-    scanner/
-      +-- [C] ProjectScanner.java
-    spring/
-      +-- [C] ApiEndpoint.java
-      +-- [C] SpringScanner.java
-    sql/
-      +-- [C] SqlParser.java
-      +-- [C] TableInfo.java
+    [C] Main
+  analyzer/
+    [C] ProjectAnalyzer
+  chain/
+    [C] CallChain
+    [C] CallChainAnalyzer
+  knowledge/
+    [C] KnowledgeBaseGenerator
+    [C] SkillGenerator
+  model/
+    [C] ClassInfo
+    [C] DependencyInfo
+    [C] FieldInfo
+    [C] MethodInfo
+    [C] ModuleInfo
+    [C] ProjectModel
+    [C] ProjectStats
+  reporter/
+    [C] ReportGenerator
+  scanner/
+    [C] ProjectScanner
+  spring/
+    [C] ApiEndpoint
+    [C] SpringScanner
+  sql/
+    [C] SqlParser
+    [C] TableInfo
 ```
 
 ## 3. API 路由
 
-无 API 端点。
+（无 Spring MVC 端点）
 
 ## 4. 数据库
 
-无数据库映射。
+（未检测到 JPA/MyBatis 映射）
 
 ## 5. Bean 依赖
 
-无。
+（未检测到 Spring Bean）
 
 ## 6. 调用链
 
-无。
+（未检测到）
 
 ## 7. 关键类
 
@@ -134,24 +137,40 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 ## 8. 业务流
 
-无法推断。
+**projectassistant**: 1 个类
+
+**analyzer**: 1 个类
+
+**chain**: 2 个类
+
+**knowledge**: 2 个类
+
+**model**: 7 个类
+
+**reporter**: 1 个类
+
+**scanner**: 1 个类
+
+**spring**: 2 个类
+
+**sql**: 2 个类
 
 ## 9. 配置
 
-无。
+（未检测到配置文件）
 
-## 10. 开发指南
+## 10. 对 Agent 的提示
 
-**启动类**: 未检测到
-**架构**: unknown
-| 你想问 | 看哪节 |
+当用户询问以下类型问题时，参考对应章节回答：
+
+| 用户想问 | 看哪节 |
 |---|---|
 | 这是什么项目？ | 1. 概览 / 2. 架构 |
 | 有哪些接口？ | 3. API 路由 |
 | 数据库怎么设计的？ | 4. 数据库 |
 | 改这个字段影响哪？ | 5. Bean依赖 / 6. 调用链 |
-| 帮我加个接口 | 8. 业务流 / 7. 关键类 |
+| 帮我加个接口 / 改个业务 | 8. 业务流 / 7. 关键类 |
 | 这个配置是什么意思？ | 9. 配置 |
 
 ---
-> 知识库由 ProjectAssistant 生成 | 配合大模型使用效果更佳
+> 由 ProjectAssistant 生成 | 安装命令: `copaw skill install <this-dir>`

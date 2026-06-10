@@ -10,6 +10,8 @@ import com.projectassistant.sql.SqlParser;
 import com.projectassistant.sql.TableInfo;
 import com.projectassistant.chain.CallChainAnalyzer;
 import com.projectassistant.chain.CallChain;
+import com.projectassistant.knowledge.KnowledgeBaseGenerator;
+import com.projectassistant.knowledge.SkillGenerator;
 import com.projectassistant.reporter.ReportGenerator;
 import java.io.IOException;
 import java.nio.file.*;
@@ -21,15 +23,18 @@ import java.util.List;
  * 升级版：彻底理解 Java 项目，像老狗一样熟悉代码
  *
  * 用法:
- *   java com.projectassistant.Main <项目路径> [报告格式]
+ *   java com.projectassistant.Main <项目路径> [markdown|html|knowledge]
  *
- * 报告格式: markdown (默认) 或 html
+ * 输出格式:
+ *   markdown  - Markdown 报告 (默认)
+ *   html      - HTML 报告
+ *   knowledge - 大模型知识库 (专为 LLM 优化的项目知识文档)
  */
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         if (args.length < 1) {
-            System.out.println("用法: java com.projectassistant.Main <项目路径> [markdown|html]");
+            System.out.println("用法: java com.projectassistant.Main <项目路径> [markdown|html|knowledge]");
             System.exit(1);
         }
 
@@ -43,103 +48,132 @@ public class Main {
             System.exit(1);
         }
 
+        System.out.println("╔══════════════════════════════════════════╗");
+        System.out.println("║  ProjectAssistant - Java 老狗级项目理解  ║");
+        System.out.println("╚══════════════════════════════════════════╝");
+        System.out.println("\n扫描项目: " + Paths.get(projectPath).toAbsolutePath().normalize());
+
+        long totalStart = System.currentTimeMillis();
+
+        // ==================== 1. 扫描 ====================
+        System.out.println("\n[1/4] 扫描 Java 源码...");
+        ProjectScanner scanner = new ProjectScanner(projectPath);
+        ProjectModel project = scanner.scan();
+
+        // ==================== 2. Spring 理解 ====================
+        System.out.println("\n[2/4] Spring 框架理解...");
+        SpringScanner springScanner = null;
         try {
-            System.out.println("╔══════════════════════════════════════════╗");
-            System.out.println("║  ProjectAssistant - Java 老狗级项目理解  ║");
-            System.out.println("╚══════════════════════════════════════════╝");
-            System.out.println();
-            System.out.println("扫描项目: " + path.toAbsolutePath());
-
-            // Step 1: 基础扫描
-            System.out.println();
-            System.out.println("[1/4] 扫描 Java 源码...");
-            ProjectScanner scanner = new ProjectScanner(projectPath);
-            ProjectModel project = scanner.scan();
-
-            // 输出摘要
-            ProjectStats stats = project.getStats();
-            System.out.println("  + 类/接口: " + project.getClasses().size());
-            System.out.println("  + 方法数: " + stats.getTotalMethods());
-            System.out.println("  + 总行数: " + stats.getTotalLines());
-            System.out.println("  + 依赖: " + project.getDependencies().size());
-
-            // Step 2: Spring 深度扫描
-            System.out.println();
-            System.out.println("[2/4] Spring 框架理解...");
-            SpringScanner springScanner = new SpringScanner(project.getClasses());
+            springScanner = new SpringScanner(project.getClasses());
             springScanner.scan();
-
             project.setApiEndpoints(springScanner.getEndpoints());
             project.setBeanDependencies(springScanner.getBeanDependencies());
             project.setProjectPattern(springScanner.getProjectPattern());
             project.setSpringBoot(springScanner.isSpringBoot());
             project.setConfigProperties(springScanner.getConfigProperties());
-
+            List<ApiEndpoint> endpoints = project.getApiEndpoints();
             System.out.println("  + 项目模式: " + project.getProjectPattern());
-            System.out.println("  + API 端点: " + project.getApiEndpoints().size());
+            System.out.println("  + API 端点: " + endpoints.size());
             System.out.println("  + Bean 依赖: " + project.getBeanDependencies().size());
+        } catch (Exception e) {
+            System.out.println("  ⚠️ Spring 扫描跳过: " + e.getMessage());
+        }
 
-            // Step 3: SQL 与数据库理解
-            System.out.println();
-            System.out.println("[3/4] 数据库与 SQL 理解...");
+        // ==================== 3. 数据库理解 ====================
+        System.out.println("\n[3/4] 数据库与 SQL 理解...");
+        try {
             SqlParser sqlParser = new SqlParser(project.getClasses());
             sqlParser.scan();
-
-            project.setDatabaseTables(sqlParser.getTables());
+            List<TableInfo> tables = sqlParser.getTables();
+            project.setDatabaseTables(tables);
             project.setMapperSql(sqlParser.getMapperSql());
+            System.out.println("  + 数据库表: " + tables.size());
+            System.out.println("  + Mapper: " + sqlParser.getMapperSql().size());
+            System.out.println("  + ORM: " + (sqlParser.hasJPA() ? "JPA" : sqlParser.hasMyBatis() ? "MyBatis" : "无"));
+        } catch (Exception e) {
+            System.out.println("  ⚠️ SQL 扫描跳过: " + e.getMessage());
+        }
 
-            System.out.println("  + 数据库表: " + project.getDatabaseTables().size());
-            System.out.println("  + Mapper: " + project.getMapperSql().size());
-            System.out.println("  + ORM: "
-                    + (sqlParser.hasJPA() ? "JPA " : "")
-                    + (sqlParser.hasMyBatis() ? "MyBatis" : "无"));
-
-            // Step 4: 调用链追踪
-            System.out.println();
-            System.out.println("[4/4] 调用链追踪...");
-            CallChainAnalyzer chainAnalyzer = new CallChainAnalyzer(springScanner.getBeanTypeMap());
-
-            // 把 API 端点转为调用链入口
-            List<String> endpoints = project.getApiEndpoints().stream()
-                    .map(ep -> ep.getControllerClass() + "." + ep.getMethodName())
+        // ==================== 4. 调用链追踪 ====================
+        System.out.println("\n[4/4] 调用链追踪...");
+        try {
+            List<String> apiEntries = project.getApiEndpoints().stream()
+                    .map(e -> e.getControllerClass() + "." + e.getMethodName())
                     .distinct()
                     .toList();
-            chainAnalyzer.analyze(project.getCallGraph(), endpoints);
-            project.setCallChains(chainAnalyzer.getChains());
+            java.util.Map<String, String> roleMap = springScanner != null ?
+                    springScanner.getBeanTypeMap() : new java.util.HashMap<>();
+            CallChainAnalyzer chainAnalyzer = new CallChainAnalyzer(roleMap);
+            chainAnalyzer.analyze(project.getCallGraph(), apiEntries);
+            List<CallChain> chains = chainAnalyzer.getChains();
+            project.setCallChains(chains);
             project.setCriticalChains(chainAnalyzer.getCriticalChains());
+            System.out.println("  + 调用链: " + chains.size() + " 条关键路径");
+        } catch (Exception e) {
+            System.out.println("  ⚠️ 调用链分析跳过: " + e.getMessage());
+        }
 
-            System.out.println("  + 调用链: " + project.getCriticalChains().size() + " 条关键路径");
+        // ==================== 5. 分析 ====================
+        System.out.println("\n生成报告...");
+        ProjectAnalyzer analyzer = new ProjectAnalyzer(project);
+        List<AnalysisResult> results = analyzer.analyze();
 
-            // Step 5: 知识库生成（专为大模型优化）
+        // ==================== 6. 输出 ====================
+        try {
+            Path reportsDir = Paths.get(projectPath).toAbsolutePath().normalize().resolve("reports");
+            Files.createDirectories(reportsDir);
+
+            String projectName = project.getProjectName();
+            String extension;
+            String content;
+
+            switch (format) {
+                case "html":
+                    ReportGenerator reporter = new ReportGenerator(project, results);
+                    content = reporter.generateHtml();
+                    extension = ".html";
+                    break;
+                case "knowledge":
+                    KnowledgeBaseGenerator kb = new KnowledgeBaseGenerator(project);
+                    content = kb.generate();
+                    extension = "_knowledge.md";
+                    break;
+                default: // markdown
+                    ReportGenerator mdReporter = new ReportGenerator(project, results);
+                    content = mdReporter.generateMarkdown();
+                    extension = ".md";
+                    break;
+            }
+
+            Path outputFile = reportsDir.resolve(projectName + extension);
+            Files.writeString(outputFile, content);
+            System.out.println("  ✅ " + (format.equals("knowledge") ? "知识库" : "报告") + "已保存: " + outputFile);
+
+            // 同时也生成知识库（如果选了其他模式）
+            if (!format.equals("knowledge")) {
+                KnowledgeBaseGenerator kb = new KnowledgeBaseGenerator(project);
+                String kbContent = kb.generate();
+                Path kbFile = reportsDir.resolve(projectName + "_knowledge.md");
+                Files.writeString(kbFile, kbContent);
+                System.out.println("  ✅ 知识库已保存: " + kbFile);
+            }
+
+            // 始终生成可安装的 Agent Skill
             System.out.println();
-            System.out.println("生成知识库...");
-            com.projectassistant.knowledge.KnowledgeBaseGenerator kbGen =
-                    new com.projectassistant.knowledge.KnowledgeBaseGenerator(project);
-            kbGen.save("reports/" + project.getProjectName() + "_knowledge.md");
-
-            // Step 6: 深度分析 + 报告
-            System.out.println();
-            System.out.println("生成分析报告...");
-            ProjectAnalyzer analyzer = new ProjectAnalyzer(project);
-            List<AnalysisResult> results = analyzer.analyze();
-
-            ReportGenerator reporter = new ReportGenerator(project, results);
-            String reportDir = "reports";
-            reporter.saveReport(reportDir + "/" + project.getProjectName() + "_report.md", "markdown");
-            reporter.saveReport(reportDir + "/" + project.getProjectName() + "_report.html", "html");
-
-            System.out.println();
-            System.out.println("╔══════════════════════════════════════════╗");
-            System.out.println("║  扫描完成！项目已经摸透了！             ║");
-            System.out.println("║  报告: " + reportDir + "/");
-            System.out.println("║  类数: " + project.getClasses().size()
-                    + "  端点: " + project.getApiEndpoints().size()
-                    + "  表: " + project.getDatabaseTables().size());
-            System.out.println("╚══════════════════════════════════════════╝");
+            System.out.println("生成项目 Skill...");
+            SkillGenerator skillGen = new SkillGenerator(project);
+            Path skillDir = reportsDir.resolve("skills");
+            skillGen.save(skillDir.toString());
 
         } catch (IOException e) {
-            System.err.println("IO 错误: " + e.getMessage());
+            System.err.println("错误: 写入报告失败 - " + e.getMessage());
             System.exit(1);
         }
+
+        long totalElapsed = System.currentTimeMillis() - totalStart;
+        System.out.println("\n============================================");
+        System.out.println("  扫描完成! 耗时: " + (totalElapsed / 1000.0) + " 秒");
+        System.out.println("  报告: reports/");
+        System.out.println("============================================");
     }
 }
