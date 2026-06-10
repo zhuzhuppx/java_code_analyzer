@@ -1,0 +1,11 @@
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/Main.java
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/analyzer/ProjectAnalyzer.java
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/model/ClassInfo.java
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/model/DependencyInfo.java
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/model/FieldInfo.java
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/model/MethodInfo.java
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/model/ModuleInfo.java
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/model/ProjectModel.java
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/model/ProjectStats.java
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/reporter/ReportGenerator.java
+/app/working/workspaces/D2GPcF/project-assistant/src/main/java/com/projectassistant/scanner/ProjectScanner.java

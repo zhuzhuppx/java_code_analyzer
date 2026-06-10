@@ -1,0 +1,12 @@
+com/projectassistant/model/ProjectModel.class
+com/projectassistant/Main.class
+com/projectassistant/model/DependencyInfo.class
+com/projectassistant/model/ClassInfo.class
+com/projectassistant/model/MethodInfo.class
+com/projectassistant/model/FieldInfo.class
+com/projectassistant/model/ModuleInfo.class
+com/projectassistant/model/ProjectStats.class
+com/projectassistant/analyzer/ProjectAnalyzer$AnalysisResult.class
+com/projectassistant/scanner/ProjectScanner.class
+com/projectassistant/analyzer/ProjectAnalyzer.class
+com/projectassistant/reporter/ReportGenerator.class

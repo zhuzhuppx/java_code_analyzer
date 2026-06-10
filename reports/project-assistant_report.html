@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>项目扫描报告 - project-assistant</title>
+<style>
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; max-width: 960px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+  .container { background: #fff; border-radius: 8px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  h1 { color: #1a1a2e; border-bottom: 3px solid #e94560; padding-bottom: 10px; }
+  h2 { color: #16213e; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 30px; }
+  h3 { color: #0f3460; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  th { background: #1a1a2e; color: #fff; }
+  tr:nth-child(even) { background: #f9f9f9; }
+  code { background: #f0f0f0; padding: 2px 5px; border-radius: 3px; font-size: 0.9em; }
+  pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 15px; margin: 20px 0; }
+  .stat-card { background: #f8f9fa; border-radius: 6px; padding: 15px; text-align: center; border: 1px solid #e9ecef; }
+  .stat-value { font-size: 2em; font-weight: bold; color: #0f3460; }
+  .stat-label { font-size: 0.9em; color: #666; margin-top: 5px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>项目扫描报告</h1>
+<table>
+<tr><td>项目</td><td>值</td></tr>
+<tr><td><b>项目名称</b></td><td>project-assistant</td></tr>
+<tr><td><b>项目路径</b></td><td>/app/working/workspaces/D2GPcF/project-assistant</td></tr>
+<tr><td><b>Java 版本</b></td><td>unknown</td></tr>
+<tr><td><b>生成时间</b></td><td>2026-06-10 16:58:33</td></tr>
+<tr><td><b>总类数</b></td><td>11</td></tr>
+<tr><td><b>总行数</b></td><td>2292</td></tr>
+</table>
+<h2>统计概要</h2>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-value">11</div><div class="stat-label">Java 类</div></div>
+  <div class="stat-card"><div class="stat-value">2292</div><div class="stat-label">总行数</div></div>
+  <div class="stat-card"><div class="stat-value">148</div><div class="stat-label">方法数</div></div>
+  <div class="stat-card"><div class="stat-value">85</div><div class="stat-label">字段数</div></div>
+  <div class="stat-card"><div class="stat-value">11.6 行</div><div class="stat-label">平均方法长度</div></div>
+  <div class="stat-card"><div class="stat-value">7</div><div class="stat-label">平均复杂度</div></div>
+  <div class="stat-card"><div class="stat-value">3</div><div class="stat-label">上帝类</div></div>
+  <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">长方法</div></div>
+  <div class="stat-card"><div class="stat-value">0</div><div class="stat-label">高复杂度</div></div>
+  <div class="stat-card"><div class="stat-value">3</div><div class="stat-label">依赖数</div></div>
+</div>
+<h2>项目结构</h2>
+<pre>project-assistant/
+  +-- com/projectassistant/
+  |   +-- [C] Main.java
+  +-- com/projectassistant/analyzer/
+  |   +-- [C] ProjectAnalyzer.java
+  +-- com/projectassistant/model/
+  |   +-- [C] ClassInfo.java
+  |   +-- [C] DependencyInfo.java
+  |   +-- [C] FieldInfo.java
+  |   +-- [C] MethodInfo.java
+  |   +-- [C] ModuleInfo.java
+  |   +-- [C] ProjectModel.java
+  |   +-- [C] ProjectStats.java
+  +-- com/projectassistant/reporter/
+  |   +-- [C] ReportGenerator.java
+  +-- com/projectassistant/scanner/
+  |   +-- [C] ProjectScanner.java
+</pre>
+<h2>包依赖关系</h2>
+<table>
+<tr><td>包</td><td>依赖项</td></tr>
+<tr><td><code>com.projectassistant.analyzer</code></td><td>-</td></tr>
+<tr><td><code>com.projectassistant</code></td><td>-</td></tr>
+<tr><td><code>com.projectassistant.reporter</code></td><td>-</td></tr>
+<tr><td><code>com.projectassistant.model</code></td><td>-</td></tr>
+<tr><td><code>com.projectassistant.scanner</code></td><td>-</td></tr>
+</table>
+<h2>类详情</h2>
+<h3>[C] ProjectAnalyzer</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.analyzer.ProjectAnalyzer</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 541</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant.analyzer</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<h4>字段 (9)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>project</code></td><td><code>ProjectModel</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>findings</code></td><td><code>return</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>true</code></td><td><code>return</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>false</code></td><td><code>return</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>type</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>title</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>description</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>severity</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>suggestion</code></td><td><code>String</code></td></tr>
+</table>
+<h4>方法 (26)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>analyze()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>analyzeDependencyCycles()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>hasCycle()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>4</td></tr>
+<tr><td>private</td><td><code>analyzeArchitectureLayers()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>7</td></tr>
+<tr><td>package-private</td><td><code>if()</code></td><td><code>else</code></td><td>`pkg.contains("")</td><td></td><td>`</td><td>1</td><td>5</td></tr>
+<tr><td>package-private</td><td><code>if()</code></td><td><code>else</code></td><td>`pkg.contains("")</td><td></td><td>pkg.contains("")</td><td></td><td>`</td><td>1</td><td>4</td></tr>
+<tr><td>package-private</td><td><code>if()</code></td><td><code>else</code></td><td>`pkg.contains("")</td><td></td><td>pkg.contains("")</td><td></td><td>`</td><td>1</td><td>3</td></tr>
+<tr><td>package-private</td><td><code>if()</code></td><td><code>else</code></td><td>`pkg.contains("")</td><td></td><td>pkg.contains("")</td><td></td><td>`</td><td>1</td><td>2</td></tr>
+<tr><td>private</td><td><code>analyzeDesignPatterns()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>4</td></tr>
+<tr><td>private</td><td><code>analyzeCodeSmells()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>4</td></tr>
+<tr><td>package-private</td><td><code>if()</code></td><td><code>else</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>package-private</td><td><code>if()</code></td><td><code>else</code></td><td>`mi.getName().startsWith("")</td><td></td><td>`</td><td>1</td><td>3</td></tr>
+<tr><td>package-private</td><td><code>if()</code></td><td><code>else</code></td><td>`mi.getName().startsWith("")</td><td></td><td>`</td><td>1</td><td>2</td></tr>
+<tr><td>private</td><td><code>analyzeUnusedCode()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>4</td></tr>
+<tr><td>private</td><td><code>analyzeTODOs()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>analyzeSpringStructure()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>analyzeNamingConventions()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>analyzeCohesion()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>4</td></tr>
+<tr><td>private</td><td><code>analyzePublicApi()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>2</td></tr>
+<tr><td>private</td><td><code>addFinding()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getType()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTitle()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getDescription()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getSeverity()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getSuggestion()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getSeverityLabel()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+</table>
+<h3>[C] Main</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.Main</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 100</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<h4>字段 (1)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>reportFile</code></td><td><code>String</code></td></tr>
+</table>
+<h4>方法 (1)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>main()</code></td><td><code>void</code></td><td><code>String[]</code></td><td>1</td><td>2</td></tr>
+</table>
+<h3>[C] ClassInfo</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.model.ClassInfo</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 138</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant.model</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<p>\u2022 <b>注解</b>: <code>Override</code></p>
+<h4>字段 (14)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>fullyQualifiedName</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>packageName</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>simpleName</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>type</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>visibility</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>sourceFilePath</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>moduleName</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>isAbstract</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>isFinal</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>isStatic</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>superClassName</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>lineCount</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>codeLineCount</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalComplexity</code></td><td><code>int</code></td></tr>
+</table>
+<h4>方法 (21)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>getFullyQualifiedName()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getPackageName()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getSimpleName()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getType()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getVisibility()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getSourceFilePath()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getModuleName()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isAbstract()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isFinal()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isStatic()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getSuperClassName()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getInterfaces()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTypeParameters()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getFields()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getMethods()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getAnnotations()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getInnerClasses()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getLineCount()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getCodeLineCount()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalComplexity()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>toString()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+</table>
+<h3>[C] DependencyInfo</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.model.DependencyInfo</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 53</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant.model</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<p>\u2022 <b>注解</b>: <code>Override</code></p>
+<h4>字段 (6)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>groupId</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>artifactId</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>version</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>scope</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>optional</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>type</code></td><td><code>String</code></td></tr>
+</table>
+<h4>方法 (8)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>getGroupId()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getArtifactId()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getVersion()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getScope()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isOptional()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getType()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>toString()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>toGav()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+</table>
+<h3>[C] FieldInfo</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.model.FieldInfo</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 49</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant.model</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<p>\u2022 <b>注解</b>: <code>Override</code></p>
+<h4>字段 (7)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>name</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>type</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>visibility</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>isStatic</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>isFinal</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>hasGetter</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>hasSetter</code></td><td><code>boolean</code></td></tr>
+</table>
+<h4>方法 (9)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>getName()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getType()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getVisibility()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isStatic()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isFinal()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getAnnotations()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isHasGetter()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isHasSetter()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>toString()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+</table>
+<h3>[C] MethodInfo</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.model.MethodInfo</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 93</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant.model</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<p>\u2022 <b>注解</b>: <code>Override</code></p>
+<h4>字段 (12)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>name</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>returnType</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>visibility</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>isAbstract</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>isStatic</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>isFinal</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>isSynchronized</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>isConstructor</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>isOverride</code></td><td><code>boolean</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>lineCount</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>cyclomaticComplexity</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>signature</code></td><td><code>String</code></td></tr>
+</table>
+<h4>方法 (19)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>getName()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getReturnType()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getVisibility()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isAbstract()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isStatic()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isFinal()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isSynchronized()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isConstructor()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>isOverride()</code></td><td><code>boolean</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getParameters()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getParameterNames()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getExceptions()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getAnnotations()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getLineCount()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getCyclomaticComplexity()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getSignature()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getCalledMethods()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getAccessedFields()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>toString()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+</table>
+<h3>[C] ModuleInfo</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.model.ModuleInfo</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 42</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant.model</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<h4>字段 (7)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>name</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>path</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>groupId</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>artifactId</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>version</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>classCount</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalLines</code></td><td><code>long</code></td></tr>
+</table>
+<h4>方法 (7)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>getName()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getPath()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getGroupId()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getArtifactId()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getVersion()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getClassCount()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalLines()</code></td><td><code>long</code></td><td>-</td><td>1</td><td>1</td></tr>
+</table>
+<h3>[C] ProjectModel</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.model.ProjectModel</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 66</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant.model</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<p>\u2022 <b>注解</b>: <code>Override</code></p>
+<h4>字段 (3)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>projectName</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>rootPath</code></td><td><code>String</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>buildType</code></td><td><code>String</code></td></tr>
+</table>
+<h4>方法 (11)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>getProjectName()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getProjectPath()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getBuildType()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getJavaVersion()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getModules()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getClasses()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getDependencies()</code></td><td><code>List</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getPackageDependencies()</code></td><td><code>Map&gt;</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getCallGraph()</code></td><td><code>Map&gt;</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getStats()</code></td><td><code>ProjectStats</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>toString()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+</table>
+<h3>[C] ProjectStats</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.model.ProjectStats</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 98</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant.model</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<h4>字段 (18)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>totalFiles</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalLines</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalCodeLines</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalCommentLines</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalClasses</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalInterfaces</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalEnums</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalRecords</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalAnnotations</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalMethods</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalFields</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>totalDependencies</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>commentRatio</code></td><td><code>double</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>averageMethodLines</code></td><td><code>double</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>maxComplexity</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>godClassCount</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>longMethodCount</code></td><td><code>int</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>highComplexityCount</code></td><td><code>int</code></td></tr>
+</table>
+<h4>方法 (19)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>getTotalFiles()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalLines()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalCodeLines()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalCommentLines()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalClasses()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalInterfaces()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalEnums()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalRecords()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalAnnotations()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalMethods()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalFields()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getTotalDependencies()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getCommentRatio()</code></td><td><code>double</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getAverageMethodLines()</code></td><td><code>double</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getMaxComplexity()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getGodClassCount()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getLongMethodCount()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getHighComplexityCount()</code></td><td><code>int</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>getHealthLevel()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+</table>
+<h3>[C] ReportGenerator</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.reporter.ReportGenerator</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 331</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant.reporter</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<h4>字段 (2)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>project</code></td><td><code>ProjectModel</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>analysisResults</code></td><td><code>List&lt;AnalysisResult&gt;</code></td></tr>
+</table>
+<h4>方法 (14)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>generateMarkdown()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>generateHtml()</code></td><td><code>String</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>mdToHtml()</code></td><td><code>String</code></td><td><code>String</code></td><td>1</td><td>4</td></tr>
+<tr><td>private</td><td><code>inline()</code></td><td><code>String</code></td><td><code>String</code></td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>escHtml()</code></td><td><code>String</code></td><td><code>String</code></td><td>1</td><td>1</td></tr>
+<tr><td>public</td><td><code>saveReport()</code></td><td><code>void</code></td><td><code>String, String</code></td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>writeHeader()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>writeSummary()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>2</td></tr>
+<tr><td>private</td><td><code>addStatCard()</code></td><td><code>void</code></td><td><code>String, String</code></td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>writeProjectStructure()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>writePackageDeps()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>2</td></tr>
+<tr><td>private</td><td><code>writeClassDetails()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>writeAnalysisResults()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>2</td></tr>
+<tr><td>private</td><td><code>writeFooter()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>1</td></tr>
+</table>
+<h3>[C] ProjectScanner</h3>
+<p>\u2022 <b>全称</b>: <code>com.projectassistant.scanner.ProjectScanner</code></p>
+<p>\u2022 <b>类型</b>: class</p>
+<p>\u2022 <b>行数</b>: 781</p>
+<p>\u2022 <b>包</b>: <code>com.projectassistant.scanner</code></p>
+<p>\u2022 <b>可见性</b>: public</p>
+<h4>字段 (6)</h4>
+<table>
+<tr><td>可见性</td><td>静态</td><td>名称</td><td>类型</td></tr>
+<tr><td>private</td><td>N</td><td><code>rootPath</code></td><td><code>Path</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>project</code></td><td><code>ProjectModel</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>project</code></td><td><code>return</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>null</code></td><td><code>return</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>javaFiles</code></td><td><code>List&lt;Path&gt;</code></td></tr>
+<tr><td>private</td><td>N</td><td><code>source</code></td><td><code>return</code></td></tr>
+</table>
+<h4>方法 (13)</h4>
+<table>
+<tr><td>可见性</td><td>名称</td><td>返回</td><td>参数</td><td>行数</td><td>复杂度</td></tr>
+<tr><td>public</td><td><code>scan()</code></td><td><code>ProjectModel</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>detectBuildType()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>2</td></tr>
+<tr><td>package-private</td><td><code>if()</code></td><td><code>else</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>scanModules()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>parseMavenPom()</code></td><td><code>void</code></td><td><code>Path, List&lt;ModuleInfo&gt;</code></td><td>1</td><td>2</td></tr>
+<tr><td>private</td><td><code>extractXmlTag()</code></td><td><code>String</code></td><td><code>String, String</code></td><td>1</td><td>2</td></tr>
+<tr><td>private</td><td><code>scanJavaFiles()</code></td><td><code>void</code></td><td>-</td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>parseJavaFile()</code></td><td><code>ClassInfo</code></td><td><code>Path</code></td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>findBodyStart()</code></td><td><code>int</code></td><td><code>String, int</code></td><td>1</td><td>1</td></tr>
+<tr><td>private</td><td><code>findBodyEnd()</code></td><td><code>int</code></td><td><code>String, int</code></td><td>1</td><td>4</td></tr>
+<tr><td>private</td><td><code>findMatchingParen()</code></td><td><code>int</code></td><td><code>String, int</code></td><td>1</td><td>3</td></tr>
+<tr><td>private</td><td><code>isJavaKeyword()</code></td><td><code>boolean</code></td><td><code>String</code></td><td>1</td><td>1</td></tr>
+<tr><td>package-private</td><td><code>switch()</code></td><td><code>return</code></td><td><code>var</code></td><td>1</td><td>1</td></tr>
+</table>
+<h2>分析发现</h2>
+<h3>严重问题 (2)</h3>
+<table>
+<tr><td>#</td><td>分类</td><td>描述</td><td>建议</td></tr>
+<tr><td>1</td><td>💩 上帝类</td><td>com.projectassistant.analyzer.ProjectAnalyzer 有 26 个方法</td><td>建议拆分为多个职责单一的类</td></tr>
+<tr><td>2</td><td>💩 上帝类</td><td>com.projectassistant.model.ClassInfo 有 21 个方法</td><td>建议拆分为多个职责单一的类</td></tr>
+</table>
+<h3>重要问题 (13)</h3>
+<table>
+<tr><td>#</td><td>分类</td><td>描述</td><td>建议</td></tr>
+<tr><td>1</td><td>💩 大类别</td><td>com.projectassistant.analyzer.ProjectAnalyzer 有 541 行</td><td>建议拆分为多个小类</td></tr>
+<tr><td>2</td><td>💩 大类别</td><td>com.projectassistant.scanner.ProjectScanner 有 781 行</td><td>建议拆分为多个小类</td></tr>
+<tr><td>3</td><td>低内聚</td><td>ProjectAnalyzer 内聚度=0.00（仅 0/26 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>4</td><td>低内聚</td><td>Main 内聚度=0.00（仅 0/1 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>5</td><td>低内聚</td><td>ClassInfo 内聚度=0.00（仅 0/21 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>6</td><td>低内聚</td><td>DependencyInfo 内聚度=0.00（仅 0/8 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>7</td><td>低内聚</td><td>FieldInfo 内聚度=0.00（仅 0/9 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>8</td><td>低内聚</td><td>MethodInfo 内聚度=0.00（仅 0/19 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>9</td><td>低内聚</td><td>ModuleInfo 内聚度=0.00（仅 0/7 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>10</td><td>低内聚</td><td>ProjectModel 内聚度=0.00（仅 0/11 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>11</td><td>低内聚</td><td>ProjectStats 内聚度=0.00（仅 0/19 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>12</td><td>低内聚</td><td>ReportGenerator 内聚度=0.00（仅 0/14 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+<tr><td>13</td><td>低内聚</td><td>ProjectScanner 内聚度=0.00（仅 0/13 方法访问字段）</td><td>方法不操作类字段，考虑是否应该放在其它类中</td></tr>
+</table>
+<h3>改进建议 (8)</h3>
+<table>
+<tr><td>#</td><td>分类</td><td>描述</td><td>建议</td></tr>
+<tr><td>1</td><td>架构分层</td><td>架构分层概览:&lt;br&gt;  - Entity/Domain 层: 1 个包&lt;br&gt;  - 其他: 4 个包&lt;br&gt;</td><td>清晰的层次结构有助于维护和扩展</td></tr>
+<tr><td>2</td><td>可能的未使用方法</td><td>ProjectAnalyzer.analyze() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>3</td><td>可能的未使用方法</td><td>Main.main() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>4</td><td>可能的未使用方法</td><td>ReportGenerator.generateMarkdown() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>5</td><td>可能的未使用方法</td><td>ReportGenerator.generateHtml() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>6</td><td>可能的未使用方法</td><td>ReportGenerator.saveReport() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>7</td><td>可能的未使用方法</td><td>ProjectScanner.scan() 在项目内部未被调用</td><td>考虑删除或标记为 @Deprecated</td></tr>
+<tr><td>8</td><td>待办事项</td><td>项目中共有 11 处 TODO/FIXME</td><td>定期清理待办事项，避免技术债务累积</td></tr>
+</table>
+<h3>信息提示 (1)</h3>
+<table>
+<tr><td>#</td><td>分类</td><td>描述</td><td>建议</td></tr>
+<tr><td>1</td><td>Public API 规模</td><td>项目共有 106 个 public 方法</td><td>public API 是项目的对外契约，变更需谨慎</td></tr>
+</table>
+<p>&gt; *由 ProjectAssistant 扫描器自动生成 *</p>
+
+</div>
+</body>
+</html>
