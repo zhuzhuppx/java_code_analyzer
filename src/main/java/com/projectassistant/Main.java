@@ -153,8 +153,9 @@ public class Main {
 
         // ==================== 6. 输出 ====================
         try {
-            Path reportsDir = Paths.get(projectPath).toAbsolutePath().normalize().resolve("reports");
-            Files.createDirectories(reportsDir);
+            // 输出到当前工作目录下，绝不修改目标项目
+            Path outputBase = Paths.get("").toAbsolutePath().normalize().resolve("reports");
+            Files.createDirectories(outputBase);
 
             String projectName = project.getProjectName();
             String extension;
@@ -178,7 +179,7 @@ public class Main {
                     break;
             }
 
-            Path outputFile = reportsDir.resolve(projectName + extension);
+            Path outputFile = outputBase.resolve(projectName + extension);
             Files.writeString(outputFile, content);
             System.out.println("  ✅ " + (mode.equals("knowledge") ? "知识库" : "报告") + "已保存: " + outputFile);
 
@@ -186,7 +187,7 @@ public class Main {
             if (!mode.equals("knowledge")) {
                 KnowledgeBaseGenerator kb = new KnowledgeBaseGenerator(project);
                 String kbContent = kb.generate();
-                Path kbFile = reportsDir.resolve(projectName + "_knowledge.md");
+                Path kbFile = outputBase.resolve(projectName + "_knowledge.md");
                 Files.writeString(kbFile, kbContent);
                 System.out.println("  ✅ 知识库已保存: " + kbFile);
             }
