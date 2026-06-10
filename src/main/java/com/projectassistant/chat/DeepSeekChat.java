@@ -34,12 +34,15 @@ public class DeepSeekChat {
     private final Scanner scanner;
 
     public DeepSeekChat(String systemPrompt, Scanner scanner) {
-        System.out.print("请输入 DeepSeek API Key: ");
-        String inputKey = scanner.nextLine().trim();
-        if (inputKey.isEmpty()) {
-            throw new IllegalArgumentException("API Key 不能为空");
+        String key = System.getenv("DEEPSEEK_API_KEY");
+        if (key == null || key.isEmpty()) {
+            System.out.print("请输入 DeepSeek API Key: ");
+            key = scanner.nextLine().trim();
+            if (key.isEmpty()) {
+                throw new IllegalArgumentException("API Key 不能为空");
+            }
         }
-        this.apiKey = inputKey;
+        this.apiKey = key;
         this.scanner = scanner;
         this.http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
