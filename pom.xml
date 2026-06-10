@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.projectassistant</groupId>
-    <artifactId>project-assistant</artifactId>
+    <artifactId>java_code_analyzer</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>Project Assistant</name>
-    <description>智能 Java 项目工程小助手 — 比程序员更懂项目</description>
+    <name>Java Code Analyzer</name>
+    <description>智能 Java 项目工程扫描器 — 比程序员更懂项目</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
