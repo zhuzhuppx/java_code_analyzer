@@ -1,6 +1,9 @@
 package com.projectassistant.reporter;
 
 import com.projectassistant.model.*;
+import com.projectassistant.spring.ApiEndpoint;
+import com.projectassistant.sql.TableInfo;
+import com.projectassistant.chain.CallChain;
 import com.projectassistant.analyzer.ProjectAnalyzer.AnalysisResult;
 import java.io.*;
 import java.nio.file.*;
@@ -30,6 +33,11 @@ public class ReportGenerator {
         md.setLength(0);
         writeHeader();
         writeSummary();
+        writeProjectPattern();
+        writeApiEndpoints();
+        writeBeanDependencies();
+        writeDatabaseTables();
+        writeCallChains();
         writeProjectStructure();
         writePackageDeps();
         writeClassDetails();
@@ -187,6 +195,113 @@ public class ReportGenerator {
           .append("</div><div class=\"stat-label\">")
           .append(label)
           .append("</div></div>\n");
+    }
+
+    // ==================== 升级报告：老狗级项目理解 ====================
+
+    /** 项目架构模式与配置 */
+    private void writeProjectPattern() {
+        md.append("## 项目架构模式\n\n");
+        md.append("| 维度 | 值 |\n|---|---|\n");
+        md.append("| **架构模式** | ").append(project.getProjectPattern()).append(" |\n");
+        md.append("| **Spring Boot** | ").append(project.isSpringBoot() ? "是" : "否").append(" |\n");
+        md.append("| **Java 版本** | ").append(project.getJavaVersion()).append(" |\n");
+        md.append("| **构建工具** | ").append(project.getBuildType()).append(" |\n\n");
+    }
+
+    /** API 路由全景 */
+    private void writeApiEndpoints() {
+        List<ApiEndpoint> endpoints = project.getApiEndpoints();
+        if (endpoints.isEmpty()) {
+            md.append("## API 路由\n\n未检测到 API 端点（非 Spring Web 项目或无法解析）。\n\n");
+            return;
+        }
+        md.append("## API 路由全景 (").append(endpoints.size()).append(" 个端点)\n\n");
+        md.append("| 方法 | 路径 | Controller | 方法 | 安全 |\n");
+        md.append("|---|---|---|---|---|\n");
+        for (ApiEndpoint ep : endpoints) {
+            md.append("| ").append(ep.getHttpMethod())
+              .append(" | `").append(ep.getPath()).append("`")
+              .append(" | ").append(ep.getControllerClass())
+              .append(" | `").append(ep.getMethodName()).append("()`")
+              .append(" | ").append(ep.isSecured() ? "需要认证" : "-")
+              .append(" |\n");
+        }
+        md.append("\n");
+    }
+
+    /** Bean 依赖图 */
+    private void writeBeanDependencies() {
+        Map<String, List<String>> deps = project.getBeanDependencies();
+        if (deps.isEmpty()) {
+            md.append("## Bean 依赖\n\n未检测到依赖注入关系。\n\n");
+            return;
+        }
+        md.append("## Bean 依赖关系 (").append(deps.size()).append(" 个 Bean)\n\n");
+        md.append("| Bean | 依赖项 |\n|---|---|\n");
+        for (Map.Entry<String, List<String>> entry : deps.entrySet()) {
+            String depStr = String.join(", ", entry.getValue());
+            md.append("| ").append(entry.getKey())
+              .append(" | ").append(depStr.isEmpty() ? "-" : depStr)
+              .append(" |\n");
+        }
+        md.append("\n");
+    }
+
+    /** 数据库表结构 */
+    private void writeDatabaseTables() {
+        List<TableInfo> tables = project.getDatabaseTables();
+        if (tables.isEmpty()) {
+            md.append("## 数据库结构\n\n未检测到数据库映射（无 JPA Entity 或无 MyBatis Mapper）。\n\n");
+            return;
+        }
+        md.append("## 数据库表结构 (").append(tables.size()).append(" 张表)\n\n");
+        for (TableInfo table : tables) {
+            md.append("### ").append(table.getTableName());
+            if (table.getEntityClass() != null) {
+                md.append(" → ").append(table.getEntityClass());
+            }
+            md.append("\n\n");
+            md.append("| 字段 | 列名 | 类型 | 主键 | 自增 |\n");
+            md.append("|---|---|---|---|---|\n");
+            for (TableInfo.Column col : table.getColumns()) {
+                md.append("| `").append(col.getFieldName()).append("`")
+                  .append(" | `").append(col.getColumnName()).append("`")
+                  .append(" | ").append(col.getJavaType())
+                  .append(" | ").append(col.isPrimaryKey() ? "是" : "")
+                  .append(" | ").append(col.isAutoIncrement() ? "是" : "")
+                  .append(" |\n");
+            }
+            md.append("\n");
+        }
+
+        // Mapper SQL
+        Map<String, String> mapperSql = project.getMapperSql();
+        if (!mapperSql.isEmpty()) {
+            md.append("### Mapper 方法\n\n");
+            md.append("| 方法 | SQL 类型 |\n|---|---|\n");
+            for (Map.Entry<String, String> entry : mapperSql.entrySet()) {
+                md.append("| `").append(entry.getKey()).append("()`")
+                  .append(" | `").append(entry.getValue()).append("`")
+                  .append(" |\n");
+            }
+            md.append("\n");
+        }
+    }
+
+    /** 调用链分析 */
+    private void writeCallChains() {
+        List<String> chains = project.getCriticalChains();
+        if (chains.isEmpty()) {
+            md.append("## 调用链分析\n\n未追踪到调用链。\n\n");
+            return;
+        }
+        md.append("## 调用链分析 (").append(chains.size()).append(" 条关键路径)\n\n");
+        md.append("```\n");
+        for (String chain : chains) {
+            md.append(chain).append("\n\n");
+        }
+        md.append("```\n\n");
     }
 
     private void writeProjectStructure() {

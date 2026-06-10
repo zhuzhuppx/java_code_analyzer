@@ -1,5 +1,8 @@
 package com.projectassistant.model;
 
+import com.projectassistant.spring.*;
+import com.projectassistant.sql.*;
+import com.projectassistant.chain.*;
 import java.util.*;
 
 /**
@@ -19,6 +22,16 @@ public class ProjectModel {
     private final Map<String, List<String>> callGraph = new HashMap<>();
     private final ProjectStats stats = new ProjectStats();
 
+    // ============ 升级：老狗级能力 ============
+    private List<ApiEndpoint> apiEndpoints = new ArrayList<>();
+    private Map<String, List<String>> beanDependencies = new HashMap<>();
+    private String projectPattern = "unknown";
+    private boolean springBoot = false;
+    private List<TableInfo> databaseTables = new ArrayList<>();
+    private Map<String, String> mapperSql = new HashMap<>();
+    private List<CallChain> callChains = new ArrayList<>();
+    private List<String> criticalChains = new ArrayList<>();
+
     // ==================== 基本属性 ====================
 
     public String getProjectName() { return projectName; }
@@ -36,31 +49,42 @@ public class ProjectModel {
     // ==================== 数据结构 ====================
 
     public List<ModuleInfo> getModules() { return modules; }
-
     public List<ClassInfo> getClasses() { return classes; }
-
     public List<DependencyInfo> getDependencies() { return dependencies; }
-
-    /**
-     * 包依赖图: 包名 -> 它依赖的包名集合
-     */
     public Map<String, Set<String>> getPackageDependencies() { return packageDependencies; }
-
-    /**
-     * 调用图: 调用者全限定签名 -> 被调用者列表
-     */
     public Map<String, List<String>> getCallGraph() { return callGraph; }
-
     public ProjectStats getStats() { return stats; }
+
+    // ============ 升级方法 ============
+
+    public List<ApiEndpoint> getApiEndpoints() { return apiEndpoints; }
+    public void setApiEndpoints(List<ApiEndpoint> eps) { this.apiEndpoints = eps; }
+
+    public Map<String, List<String>> getBeanDependencies() { return beanDependencies; }
+    public void setBeanDependencies(Map<String, List<String>> deps) { this.beanDependencies = deps; }
+
+    public String getProjectPattern() { return projectPattern; }
+    public void setProjectPattern(String p) { this.projectPattern = p; }
+
+    public boolean isSpringBoot() { return springBoot; }
+    public void setSpringBoot(boolean sb) { this.springBoot = sb; }
+
+    public List<TableInfo> getDatabaseTables() { return databaseTables; }
+    public void setDatabaseTables(List<TableInfo> tables) { this.databaseTables = tables; }
+
+    public Map<String, String> getMapperSql() { return mapperSql; }
+    public void setMapperSql(Map<String, String> sql) { this.mapperSql = sql; }
+
+    public List<CallChain> getCallChains() { return callChains; }
+    public void setCallChains(List<CallChain> chains) { this.callChains = chains; }
+
+    public List<String> getCriticalChains() { return criticalChains; }
+    public void setCriticalChains(List<String> chains) { this.criticalChains = chains; }
 
     @Override
     public String toString() {
-        return "ProjectModel{" +
-                "name='" + projectName + '\'' +
-                ", buildType='" + buildType + '\'' +
-                ", modules=" + modules.size() +
-                ", classes=" + classes.size() +
-                ", dependencies=" + dependencies.size() +
-                '}';
+        return "ProjectModel{name='" + projectName + "', buildType='" + buildType
+                + "', classes=" + classes.size() + ", endpoints=" + apiEndpoints.size()
+                + ", tables=" + databaseTables.size() + ", chains=" + callChains.size() + "}";
     }
 }
