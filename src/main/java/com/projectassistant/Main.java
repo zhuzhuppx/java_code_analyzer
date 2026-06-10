@@ -109,8 +109,10 @@ public class Main {
                 paths.filter(p -> p.toString().endsWith(".xml"))
                      .filter(p -> !p.toString().contains("target" + File.separator))
                      .filter(p -> !p.toString().contains(".mvn" + File.separator))
-                     .filter(p -> p.toString().contains("mapper") || p.toString().contains("mybatis") ||
-                                  p.toString().contains("sqlmap") || p.toString().contains("resources"))
+                     .filter(p -> p.toString().contains("mapper") || p.toString().contains("Mapper") ||
+                                  p.toString().contains("mybatis") || p.toString().contains("MyBatis") ||
+                                  p.toString().contains("sqlmap") || p.toString().contains("resources") ||
+                                  p.toString().contains("/dao/") || p.toString().contains("/Dao/"))
                      .forEach(xmlFiles::add);
             }
             System.out.println("  📄 XML 文件: " + xmlFiles.size());

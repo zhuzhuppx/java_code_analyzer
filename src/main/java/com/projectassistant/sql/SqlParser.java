@@ -166,11 +166,16 @@ public class SqlParser {
                     String sqlType = m.group(1).toUpperCase();
                     String id = m.group(2);
                     String sql = m.group(3).trim();
-                    // 替换引用的 <include refid="..."/>
-                    for (Map.Entry<String, String> frag : xmlFragments.entrySet()) {
-                        sql = sql.replaceAll(
-                                "<include\\s+[^>]*?refid\\s*=\\s*\"?" + Pattern.quote(frag.getKey()) + "\"?[^>]*?/>",
-                                Matcher.quoteReplacement(frag.getValue()));
+
+                    // 递归展开 <include refid="..."/>（最多5层）
+                    for (int depth = 0; depth < 5; depth++) {
+                        String prev = sql;
+                        for (Map.Entry<String, String> frag : xmlFragments.entrySet()) {
+                            sql = sql.replaceAll(
+                                    "<include\\s+[^>]*?refid\\s*=\\s*\"?" + Pattern.quote(frag.getKey()) + "\"?[^>]*?/>",
+                                    Matcher.quoteReplacement(frag.getValue()));
+                        }
+                        if (sql.equals(prev)) break;
                     }
                     // 清理 XML 标签和多余空白
                     sql = sql.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim();
