@@ -1,6 +1,6 @@
 ---
 name: java_code_analyzer
-description: "java_code_analyzer 项目知识库 — 20 个类, 0 个 API, 0 张表"
+description: "java_code_analyzer 项目知识库 — 23 个类, 0 个 API, 0 张表"
 metadata:
   copaw:
     emoji: "📦"
@@ -9,7 +9,7 @@ metadata:
 
 # java_code_analyzer 项目知识库
 
-> 由 ProjectAssistant 自动生成 | 2026-06-11 00:14
+> 由 ProjectAssistant 自动生成 | 2026-06-11 08:08
 
 当用户询问本项目相关的任何问题时，优先使用以下信息回答。
 
@@ -21,9 +21,9 @@ metadata:
 | 构建 | maven |
 | Java | unknown |
 | Spring Boot | 否 |
-| 行数 | 4429 |
-| 类数 | 20 |
-| 方法数 | 276 |
+| 行数 | 5653 |
+| 类数 | 23 |
+| 方法数 | 339 |
 | API | 0 |
 | 数据库表 | 0 |
 | 依赖 | 3 |
@@ -50,6 +50,8 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
     [C] CallChainAnalyzer
   chat/
     [C] DeepSeekChat
+  config/
+    [C] ConfigParser
   knowledge/
     [C] KnowledgeBaseGenerator
   model/
@@ -64,11 +66,13 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
     [C] ReportGenerator
   scanner/
     [C] ProjectScanner
+    [C] VulnScanner
   spring/
     [C] ApiEndpoint
     [C] BeanInfo
     [C] SpringScanner
   sql/
+    [C] SchemaParser
     [C] SqlParser
     [C] TableInfo
 ```
@@ -108,9 +112,13 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 - **DeepSeekChat** (class) — 0 方法, 0 字段
 
+### com.projectassistant.config
+
+- **ConfigParser** (class) — 17 方法, 5 字段
+
 ### com.projectassistant.knowledge
 
-- **KnowledgeBaseGenerator** (class) — 18 方法, 2 字段
+- **KnowledgeBaseGenerator** (class) — 19 方法, 2 字段
 
 ### com.projectassistant.model
 
@@ -119,7 +127,7 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 - **FieldInfo** (class) — 9 方法, 7 字段
 - **MethodInfo** (class) — 19 方法, 12 字段
 - **ModuleInfo** (class) — 7 方法, 7 字段
-- **ProjectModel** (class) — 21 方法, 3 字段
+- **ProjectModel** (class) — 22 方法, 9 字段
 - **ProjectStats** (class) — 19 方法, 18 字段
 
 ### com.projectassistant.reporter
@@ -129,15 +137,17 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 ### com.projectassistant.scanner
 
 - **ProjectScanner** (class) — 13 方法, 6 字段
+- **VulnScanner** (class) — 6 方法, 15 字段
 
 ### com.projectassistant.spring
 
-- **ApiEndpoint** (class) — 10 方法, 7 字段
+- **ApiEndpoint** (class) — 25 方法, 17 字段
 - **BeanInfo** (class) — 17 方法, 13 字段
-- **SpringScanner** (class) — 28 方法, 6 字段
+- **SpringScanner** (class) — 36 方法, 6 字段
 
 ### com.projectassistant.sql
 
+- **SchemaParser** (class) — 15 方法, 5 字段
 - **SqlParser** (class) — 12 方法, 3 字段
 - **TableInfo** (class) — 16 方法, 10 字段
 
@@ -240,6 +250,37 @@ class DeepSeekChat {
 }
 ```
 
+### com.projectassistant.config
+
+```
+class ConfigParser {
+    Path rootPath;
+    String filePath;
+    String type;
+    int keyCount;
+    return properties;
+
+    // --- 17 个方法 ---
+    String getFilePath();
+    String getType();
+    int getKeyCount();
+    Map parse();
+    void findAndParseConfigFiles();
+    void parseFile(Path);
+    else if(name.endsWith("") ||);
+    else if(var);
+    void parseProperties(String, Path);
+    void parseYaml(String, Path);
+    else if(var);
+    void parseLogbackXml(String, Path);
+    boolean isKeyConfig(String);
+    String getSummary();
+    String maskPassword(String);
+    List getSources();
+    Map getProperties();
+}
+```
+
 ### com.projectassistant.knowledge
 
 ```
@@ -247,10 +288,11 @@ class KnowledgeBaseGenerator {
     ProjectModel project;
     return m;
 
-    // --- 18 个方法 ---
+    // --- 19 个方法 ---
     String generate();
     void preamble();
     void overview();
+    int calculateHealthScore();
     void architecture();
     void apiCatalog();
     void databaseSchema();
@@ -421,8 +463,14 @@ class ProjectModel {
     String projectName;
     String rootPath;
     String buildType;
+    String groupId;
+    String artifactId;
+    String currentVersion;
+    String cve;
+    String severity;
+    String description;
 
-    // --- 21 个方法 ---
+    // --- 22 个方法 ---
     String getProjectName();
     String getProjectPath();
     String getBuildType();
@@ -443,6 +491,7 @@ class ProjectModel {
     List getCriticalChains();
     Map getConfigProperties();
     List getBeanInfos();
+    List getVulnFindings();
     String toString();
 }
 ```
@@ -549,6 +598,34 @@ class ProjectScanner {
 }
 ```
 
+```
+class VulnScanner {
+    List<DependencyInfo> dependencies;
+    return findings;
+    return false;
+    String groupId;
+    String artifactId;
+    String affectedRange;
+    String cve;
+    String severity;
+    String description;
+    String groupId;
+    String artifactId;
+    String currentVersion;
+    String cve;
+    String severity;
+    String description;
+
+    // --- 6 个方法 ---
+    List scan();
+    boolean isAffected(String, String);
+    int compareVersions(String, String);
+    int parseIntSafe(String);
+    VulnRule vuln(String, String, String, String, String, String);
+    List getFindings();
+}
+```
+
 ### com.projectassistant.spring
 
 ```
@@ -560,8 +637,18 @@ class ApiEndpoint {
     String returnType;
     String description;
     boolean secured;
+    String requestBodyType;
+    String consumes;
+    String produces;
+    String summary;
+    boolean deprecated;
+    String name;
+    String type;
+    boolean required;
+    String defaultValue;
+    String description;
 
-    // --- 10 个方法 ---
+    // --- 25 个方法 ---
     String getHttpMethod();
     String getPath();
     String getControllerClass();
@@ -571,6 +658,21 @@ class ApiEndpoint {
     List getAnnotations();
     String getDescription();
     boolean isSecured();
+    List getRequestParams();
+    List getPathVariables();
+    String getRequestBodyType();
+    List getRequestHeaders();
+    String getConsumes();
+    String getProduces();
+    String getSummary();
+    boolean isDeprecated();
+    String getSignature();
+    String toString();
+    String getName();
+    String getType();
+    boolean isRequired();
+    String getDefaultValue();
+    String getDescription();
     String toString();
 }
 ```
@@ -621,13 +723,21 @@ class SpringScanner {
     return cleanType;
     return false;
 
-    // --- 28 个方法 ---
+    // --- 36 个方法 ---
     void scan();
     void scanProjectPattern();
     boolean hasAnnotation(ClassInfo, String);
     void scanControllers();
     String extractClassLevelPath(ClassInfo);
     void scanMethodEndpoint();
+    else if(var);
+    else if(ma.startsWith(REQUEST_BODY) ||);
+    else if(var);
+    String extractApiSummary(MethodInfo);
+    return decamelize(var);
+    String decamelize(String);
+    String extractParamName(String);
+    String extractParamJavaType(String, MethodInfo);
     String inferHttpMethod(String, String);
     String extractMethodPath(String);
     String normalizePath(String);
@@ -654,6 +764,33 @@ class SpringScanner {
 ```
 
 ### com.projectassistant.sql
+
+```
+class SchemaParser {
+    List<ClassInfo> classes;
+    List<java.nio.file.Path> xmlFiles;
+    return tables;
+    return col;
+    return result;
+
+    // --- 15 个方法 ---
+    List parse();
+    void parseEntityClasses();
+    void parseXmlResultMaps();
+    String inferTableFromResultMap(String);
+    return toSnakeCase(var);
+    return toSnakeCase(var);
+    return toSnakeCase(var);
+    String inferTableName(ClassInfo);
+    return toSnakeCase(var);
+    TableInfo.Column parseColumn(FieldInfo, ClassInfo);
+    String mapJavaToSql(String);
+    String toSnakeCase(String);
+    int findClosingTag(String, int, String);
+    void mergeTables();
+    List getTables();
+}
+```
 
 ```
 class SqlParser {
@@ -720,17 +857,19 @@ class TableInfo {
 
 **chat**: 1 个类
 
+**config**: 1 个类
+
 **knowledge**: 1 个类
 
 **model**: 7 个类
 
 **reporter**: 1 个类
 
-**scanner**: 1 个类
+**scanner**: 2 个类
 
 **spring**: 3 个类
 
-**sql**: 2 个类
+**sql**: 3 个类
 
 ## 10. 配置
 
