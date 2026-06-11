@@ -241,6 +241,7 @@ public class WebServer {
     private static void sendResponse(HttpExchange ex, int code, String contentType, String body) throws IOException {
         byte[] b = body.getBytes(StandardCharsets.UTF_8);
         ex.getResponseHeaders().add("Content-Type", contentType);
+        ex.getResponseHeaders().add("Cache-Control", "no-cache, no-store, must-revalidate");
         ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         ex.sendResponseHeaders(code, b.length);
         ex.getResponseBody().write(b);
