@@ -22,13 +22,13 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .mn{display:flex;height:calc(100vh - 48px);overflow:hidden;position:relative}
 
 /* Left panel - draggable */
-.lp{width:260px;min-width:160px;max-width:500px;display:flex;flex-direction:column;background:#fff;border-right:1px solid #e2e8f0;flex-shrink:0;position:relative}
+.lp{width:220px;min-width:140px;max-width:500px;display:flex;flex-direction:column;background:#fff;border-right:1px solid #e2e8f0;flex-shrink:0;position:relative}
 .lp.c{width:0!important;overflow:hidden;min-width:0;border-right:none}
 .lp .rg{position:absolute;right:-8px;top:0;bottom:0;width:16px;cursor:col-resize;z-index:10;background:transparent;border:none;display:flex;align-items:center;justify-content:center}
 .lp .rg::after{content:'';display:block;width:4px;height:32px;background:#cbd5e1;border-radius:2px;transition:background .15s}
 .lp .rg:hover::after,.lp .rg:active::after{background:#6366f1;height:48px}
 /* Toggle button - outside lp to avoid overflow:hidden clip */
-.tb{position:absolute;left:260px;top:50%;transform:translateY(-50%);width:16px;height:40px;background:#e2e8f0;border:none;border-radius:0 4px 4px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:#64748b;z-index:20;transition:left .2s}
+.tb{position:absolute;left:220px;top:50%;transform:translateY(-50%);width:16px;height:40px;background:#e2e8f0;border:none;border-radius:0 4px 4px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:#64748b;z-index:20;transition:left .2s}
 .tb:hover{background:#cbd5e1}
 .lp.c ~ .tb{left:0}
 .lc{display:flex;flex-direction:column;gap:10px;padding:12px;overflow-y:auto;flex:1}
@@ -69,10 +69,10 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .cm.l .tx code{background:#f1f5f9;padding:1px 3px;border-radius:2px;font-size:12px}
 .cm.l .tx pre{background:#1e293b;color:#e2e8f0;padding:8px 12px;border-radius:6px;overflow-x:auto;font-size:11px;margin:4px 0}
 .cm.l .tx p{margin:2px 0}
-.chf{display:flex;gap:8px;padding:12px 16px;border-top:1px solid #e2e8f0;flex-shrink:0;background:#fff}
-.chf input{flex:1;padding:10px 16px;border:1.5px solid #e2e8f0;border-radius:24px;font-size:13px;outline:none;background:#f8fafc}
+.chf{display:flex;gap:10px;padding:16px 20px;border-top:1px solid #e2e8f0;flex-shrink:0;background:#fff}
+.chf input{flex:1;padding:12px 20px;border:1.5px solid #e2e8f0;border-radius:28px;font-size:15px;outline:none;background:#f8fafc}
 .chf input:focus{border-color:#6366f1;background:#fff}
-.chf button{width:38px;height:38px;border:none;border-radius:50%;background:#6366f1;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.chf button{width:44px;height:44px;border:none;border-radius:50%;background:#6366f1;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
 .chf button:hover{box-shadow:0 2px 8px rgba(99,102,241,.3)}
 .chf button:disabled{opacity:.4;cursor:not-allowed}
 .chp{text-align:center;padding:30px 0;color:#94a3b8;font-size:13px}
