@@ -116,18 +116,18 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <button onclick="ask()" id="sbb" disabled>&#x27A1;</button></div></div></div>
 </div>
 <script>
-var cr,lp='',dd=false,cid=-1;
+var cr,ph='',dd=false,cid=-1;
 function md(t){try{return marked.parse(t)}catch(e){return '<pre>'+t.replace(/</g,'&lt;')+'</pre>'}}
 function sc(){var e=document.getElementById('chb');e.scrollTop=e.scrollHeight}
 function ac(m){var b=document.getElementById('chb');b.innerHTML+='<div class="cm l"><div class="av">&#x1F40B;</div><div class="tx">'+m+'</div></div>';sc()}
-function scan(){var p=document.getElementById('pi').value.trim();if(!p)return;document.getElementById('sb').disabled=true;lp='';dd=false;cid=-1;
+function scan(){var p=document.getElementById('pi').value.trim();if(!p)return;document.getElementById('sb').disabled=true;ph='';dd=false;cid=-1;
 document.getElementById('chq').disabled=true;document.getElementById('sbb').disabled=true;
 document.getElementById('chb').innerHTML='<div class="cm l"><div class="av">&#x1F40B;</div><div class="tx">&#x1F680; 开始扫描...</div></div>';sc();
 fetch('/scan',{method:'POST',body:'path='+encodeURIComponent(p),headers:{'Content-Type':'application/x-www-form-urlencoded'}}).then(r=>r.json()).then(d=>{if(d.status==='started')pp()})}
 function pp(){if(dd)return;fetch('/status').then(r=>r.json()).then(d=>{
 var el=document.getElementById('sta');
 if(d.status==='running'){el.className='st st-r';el.innerHTML='<span class="sp"></span>'+(d.phase||'')+'('+d.elapsed+'s)';
-if(d.phase&&d.phase!==lp){lp=d.phase;ac(d.phase+' ('+d.elapsed+'s)')}
+if(d.phase&&d.phase!==ph){ph=d.phase;ac(d.phase+' ('+d.elapsed+'s)')}
 setTimeout(pp,1500)}
 else if(d.status==='done'){dd=true;el.className='st st-d';el.innerHTML='&#x2705; 完成('+d.elapsed+'s)';document.getElementById('sb').disabled=false;document.getElementById('scd').classList.remove('h');document.getElementById('chq').disabled=false;document.getElementById('sbb').disabled=false;
 if(d.projectId)cid=d.projectId;
