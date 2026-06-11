@@ -102,7 +102,7 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <div class="ig"><input id="pi" placeholder="/path/to/project" value="{{DEFAULT_PATH}}" onkeydown="if(event.key==='Enter')scan()">
 <button class="btn btn-p" id="sb" onclick="scan()">&#x1F680;</button></div>
 <div class="st st-i" id="sta">&#x23F3; 输入路径</div>
-<div class="h" id="scd"><div class="sg" id="sg"></div><div style="margin-top:6px;display:flex;gap:4px"><button class="btn btn-g bs" id="skb" onclick="skl()" disabled style="opacity:.4;flex:1;padding:5px 8px">&#x1F4E6; 导出 Skill</button></div></div>
+<div class="h" id="scd"><div class="sg" id="sg"></div><div style="margin-top:6px;display:flex;gap:4px"><button class="btn btn-g bs" id="skb" onclick="skl()" disabled style="opacity:.4;flex:1;padding:5px 8px">&#x1F4E6; 导出 Skill</button></div><div id="skt" style="font-size:11px;color:#94a3b8;margin-top:2px;text-align:center;display:none">存到目录后运行: copaw skill install ./目录名</div></div>
 <div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px"><span>&#x1F4C5; 项目历史</span><button class="btn btn-g bs" onclick="lh()">&#x1F504;</button></div>
 <div id="hc" style="max-height:400px;overflow-y:auto"></div></div>
 </div></div>
@@ -130,7 +130,7 @@ if(d.status==='running'){el.className='st st-r';el.innerHTML='<span class="sp"><
 if(d.phase&&d.phase!==ph){ph=d.phase;ac(d.phase+' ('+d.elapsed+'s)')}
 setTimeout(pp,1500)}
 else if(d.status==='done'){dd=true;el.className='st st-d';el.innerHTML='&#x2705; 完成('+d.elapsed+'s)';document.getElementById('sb').disabled=false;document.getElementById('scd').classList.remove('h');document.getElementById('chq').disabled=false;document.getElementById('sbb').disabled=false;
-if(d.projectId){cid=d.projectId;var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1'}
+if(d.projectId){cid=d.projectId;var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block'}
 ac('&#x2705; 扫描完成 ('+d.elapsed+'s)，输入问题开始对话');fs(d);lh()}
 else if(d.status==='error'){dd=true;el.className='st st-e';el.innerHTML='&#x274C; '+d.message;document.getElementById('sb').disabled=false;ac('&#x274C; 扫描失败: '+d.message)}
 }).catch(function(){if(!dd)setTimeout(pp,1500)})}
@@ -144,7 +144,7 @@ var g=document.getElementById('sg');g.innerHTML='';
 ['classes','methods','lines','apis'].forEach(function(k){var x=document.createElement('div');x.className='si';x.innerHTML='<div class="n">'+(d[k]||0)+'</div><div class="l">'+k+'</div>';g.appendChild(x)});var sk=['vulns','health'];sk.forEach(function(k){var x=document.createElement('div');x.className='si'+(k==='vulns'&&(+d[k]||0)>0?' d':k==='health'?(+d[k]||0)<60?' d':(+d[k]||0)<80?' w':' s':'');x.innerHTML='<div class="n">'+(d[k]||'-')+'</div><div class="l">'+k+'</div>';g.appendChild(x)});
 document.getElementById('scd').classList.remove('h');
 document.getElementById('sta').className='st st-d';document.getElementById('sta').innerHTML='&#x1F4C2; '+d.name;
-var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';
+var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';
 // Load chat history
 var b=document.getElementById('chb');b.innerHTML='';
 if(d.chats&&d.chats.length){d.chats.forEach(function(c){var side=c.role==='user'?'r':'l';var av=c.role==='user'?'&#x1F464;':'&#x1F40B;';b.innerHTML+='<div class="cm '+side+'"><div class="av">'+av+'</div><div class="tx">'+(c.role==='assistant'?md(c.content):c.content)+'</div></div>'})}else{b.innerHTML='<div class="chp">没有聊天记录，开始提问</div>'}

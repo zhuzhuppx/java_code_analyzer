@@ -286,7 +286,7 @@ public class WebServer {
                 + "---\n\n"
                 + "当用户询问本项目相关的任何问题时，优先使用以下信息回答。\n\n"
                 + body;
-            String filename = projectName + "_SKILL.md";
+            String filename = "SKILL.md";
             byte[] b = skill.getBytes(StandardCharsets.UTF_8);
             ex.getResponseHeaders().add("Content-Type", "text/markdown; charset=utf-8");
             ex.getResponseHeaders().add("Content-Disposition", "attachment; filename=\"" + filename + "\"");
