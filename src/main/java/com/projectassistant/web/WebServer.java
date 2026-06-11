@@ -21,6 +21,7 @@ public class WebServer {
 
     private static final int DEFAULT_PORT = 8653;
     private static final Path REPORTS_DIR = Paths.get("reports").toAbsolutePath().normalize();
+    private static final Path API_KEY_FILE = REPORTS_DIR.resolve(".apikey");
     private static volatile ScanTask currentTask;
     private static String cachedHtml;
     private static volatile String chatApiKey;
@@ -33,7 +34,12 @@ public class WebServer {
                 port = Integer.parseInt(args[i + 1]);
         }
         String envKey = System.getenv("DEEPSEEK_API_KEY");
-        if (envKey != null && !envKey.isEmpty()) chatApiKey = envKey;
+        if (envKey != null && !envKey.isEmpty()) {
+            chatApiKey = envKey;
+        } else if (Files.exists(API_KEY_FILE)) {
+            String fileKey = Files.readString(API_KEY_FILE, StandardCharsets.UTF_8).trim();
+            if (!fileKey.isEmpty()) chatApiKey = fileKey;
+        }
         Files.createDirectories(REPORTS_DIR);
         cachedHtml = loadHtml();
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
@@ -182,6 +188,7 @@ public class WebServer {
             String key = params.get("key");
             if (key != null && !key.isEmpty()) {
                 chatApiKey = key;
+                Files.writeString(API_KEY_FILE, key, StandardCharsets.UTF_8);
                 sendJson(ex, 200, gson.toJson(Map.of("status", "ok")));
             } else {
                 sendJson(ex, 400, gson.toJson(Map.of("error", "missing key")));
