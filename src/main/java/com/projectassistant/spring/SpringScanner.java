@@ -48,21 +48,6 @@ public class SpringScanner {
             "server\\.servlet\\.context-path\\s*[=:]\\s*\"?([^\"]+)\"?");
 
     // 文档增强 - 参数注解正则
-    private static final Pattern REQUEST_PARAM = Pattern.compile(
-            "@RequestParam\\s*(?:\\([^)]*\\))?");
-    private static final Pattern REQUEST_PARAM_DETAIL = Pattern.compile(
-            "@RequestParam\\s*\\(\\s*(?:" +
-            "(?:value|name)\\s*=\\s*\"([^\"]+)\"\\s*(?:,\\s*required\\s*=\\s*(true|false))?" +
-            "|" +
-            "(?:required\\s*=\\s*(true|false)\\s*(?:,\\s*(?:value|name)\\s*=\\s*\"([^\"]+)\")?)?" +
-            "|" +
-            "([^\\)]+)" +
-            ")?\\s*\\)");
-    private static final Pattern PATH_VARIABLE = Pattern.compile(
-            "@PathVariable\\s*(?:\\([^)]*\\))?");
-    private static final String REQUEST_BODY = "@RequestBody";
-    private static final Pattern REQUEST_HEADER = Pattern.compile(
-            "@RequestHeader\\s*(?:\\([^)]*\\))?");
     private static final Pattern API_OPERATION = Pattern.compile(
             "@ApiOperation\\s*\\([^)]*value\\s*=\\s*\"([^\"]+)\"[^)]*\\)");
     private static final Pattern API_OPERATION_SHORT = Pattern.compile(
@@ -169,10 +154,7 @@ public class SpringScanner {
             if (!rm.find()) continue;
 
             String annName = rm.group(1);
-            // 从注解名推断 HTTP 方法
             String httpMethod = inferHttpMethod(annName, ann);
-
-            // 提取路径
             String methodPath = extractMethodPath(ann);
             String fullPath = normalizePath(classPath + "/" + methodPath);
 
@@ -190,72 +172,94 @@ public class SpringScanner {
             ep.getAnnotations().add(ann);
             ep.setSecured(secured);
 
-            // === 文档增强：解析请求参数、路径变量、请求体等 ===
-            // 先提取 summary（@ApiOperation 或方法名）
+            // === 文档增强 ===
+            // @ApiOperation → summary
             String summary = extractApiSummary(mi);
             ep.setSummary(summary);
-
             // @Deprecated
             ep.setDeprecated(mi.getAnnotations().stream()
                     .anyMatch(a -> a.contains("Deprecated")));
-
-            // 从方法注解中解析参数相关注解
-            List<String> methodAnnotations = mi.getAnnotations();
-            for (String ma : methodAnnotations) {
-                // @RequestParam
-                if (REQUEST_PARAM.matcher(ma).find()) {
-                    String paramName = extractParamName(ma);
-                    String paramType = extractParamJavaType(ma, mi);
-                    boolean required = !ma.contains("required\\s*=\\s*false");
-                    ApiEndpoint.ApiParam p = new ApiEndpoint.ApiParam(
-                            paramName != null ? paramName : "unknown", paramType, required);
-                    if (ma.contains("defaultValue")) {
-                        Matcher dv = Pattern.compile("defaultValue\\s*=\\s*\"([^\"]+)\"").matcher(ma);
-                        if (dv.find()) p.setDefaultValue(dv.group(1));
-                    }
-                    ep.getRequestParams().add(p);
-                }
-                // @PathVariable
-                else if (PATH_VARIABLE.matcher(ma).find()) {
-                    String pvName = extractParamName(ma);
-                    String pvType = extractParamJavaType(ma, mi);
-                    ApiEndpoint.ApiParam p = new ApiEndpoint.ApiParam(
-                            pvName != null ? pvName : "unknown", pvType, true);
-                    ep.getPathVariables().add(p);
-                }
-                // @RequestBody
-                else if (ma.startsWith(REQUEST_BODY) || ma.contains(REQUEST_BODY)) {
-                    String bodyType = extractParamJavaType(ma, mi);
-                    ep.setRequestBodyType(bodyType != null ? bodyType : "Object");
-                }
-                // @RequestHeader
-                else if (REQUEST_HEADER.matcher(ma).find()) {
-                    String hName = extractParamName(ma);
-                    String hType = extractParamJavaType(ma, mi);
-                    boolean reqd = !ma.contains("required\\s*=\\s*false");
-                    ep.getRequestHeaders().add(
-                            new ApiEndpoint.ApiParam(hName != null ? hName : "unknown", hType, reqd));
-                }
-            }
-
             // consmes / produces（从 @RequestMapping 注解中提取）
             Matcher cm = CONSUMES.matcher(ann);
             if (cm.find()) ep.setConsumes(cm.group(1));
             Matcher pm = PRODUCES.matcher(ann);
             if (pm.find()) ep.setProduces(pm.group(1));
 
-            // 从方法参数名列表中推断路径变量的描述性名称
-            if (ep.getPathVariables().isEmpty() && !mi.getParameterNames().isEmpty()) {
-                // 如果没有 @PathVariable 注解，但方法参数名与路径占位符匹配，也补上
-                for (String pn : mi.getParameterNames()) {
+            // === 从方法签名的参数列表推断 params / pathVars / body ===
+            // mi.getParameters()  → 类型列表 ["String", "Integer", "UserDTO"]
+            // mi.getParameterNames() → 名字列表 ["name", "page", "user"]
+            List<String> paramTypes = mi.getParameters();
+            List<String> paramNames = mi.getParameterNames();
+            Set<String> usedNames = new HashSet<>();
+
+            // 1️⃣ 路径变量：匹配 `:name` 占位符
+            if (!paramNames.isEmpty() && fullPath.contains(":")) {
+                for (int pidx = 0; pidx < paramNames.size() && pidx < paramTypes.size(); pidx++) {
+                    String pn = paramNames.get(pidx);
+                    String pt = paramTypes.get(pidx);
                     if (fullPath.contains(":" + pn)) {
-                        ep.getPathVariables().add(
-                                new ApiEndpoint.ApiParam(pn, "String", true));
+                        ep.getPathVariables().add(new ApiEndpoint.ApiParam(pn, pt, true));
+                        usedNames.add(pn);
                     }
                 }
             }
 
+            // 2️⃣ 请求体 / 查询参数：用 HTTP 方法 + 参数类型推断
+            boolean isBodyMethod = httpMethod.equals("POST") || httpMethod.equals("PUT")
+                    || httpMethod.equals("PATCH");
+            for (int pidx = 0; pidx < paramNames.size() && pidx < paramTypes.size(); pidx++) {
+                String pn = paramNames.get(pidx);
+                String pt = paramTypes.get(pidx);
+                if (usedNames.contains(pn)) continue; // 已经是路径变量
+
+                // 简单类型 → 查询参数
+                if (isSimpleType(cleanType(pt))) {
+                    ep.getRequestParams().add(new ApiEndpoint.ApiParam(pn, cleanType(pt), false));
+                }
+                // 复杂类型 + POST/PUT/PATCH → 请求体
+                else if (isBodyMethod && ep.getRequestBodyType() == null) {
+                    ep.setRequestBodyType(cleanType(pt));
+                }
+                // 复杂类型 + GET/DELETE → 查询参数（JSON 对象序列化）
+                else {
+                    ep.getRequestParams().add(new ApiEndpoint.ApiParam(pn, cleanType(pt), false));
+                }
+            }
+
             endpoints.add(ep);
+        }
+    }
+
+    /**
+     * 清理类型字符串：去除注解前缀、空白
+     * "@RequestParam("") Long" -> "Long"
+     * "String" -> "String"
+     * "List<String>" -> "List<String>"
+     */
+    private String cleanType(String type) {
+        if (type == null) return "String";
+        // 去掉前导的注解（以 @ 开头）
+        String cleaned = type.replaceAll("^@[\\w.]+(?:\\([^)]*\\))?\\s*", "").trim();
+        // 去掉尾部多余部分
+        cleaned = cleaned.replaceAll("\\s+$", "");
+        return cleaned.isEmpty() ? "String" : cleaned;
+    }
+
+    /** 判断是否为简单类型（用于区分查询参数和请求体） */
+    private boolean isSimpleType(String type) {
+        if (type == null) return true;
+        String base = type.replaceAll("<[^>]*>", "").replaceAll("\\[\\]", "").trim();
+        switch (base) {
+            case "String": case "int": case "Integer": case "long": case "Long":
+            case "double": case "Double": case "float": case "Float":
+            case "boolean": case "Boolean": case "short": case "Short":
+            case "byte": case "Byte": case "char": case "Character":
+            case "BigDecimal": case "BigInteger":
+            case "Date": case "LocalDate": case "LocalDateTime": case "LocalTime":
+            case "Instant": case "timestamp":
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -288,28 +292,6 @@ public class SpringScanner {
         if (s == null || s.isEmpty()) return "";
         return s.replaceAll("([a-z])([A-Z])", "$1 $2")
                 .replaceAll("([A-Z]+)([A-Z][a-z])", "$1 $2");
-    }
-
-    /**
-     * 从方法注解文本中提取参数名
-     * 支持 @RequestParam("name") 或 @RequestParam(value="name") 或 @RequestParam(name="name")
-     */
-    private String extractParamName(String annotationText) {
-        // 直接值: @RequestParam("name") 或 @PathVariable("name")
-        Matcher m = Pattern.compile("\\(\\s*\"([^\"]+)\"\\s*(?:,|\\))").matcher(annotationText);
-        if (m.find()) return m.group(1);
-        // name= / value=
-        m = Pattern.compile("(?:name|value)\\s*=\\s*\"([^\"]+)\"").matcher(annotationText);
-        return m.find() ? m.group(1) : null;
-    }
-
-    /**
-     * 从方法注解和方法签名推断参数 Java 类型
-     * 通过方法参数名列表和参数类型列表的索引匹配来识别
-     */
-    private String extractParamJavaType(String annotationText, MethodInfo mi) {
-        // 尝试通过方法参数名列表匹配 — 简化实现：返回 String 作为默认
-        return "String";
     }
 
     private String inferHttpMethod(String annName, String annExpr) {
