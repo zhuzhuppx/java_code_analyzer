@@ -48,6 +48,7 @@ public class WebServer {
         server.createContext("/project", WebServer::handleProject);
         server.createContext("/chat", WebServer::handleChat);
         server.createContext("/apikey", WebServer::handleApiKey);
+        server.createContext("/skill", WebServer::handleSkill);
         server.setExecutor(Executors.newFixedThreadPool(4));
         server.start();
         System.out.println("  ProjectAssistant Web started: http://localhost:" + port);
@@ -252,6 +253,50 @@ public class WebServer {
             )));
         } else {
             send405(ex);
+        }
+    }
+
+    private static void handleSkill(HttpExchange ex) throws IOException {
+        String q = ex.getRequestURI().getRawQuery();
+        Map<String, String> qm = parseQuery(q != null ? q : "");
+        String idStr = qm.get("id");
+        if (idStr == null) { sendJson(ex, 400, gson.toJson(Map.of("error", "missing id"))); return; }
+        try {
+            long id = Long.parseLong(idStr);
+            Map<String, Object> data = DatabaseManager.getProject(id);
+            String kb = data != null && data.containsKey("kb") ? (String) data.get("kb") : null;
+            String path = data != null && data.containsKey("path") ? (String) data.get("path") : "unknown";
+            if (kb == null || kb.isEmpty()) {
+                sendJson(ex, 404, gson.toJson(Map.of("error", "no knowledge base found for this project")));
+                return;
+            }
+            // Extract project name from path
+            String projectName = Paths.get(path).getFileName().toString();
+            if (projectName == null || projectName.isEmpty()) projectName = "project";
+            // Remove the "# 项目知识库" title from kb to avoid duplication
+            String body = kb.replaceFirst("^# 项目知识库\\s*", "");
+            body = body.replaceFirst("^> 由 ProjectAssistant 自动生成.*?(\\n|$)", "");
+            String skill = "---\n"
+                + "name: " + projectName + "\n"
+                + "description: \"" + projectName + " 项目知识库\"\n"
+                + "metadata:\n"
+                + "  copaw:\n"
+                + "    emoji: \"\\uD83D\\uDCE6\"\n"
+                + "    requires: {}\n"
+                + "---\n\n"
+                + "当用户询问本项目相关的任何问题时，优先使用以下信息回答。\n\n"
+                + body;
+            String filename = projectName + "_SKILL.md";
+            byte[] b = skill.getBytes(StandardCharsets.UTF_8);
+            ex.getResponseHeaders().add("Content-Type", "text/markdown; charset=utf-8");
+            ex.getResponseHeaders().add("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+            ex.getResponseHeaders().add("Cache-Control", "no-cache, no-store, must-revalidate");
+            ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            ex.sendResponseHeaders(200, b.length);
+            ex.getResponseBody().write(b);
+            ex.getResponseBody().close();
+        } catch (NumberFormatException e) {
+            sendJson(ex, 400, gson.toJson(Map.of("error", "invalid id")));
         }
     }
 
