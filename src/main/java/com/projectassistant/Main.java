@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * ProjectAssistant - 主入口
+ * Java老狗 - 主入口
  *
  * 彻底理解 Java 项目，像老狗一样熟悉代码
  *
@@ -78,7 +78,7 @@ public class Main {
         }
 
         System.out.println("╔══════════════════════════════════════════╗");
-        System.out.println("║  ProjectAssistant - Java 老狗级项目理解  ║");
+        System.out.println("║  Java老狗 - 像老狗一样熟悉代码         ║");
         System.out.println("╚══════════════════════════════════════════╝");
         System.out.println("\n扫描项目: " + Paths.get(projectPath).toAbsolutePath().normalize());
 

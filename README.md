@@ -1,8 +1,8 @@
-# 🔍 ProjectAssistant
+# 🔍 Java老狗
 
-**比程序员更懂项目** — 智能 Java 项目工程扫描器
+**像老狗一样熟悉代码** — 智能 Java 项目工程扫描器
 
-ProjectAssistant 是一款深度理解 Java 项目的静态分析工具。它不仅能扫描类结构、Spring 配置、API 端点、SQL 映射、调用链，还能将扫描结果转化为**大模型可直接理解的知识库**，支持 DeepSeek 对话问答，并自带 Web UI，让你像聊代码一样跟项目对话。
+Java老狗 是一款深度理解 Java 项目的静态分析工具。它不仅能扫描类结构、Spring 配置、API 端点、SQL 映射、调用链，还能将扫描结果转化为**大模型可直接理解的知识库**，支持 DeepSeek 对话问答，并自带 Web UI，让你像聊代码一样跟项目对话。
 
 ---
 
@@ -164,7 +164,7 @@ java_code_analyzer/
 
 ### 接手遗留项目
 
-新接手一个不熟悉的 Java 项目？ProjectAssistant 能在一分钟内告诉你：
+新接手一个不熟悉的 Java 项目？Java老狗 能在一分钟内告诉你：
 - 项目用了什么框架（Spring Boot、MyBatis、JPA...）
 - 有多少个 Controller、Service、配置类
 - 数据库表结构是什么样的
@@ -227,4 +227,4 @@ MIT License — 详见 [LICENSE](LICENSE) 文件。
 
 ---
 
-> **ProjectAssistant** — 不是代码搜索，是代码理解。
+> **Java老狗** — 不是代码搜索，是代码理解。

@@ -46,7 +46,7 @@ public class KnowledgeBaseGenerator {
 
     private void preamble() {
         sb.append("# 项目知识库\n\n");
-        sb.append("> 由 ProjectAssistant 自动生成，专为大模型理解优化\n");
+        sb.append("> 由 Java老狗 自动生成，专为大模型理解优化\n");
         sb.append("> 生成时间: ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
           .append("\n\n---\n\n");
     }
@@ -533,7 +533,7 @@ public class KnowledgeBaseGenerator {
         sb.append("| 帮我加个接口 | 9. 业务流 / 7. 关键类 |\n");
         sb.append("| 这个类的字段和注解？ | 8. 类全量信息 |\n");
         sb.append("| 这个配置是什么意思？ | 10. 配置 |\n\n");
-        sb.append("---\n> 知识库由 ProjectAssistant 生成 | 配合大模型使用效果更佳\n");
+        sb.append("---\n> 知识库由 Java老狗 生成 | 配合大模型使用效果更佳\n");
     }
 
     private String shorten(String s) {
@@ -582,7 +582,7 @@ public class KnowledgeBaseGenerator {
 
         // 项目知识正文：内容和 generate() 一致，但多了 agent 使用提示
         md.append("# ").append(project.getProjectName()).append(" 项目知识库\n\n");
-        md.append("> 由 ProjectAssistant 自动生成 | ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))).append("\n\n");
+        md.append("> 由 Java老狗 自动生成 | ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))).append("\n\n");
         md.append("当用户询问本项目相关的任何问题时，优先使用以下信息回答。\n\n");
 
         // === 1. 概览 ===
@@ -828,7 +828,7 @@ public class KnowledgeBaseGenerator {
         md.append("| 改这个字段影响哪？ | 5. Bean / 6. 调用链 |\n");
         md.append("| 帮我加个接口 | 8. 业务流 / 7. 关键类 |\n");
         md.append("| 这个配置是什么意思？ | 9. 配置 |\n\n");
-        md.append("---\n> 由 ProjectAssistant 生成 | 安装命令: `copaw skill install <this-dir>`\n");
+        md.append("---\n> 由 Java老狗 生成 | 安装命令: `copaw skill install <this-dir>`\n");
 
         Files.writeString(skillDir.resolve("SKILL.md"), md.toString());
         System.out.println("  ✅ 项目 Skill 已生成: " + skillDir.toAbsolutePath());

@@ -51,7 +51,7 @@ public class WebServer {
         server.createContext("/skill", WebServer::handleSkill);
         server.setExecutor(Executors.newFixedThreadPool(4));
         server.start();
-        System.out.println("  ProjectAssistant Web started: http://localhost:" + port);
+        System.out.println("  Java老狗 Web started: http://localhost:" + port);
     }
 
     private static void handleRoot(HttpExchange ex) throws IOException {
@@ -275,7 +275,7 @@ public class WebServer {
             if (projectName == null || projectName.isEmpty()) projectName = "project";
             // Remove the "# 项目知识库" title from kb to avoid duplication
             String body = kb.replaceFirst("^# 项目知识库\\s*", "");
-            body = body.replaceFirst("^> 由 ProjectAssistant 自动生成.*?(\\n|$)", "");
+            body = body.replaceFirst("^> 由 Java老狗 自动生成.*?(\\n|$)", "");
             String skill = "---\n"
                 + "name: " + projectName + "\n"
                 + "description: \"" + projectName + " 项目知识库\"\n"

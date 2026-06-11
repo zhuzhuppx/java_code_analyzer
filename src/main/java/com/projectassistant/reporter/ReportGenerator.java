@@ -494,6 +494,6 @@ public class ReportGenerator {
 
     private void writeFooter() {
         md.append("\n---\n");
-        md.append("> *由 ProjectAssistant 扫描器自动生成 *\n");
+        md.append("> *由 Java老狗 扫描器自动生成 *\n");
     }
 }
