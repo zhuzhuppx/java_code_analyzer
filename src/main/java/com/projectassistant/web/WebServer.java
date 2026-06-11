@@ -13,9 +13,12 @@ import java.net.*;
 import java.net.http.*;
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import com.google.gson.*;
 
 public class WebServer {
@@ -286,14 +289,24 @@ public class WebServer {
                 + "---\n\n"
                 + "当用户询问本项目相关的任何问题时，优先使用以下信息回答。\n\n"
                 + body;
-            String filename = "SKILL.md";
-            byte[] b = skill.getBytes(StandardCharsets.UTF_8);
-            ex.getResponseHeaders().add("Content-Type", "text/markdown; charset=utf-8");
-            ex.getResponseHeaders().add("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+
+            // Build zip in memory
+            String zipName = projectName + "_" + LocalDate.now().toString() + ".zip";
+            byte[] skillBytes = skill.getBytes(StandardCharsets.UTF_8);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+                zos.putNextEntry(new ZipEntry("SKILL.md"));
+                zos.write(skillBytes);
+                zos.closeEntry();
+            }
+            byte[] zipBytes = baos.toByteArray();
+
+            ex.getResponseHeaders().add("Content-Type", "application/zip");
+            ex.getResponseHeaders().add("Content-Disposition", "attachment; filename=\"" + zipName + "\"");
             ex.getResponseHeaders().add("Cache-Control", "no-cache, no-store, must-revalidate");
             ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-            ex.sendResponseHeaders(200, b.length);
-            ex.getResponseBody().write(b);
+            ex.sendResponseHeaders(200, zipBytes.length);
+            ex.getResponseBody().write(zipBytes);
             ex.getResponseBody().close();
         } catch (NumberFormatException e) {
             sendJson(ex, 400, gson.toJson(Map.of("error", "invalid id")));
