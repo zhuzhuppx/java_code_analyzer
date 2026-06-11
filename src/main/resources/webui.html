@@ -69,12 +69,16 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .cm.l .tx code{background:#f1f5f9;padding:1px 3px;border-radius:2px;font-size:12px}
 .cm.l .tx pre{background:#1e293b;color:#e2e8f0;padding:8px 12px;border-radius:6px;overflow-x:auto;font-size:11px;margin:4px 0}
 .cm.l .tx p{margin:2px 0}
-.chf{display:flex;gap:10px;padding:14px 20px;border-top:1px solid #e2e8f0;flex-shrink:0;background:#fff}
-.chf textarea{flex:1;padding:12px 20px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:15px;outline:none;background:#f8fafc;font-family:inherit;line-height:1.4;min-height:44px;max-height:120px;resize:vertical}
+.chf{display:flex;gap:10px;padding:14px 20px;border-top:none;flex-shrink:0;background:#fff;min-height:60px}
+.chf textarea{flex:1;padding:12px 20px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:15px;outline:none;background:#f8fafc;font-family:inherit;line-height:1.4;min-height:40px}
 .chf textarea:focus{border-color:#6366f1;background:#fff}
 .chf button{width:44px;height:44px;border:none;border-radius:50%;background:#6366f1;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;align-self:flex-end}
 .chf button:hover{box-shadow:0 2px 8px rgba(99,102,241,.3)}
 .chf button:disabled{opacity:.4;cursor:not-allowed}
+/* Drag handle between chat and input */
+.dr{height:6px;cursor:row-resize;flex-shrink:0;position:relative;z-index:5}
+.dr::after{content:'';display:block;height:3px;width:40px;background:#cbd5e1;border-radius:2px;position:absolute;top:1.5px;left:50%;transform:translateX(-50%);transition:background .15s,width .15s}
+.dr:hover::after,.dr:active::after{background:#6366f1;width:60px}
 .chp{text-align:center;padding:30px 0;color:#94a3b8;font-size:13px}
 </style></head>
 <body style="display:flex;flex-direction:column;height:100vh">
@@ -94,6 +98,7 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <div class="rp" id="rp">
 <div class="ch"><div class="chh"><span>&#x1F4AC; 对话</span><button onclick="cc()">&#x1F5D1; 清除</button></div>
 <div class="chb" id="chb"><div class="chp">&#x1F50D; 输入路径开始扫描，进度会显示在这里</div></div>
+<div class="dr" id="cdr"></div>
 <div class="chf"><textarea id="chq" placeholder="询问项目... (Enter发送, Shift+Enter换行)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ask()}" disabled></textarea>
 <button onclick="ask()" id="sbb" disabled>&#x27A1;</button></div></div></div>
 </div>
@@ -127,6 +132,7 @@ b.innerHTML+='<div class="cm l"><div class="av">&#x1F40B;</div><div class="tx" i
 fetch('/chat',{method:'POST',body:'question='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}}).then(r=>r.json()).then(function(d){var e=document.getElementById('lrp');if(e){e.innerHTML=d.reply?md(d.reply):(d.error||'失败');sc()}}).catch(function(){var e=document.getElementById('lrp');if(e)e.innerHTML='网络错误';sc()})}
 function cc(){document.getElementById('chb').innerHTML='<div class="chp">对话已清除</div>'}
 function tp(){var lp=document.getElementById('lp');lp.classList.toggle('c');document.getElementById('ltg').innerHTML=lp.classList.contains('c')?'&#x25B6;':'&#x25C0;'}
-function dr(){var h=document.getElementById('rh'),l=document.getElementById('lp'),t=document.getElementById('ltg'),s=null;function m(e){if(!s)return;var n=Math.max(160,Math.min(500,s+e.clientX-h.getBoundingClientRect().left));l.style.width=n+'px';t.style.left=n+'px'}h.addEventListener('mousedown',function(e){s=l.offsetWidth;document.body.style.cursor='col-resize';document.body.style.userSelect='none';document.addEventListener('mousemove',m);document.addEventListener('mouseup',function(){s=null;document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',m)},{once:true})})}
-dr();ck();lr();
+function dr(){var h=document.getElementById('rh'),l=document.getElementById('lp'),t=document.getElementById('ltg'),s=null;function m(e){if(!s)return;var n=Math.max(309,Math.min(600,s+e.clientX-h.getBoundingClientRect().left));l.style.width=n+'px';t.style.left=n+'px'}h.addEventListener('mousedown',function(e){s=l.offsetWidth;document.body.style.cursor='col-resize';document.body.style.userSelect='none';document.addEventListener('mousemove',m);document.addEventListener('mouseup',function(){s=null;document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',m)},{once:true})})}
+function vdr(){var h=document.getElementById('cdr'),f=document.getElementById('chf'),s=null;function m(e){if(!s)return;var n=Math.max(60,Math.min(300,s-(e.clientY-h.getBoundingClientRect().top)));f.style.height=n+'px'}h.addEventListener('mousedown',function(e){s=f.offsetHeight;document.body.style.cursor='row-resize';document.body.style.userSelect='none';document.addEventListener('mousemove',m);document.addEventListener('mouseup',function(){s=null;document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',m)},{once:true})})}
+dr();vdr();ck();lr();
 </script></body></html>
