@@ -18,6 +18,8 @@ public class DatabaseManager {
 
     public static synchronized void init() throws SQLException, IOException {
         Files.createDirectories(DB_DIR);
+        try { Class.forName("org.h2.Driver"); }
+        catch (ClassNotFoundException e) { throw new SQLException("H2 driver not found in classpath", e); }
         conn = DriverManager.getConnection(DB_URL, "sa", "");
         try (Statement st = conn.createStatement()) {
             st.execute("CREATE TABLE IF NOT EXISTS projects (" +
