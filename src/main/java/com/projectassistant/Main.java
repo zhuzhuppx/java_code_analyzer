@@ -28,6 +28,7 @@ import java.util.Scanner;
  *
  * 用法:
  *   java com.projectassistant.Main <项目路径> [格式|--ask "问题"|--chat]
+ *   java com.projectassistant.Main --web             启动内嵌 Web 版本
  *
  * 格式:
  *   markdown          - Markdown 报告 (默认)
@@ -35,12 +36,22 @@ import java.util.Scanner;
  *   knowledge         - 知识库 (专为大模型优化)
  *   --ask "问题"      - 扫描后用 DeepSeek 回答
  *   --chat            - 扫描后进入交互式问答
+ *   --web             - 启动 Web UI (浏览器访问)
  */
 public class Main {
 
     public static void main(String[] args) throws Exception {
+        // Web 模式
+        if (args.length >= 1 && "--web".equals(args[0])) {
+            com.projectassistant.web.WebServer.start(args);
+            // 保持主线程存活
+            Object lock = new Object();
+            synchronized (lock) { lock.wait(); }
+            return;
+        }
+
         if (args.length < 1) {
-            System.out.println("用法: java com.projectassistant.Main <项目路径> [格式|--ask \"问题\"|--chat]");
+            System.out.println("用法: java com.projectassistant.Main <项目路径> [格式|--ask \"问题\"|--chat|--web]");
             System.exit(1);
         }
 
