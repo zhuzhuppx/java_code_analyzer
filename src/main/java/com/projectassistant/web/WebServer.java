@@ -1,5 +1,6 @@
 package com.projectassistant.web;
 
+import com.projectassistant.db.DatabaseManager;
 import com.projectassistant.model.ProjectModel;
 import com.projectassistant.scanner.ProjectScanner;
 import com.projectassistant.analyzer.ProjectAnalyzer;
@@ -21,13 +22,12 @@ public class WebServer {
 
     private static final int DEFAULT_PORT = 8653;
     private static final Path REPORTS_DIR = Paths.get("reports").toAbsolutePath().normalize();
-    private static final Path API_KEY_FILE = REPORTS_DIR.resolve(".apikey");
     private static volatile ScanTask currentTask;
     private static String cachedHtml;
     private static volatile String chatApiKey;
     private static final Gson gson = new Gson();
 
-    public static void start(String[] args) throws IOException {
+    public static void start(String[] args) throws Exception {
         int port = DEFAULT_PORT;
         for (int i = 0; i < args.length; i++) {
             if ("--port".equals(args[i]) && i + 1 < args.length)
@@ -36,17 +36,16 @@ public class WebServer {
         String envKey = System.getenv("DEEPSEEK_API_KEY");
         if (envKey != null && !envKey.isEmpty()) {
             chatApiKey = envKey;
-        } else if (Files.exists(API_KEY_FILE)) {
-            String fileKey = Files.readString(API_KEY_FILE, StandardCharsets.UTF_8).trim();
-            if (!fileKey.isEmpty()) chatApiKey = fileKey;
         }
         Files.createDirectories(REPORTS_DIR);
+        DatabaseManager.init();
         cachedHtml = loadHtml();
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", WebServer::handleRoot);
         server.createContext("/scan", WebServer::handleScan);
         server.createContext("/status", WebServer::handleStatus);
-        server.createContext("/reports", WebServer::handleReports);
+        server.createContext("/history", WebServer::handleHistory);
+        server.createContext("/project", WebServer::handleProject);
         server.createContext("/chat", WebServer::handleChat);
         server.createContext("/apikey", WebServer::handleApiKey);
         server.setExecutor(Executors.newFixedThreadPool(4));
@@ -99,6 +98,25 @@ public class WebServer {
             : currentTask.toJson());
     }
 
+    private static void handleHistory(HttpExchange ex) throws IOException {
+        List<Map<String, Object>> list = DatabaseManager.listProjects();
+        sendJson(ex, 200, gson.toJson(list));
+    }
+
+    private static void handleProject(HttpExchange ex) throws IOException {
+        String q = ex.getRequestURI().getRawQuery();
+        Map<String, String> qm = parseQuery(q != null ? q : "");
+        String idStr = qm.get("id");
+        if (idStr == null) { sendJson(ex, 400, gson.toJson(Map.of("error", "missing id"))); return; }
+        try {
+            long id = Long.parseLong(idStr);
+            Map<String, Object> data = DatabaseManager.getProject(id);
+            sendJson(ex, 200, gson.toJson(data));
+        } catch (NumberFormatException e) {
+            sendJson(ex, 400, gson.toJson(Map.of("error", "invalid id")));
+        }
+    }
+
     private static void handleReports(HttpExchange ex) throws IOException {
         String q = ex.getRequestURI().getRawQuery();
         Map<String, String> qm = parseQuery(q != null ? q : "");
@@ -124,6 +142,7 @@ public class WebServer {
         Map<String, String> params = parseQuery(body);
         String question = params.get("question");
         String apiKey = params.get("apiKey");
+        String pidStr = params.get("projectId");
         if (apiKey == null || apiKey.isEmpty()) apiKey = chatApiKey;
         if (apiKey == null || apiKey.isEmpty()) {
             sendJson(ex, 200, gson.toJson(Map.of(
@@ -132,12 +151,24 @@ public class WebServer {
             return;
         }
 
-        // Load knowledge base for context
+        long projectId = -1;
+        if (pidStr != null) { try { projectId = Long.parseLong(pidStr); } catch (NumberFormatException ignored) {} }
+
+        // Save user message
+        if (projectId > 0) DatabaseManager.saveChatMessage(projectId, "user", question);
+
+        // Load knowledge base from DB
         String kbContext = "";
-        Path kbPath = REPORTS_DIR.resolve("knowledge_base.md");
-        if (Files.exists(kbPath)) {
-            try { kbContext = Files.readString(kbPath); }
-            catch (Exception ignored) {}
+        if (projectId > 0) {
+            Map<String, Object> pdata = DatabaseManager.getProject(projectId);
+            if (pdata.containsKey("kb")) kbContext = (String) pdata.get("kb");
+        }
+        // Fallback to file
+        if (kbContext.isEmpty()) {
+            Path kbPath = REPORTS_DIR.resolve("knowledge_base.md");
+            if (Files.exists(kbPath)) {
+                try { kbContext = Files.readString(kbPath); } catch (Exception ignored) {}
+            }
         }
         if (kbContext.length() > 30000)
             kbContext = kbContext.substring(0, 30000) + "\n... (truncated)";
@@ -171,6 +202,10 @@ public class WebServer {
             JsonObject json = JsonParser.parseString(rp.body()).getAsJsonObject();
             String reply = json.getAsJsonArray("choices").get(0).getAsJsonObject()
                 .getAsJsonObject("message").get("content").getAsString();
+
+            // Save AI reply
+            if (projectId > 0) DatabaseManager.saveChatMessage(projectId, "assistant", reply);
+
             sendJson(ex, 200, gson.toJson(Map.of("reply", reply)));
         } catch (Exception e) {
             String m = e.getMessage() != null ? e.getMessage() : "unknown error";
@@ -192,41 +227,40 @@ public class WebServer {
             }
         } else if ("GET".equals(ex.getRequestMethod())) {
             boolean hasKey = chatApiKey != null && !chatApiKey.isEmpty();
-            String src = hasKey
-                ? (System.getenv("DEEPSEEK_API_KEY") != null ? "env" : "manual")
-                : "none";
-            Map<String, Object> resp = new HashMap<>();
-            resp.put("configured", hasKey);
-            resp.put("source", src);
-            sendJson(ex, 200, gson.toJson(resp));
-        } else { send405(ex); }
+            sendJson(ex, 200, gson.toJson(Map.of(
+                "configured", hasKey,
+                "source", hasKey ? "env" : "none"
+            )));
+        } else {
+            send405(ex);
+        }
     }
 
-    // ========== Helpers ==========
+    // ========== Utility ==========
+
+    private static void sendResponse(HttpExchange ex, int code, String contentType, String body) throws IOException {
+        byte[] b = body.getBytes(StandardCharsets.UTF_8);
+        ex.getResponseHeaders().add("Content-Type", contentType);
+        ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        ex.sendResponseHeaders(code, b.length);
+        ex.getResponseBody().write(b);
+        ex.getResponseBody().close();
+    }
 
     private static void sendJson(HttpExchange ex, int code, String json) throws IOException {
         sendResponse(ex, code, "application/json; charset=utf-8", json);
     }
 
-    private static void sendResponse(HttpExchange ex, int code, String contentType, String body) throws IOException {
-        byte[] b = body.getBytes(StandardCharsets.UTF_8);
-        ex.getResponseHeaders().set("Content-Type", contentType);
-        ex.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-        ex.sendResponseHeaders(code, b.length);
-        try (OutputStream os = ex.getResponseBody()) { os.write(b); }
-    }
-
     private static void send404(HttpExchange ex) throws IOException {
-        sendJson(ex, 404, gson.toJson(Map.of("error", "not found")));
+        sendResponse(ex, 404, "text/plain", "404 Not Found");
     }
 
     private static void send405(HttpExchange ex) throws IOException {
-        sendJson(ex, 405, gson.toJson(Map.of("error", "method not allowed")));
+        sendResponse(ex, 405, "text/plain", "405 Method Not Allowed");
     }
 
     private static Map<String, String> parseQuery(String query) {
-        Map<String, String> map = new HashMap<>();
-        if (query == null || query.isEmpty()) return map;
+        Map<String, String> map = new LinkedHashMap<>();
         for (String pair : query.split("&")) {
             int eq = pair.indexOf('=');
             try {
@@ -249,6 +283,7 @@ public class WebServer {
         volatile long startTime;
         volatile int classes, methods, lines, apis, chains, findings, vulns, health;
         volatile String phase;
+        volatile long projectId = -1;
 
         ScanTask(Path projectPath) { this.projectPath = projectPath; }
 
@@ -277,10 +312,31 @@ public class WebServer {
                 health = calcHealth(model, results);
 
                 phase = "Generating report...";
-                String reportFile = REPORTS_DIR.resolve("report.md").toString();
-                new ReportGenerator(model, results).saveReport(reportFile, "markdown");
+                String reportMd = new ReportGenerator(model, results).generateMarkdown();
                 String kbFile = REPORTS_DIR.resolve("knowledge_base.md").toString();
                 new KnowledgeBaseGenerator(model).save(kbFile);
+                String kbContent = Files.readString(Paths.get(kbFile));
+
+                // Save to DB
+                Map<String, Object> stats = new LinkedHashMap<>();
+                stats.put("classes", classes); stats.put("methods", methods);
+                stats.put("lines", lines); stats.put("apis", apis);
+                stats.put("chains", chains); stats.put("findings", findings);
+                stats.put("vulns", vulns); stats.put("health", health);
+                String statsJson = gson.toJson(stats);
+                projectId = DatabaseManager.saveProject(projectPath.toString(), statsJson);
+                if (projectId > 0) {
+                    DatabaseManager.saveKnowledgeBase(projectId, kbContent);
+                    DatabaseManager.saveReport(projectId, "report.md", reportMd);
+                    // Also save other reports
+                    Path knowledgeBasePath = Paths.get(kbFile);
+                    if (Files.exists(knowledgeBasePath)) {
+                        try {
+                            DatabaseManager.saveReport(projectId, "knowledge_base.md",
+                                    Files.readString(knowledgeBasePath));
+                        } catch (Exception ignored) {}
+                    }
+                }
 
                 phase = "Done";
             } catch (Exception e) {
@@ -308,12 +364,12 @@ public class WebServer {
                 m.put("vulns", vulns);
                 m.put("health", health);
             }
+            if (projectId > 0) m.put("projectId", projectId);
             if (running) m.put("phase", phase);
             if (error != null) m.put("message", error);
             return gson.toJson(m);
         }
 
-        // Simplified health score calculation
         private int calcHealth(ProjectModel model, List<AnalysisResult> results) {
             int score = 80;
             if (results != null) {
