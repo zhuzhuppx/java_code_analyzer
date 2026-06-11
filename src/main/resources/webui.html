@@ -19,7 +19,7 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 #akey:hover{background:#f1f5f9}
 
 /* Two-column layout */
-.mn{display:flex;height:calc(100vh - 48px);overflow:hidden}
+.mn{display:flex;height:calc(100vh - 48px);overflow:hidden;position:relative}
 
 /* Left panel - draggable */
 .lp{width:260px;min-width:160px;max-width:500px;display:flex;flex-direction:column;background:#fff;border-right:1px solid #e2e8f0;flex-shrink:0;position:relative}
@@ -27,9 +27,10 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .lp .rg{position:absolute;right:-8px;top:0;bottom:0;width:16px;cursor:col-resize;z-index:10;background:transparent;border:none;display:flex;align-items:center;justify-content:center}
 .lp .rg::after{content:'';display:block;width:4px;height:32px;background:#cbd5e1;border-radius:2px;transition:background .15s}
 .lp .rg:hover::after,.lp .rg:active::after{background:#6366f1;height:48px}
-.lp .tb{position:absolute;right:0;top:50%;transform:translateY(-50%);width:16px;height:40px;background:#e2e8f0;border:none;border-radius:4px 0 0 4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:#64748b;z-index:6}
-.lp .tb:hover{background:#cbd5e1}
-.lp.c .tb{right:auto;left:0;border-radius:0 4px 4px 0}
+/* Toggle button - outside lp to avoid overflow:hidden clip */
+.tb{position:absolute;left:260px;top:50%;transform:translateY(-50%);width:16px;height:40px;background:#e2e8f0;border:none;border-radius:0 4px 4px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:#64748b;z-index:20;transition:left .2s}
+.tb:hover{background:#cbd5e1}
+.lp.c ~ .tb{left:0}
 .lc{display:flex;flex-direction:column;gap:10px;padding:12px;overflow-y:auto;flex:1}
 .ig{display:flex;gap:6px}.ig input{flex:1;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;outline:none}
 .ig input:focus{border-color:#6366f1}
@@ -80,7 +81,7 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <div class="hdr"><h1>&#x1F50D; <em>ProjectAssistant</em></h1><div class="m"><span id="akey" onclick="sk()">&#x1F511; Key</span><span id="sc">0</span></div></div>
 <div class="mn">
 <!-- Left Panel -->
-<div class="lp" id="lp"><button class="rg" id="rh"></button><button class="tb" id="ltg" onclick="tp()">&#x25C0;</button><div class="lc">
+<div class="lp" id="lp"><button class="rg" id="rh"></button><div class="lc">
 <div class="ig"><input id="pi" placeholder="/path/to/project" value="{{DEFAULT_PATH}}" onkeydown="if(event.key==='Enter')scan()">
 <button class="btn btn-p" id="sb" onclick="scan()">&#x1F680;</button></div>
 <div class="st st-i" id="sta">&#x23F3; 输入路径</div>
@@ -88,6 +89,7 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px"><span>&#x1F4C4; 报告</span><button class="btn btn-g bs" onclick="lr()">&#x1F504;</button></div>
 <div class="rl" id="rc"><div class="es">暂无</div></div></div>
 </div></div>
+<button class="tb" id="ltg" onclick="tp()">&#x25C0;</button>
 <!-- Right Panel - Chat Full Height -->
 <div class="rp" id="rp">
 <div class="ch"><div class="chh"><span>&#x1F4AC; 对话</span><button onclick="cc()">&#x1F5D1; 清除</button></div>
@@ -119,6 +121,6 @@ b.innerHTML+='<div class="cm l"><div class="av">&#x1F40B;</div><div class="tx" i
 fetch('/chat',{method:'POST',body:'question='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}}).then(r=>r.json()).then(function(d){var e=document.getElementById('lrp');if(e){e.innerHTML=d.reply?md(d.reply):(d.error||'失败');sc()}}).catch(function(){var e=document.getElementById('lrp');if(e)e.innerHTML='网络错误';sc()})}
 function cc(){document.getElementById('chb').innerHTML='<div class="chp">对话已清除</div>'}
 function tp(){var lp=document.getElementById('lp');lp.classList.toggle('c');document.getElementById('ltg').innerHTML=lp.classList.contains('c')?'&#x25B6;':'&#x25C0;'}
-function dr(){var h=document.getElementById('rh'),l=document.getElementById('lp'),s=null;function m(e){if(!s)return;var n=Math.max(160,Math.min(500,s+e.clientX-h.getBoundingClientRect().left));l.style.width=n+'px'}h.addEventListener('mousedown',function(e){s=l.offsetWidth;document.body.style.cursor='col-resize';document.body.style.userSelect='none';document.addEventListener('mousemove',m);document.addEventListener('mouseup',function(){s=null;document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',m)},{once:true})})}
+function dr(){var h=document.getElementById('rh'),l=document.getElementById('lp'),t=document.getElementById('ltg'),s=null;function m(e){if(!s)return;var n=Math.max(160,Math.min(500,s+e.clientX-h.getBoundingClientRect().left));l.style.width=n+'px';t.style.left=n+'px'}h.addEventListener('mousedown',function(e){s=l.offsetWidth;document.body.style.cursor='col-resize';document.body.style.userSelect='none';document.addEventListener('mousemove',m);document.addEventListener('mouseup',function(){s=null;document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',m)},{once:true})})}
 dr();ck();lr();
 </script></body></html>
