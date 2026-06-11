@@ -150,20 +150,14 @@ public class WebServer {
             )));
             return;
         }
-
         long projectId = -1;
         if (pidStr != null) { try { projectId = Long.parseLong(pidStr); } catch (NumberFormatException ignored) {} }
-
-        // Save user message
         if (projectId > 0) DatabaseManager.saveChatMessage(projectId, "user", question);
-
-        // Load knowledge base from DB
         String kbContext = "";
         if (projectId > 0) {
             Map<String, Object> pdata = DatabaseManager.getProject(projectId);
             if (pdata.containsKey("kb")) kbContext = (String) pdata.get("kb");
         }
-        // Fallback to file
         if (kbContext.isEmpty()) {
             Path kbPath = REPORTS_DIR.resolve("knowledge_base.md");
             if (Files.exists(kbPath)) {
@@ -172,7 +166,11 @@ public class WebServer {
         }
         if (kbContext.length() > 30000)
             kbContext = kbContext.substring(0, 30000) + "\n... (truncated)";
-
+        ex.getResponseHeaders().add("Content-Type", "text/event-stream; charset=utf-8");
+        ex.getResponseHeaders().add("Cache-Control", "no-cache");
+        ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        ex.sendResponseHeaders(200, 0);
+        OutputStream os = ex.getResponseBody();
         try {
             HttpClient client = HttpClient.newHttpClient();
             Map<String, Object> msg1 = new HashMap<>();
@@ -184,33 +182,54 @@ public class WebServer {
             Map<String, Object> reqBody = new HashMap<>();
             reqBody.put("model", "deepseek-v4-flash");
             reqBody.put("messages", Arrays.asList(msg1, msg2));
-            reqBody.put("stream", false);
-
+            reqBody.put("stream", true);
             HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.deepseek.com/chat/completions"))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + apiKey)
                 .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(reqBody)))
                 .build();
-
-            HttpResponse<String> rp = client.send(req, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<InputStream> rp = client.send(req, HttpResponse.BodyHandlers.ofInputStream());
             if (rp.statusCode() != 200) {
-                String err = "API request failed: " + rp.statusCode();
-                sendJson(ex, 200, gson.toJson(Map.of("error", err)));
+                String errBody = new String(rp.body().readAllBytes(), StandardCharsets.UTF_8);
+                sendSseEvent(os, "error", "API error: " + rp.statusCode() + " - " + errBody);
                 return;
             }
-            JsonObject json = JsonParser.parseString(rp.body()).getAsJsonObject();
-            String reply = json.getAsJsonArray("choices").get(0).getAsJsonObject()
-                .getAsJsonObject("message").get("content").getAsString();
-
-            // Save AI reply
-            if (projectId > 0) DatabaseManager.saveChatMessage(projectId, "assistant", reply);
-
-            sendJson(ex, 200, gson.toJson(Map.of("reply", reply)));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(rp.body(), StandardCharsets.UTF_8));
+            StringBuilder fullReply = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.startsWith("data: ")) continue;
+                String data = line.substring(6).trim();
+                if (data.equals("[DONE]")) break;
+                try {
+                    JsonObject json = JsonParser.parseString(data).getAsJsonObject();
+                    JsonArray choices = json.getAsJsonArray("choices");
+                    if (choices == null || choices.isEmpty()) continue;
+                    JsonObject delta = choices.get(0).getAsJsonObject().getAsJsonObject("delta");
+                    if (delta == null || delta.get("content") == null) continue;
+                    String chunk = delta.get("content").getAsString();
+                    fullReply.append(chunk);
+                    sendSseEvent(os, "content", chunk);
+                } catch (Exception ignored) {}
+            }
+            if (projectId > 0 && fullReply.length() > 0) {
+                DatabaseManager.saveChatMessage(projectId, "assistant", fullReply.toString());
+            }
+            sendSseEvent(os, "done", "true");
         } catch (Exception e) {
             String m = e.getMessage() != null ? e.getMessage() : "unknown error";
-            sendJson(ex, 200, gson.toJson(Map.of("error", m)));
+            try { sendSseEvent(os, "error", m); } catch (Exception ignored) {}
+        } finally {
+            try { os.close(); } catch (Exception ignored) {}
         }
+    }
+    private static void sendSseEvent(OutputStream os, String type, String data) throws IOException {
+        Map<String, String> ev = new LinkedHashMap<>();
+        ev.put("type", type);
+        ev.put("data", data);
+        os.write(("data: " + gson.toJson(ev) + "\n\n").getBytes(StandardCharsets.UTF_8));
+        os.flush();
     }
 
     private static void handleApiKey(HttpExchange ex) throws IOException {
