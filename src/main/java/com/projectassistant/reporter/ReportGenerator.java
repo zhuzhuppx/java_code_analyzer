@@ -209,7 +209,7 @@ public class ReportGenerator {
         md.append("| **构建工具** | ").append(project.getBuildType()).append(" |\n\n");
     }
 
-    /** API 路由全景 */
+    /** API 路由全景 — 增强版：按 Controller 分组，含参数和描述 */
     private void writeApiEndpoints() {
         List<ApiEndpoint> endpoints = project.getApiEndpoints();
         if (endpoints.isEmpty()) {
@@ -217,17 +217,70 @@ public class ReportGenerator {
             return;
         }
         md.append("## API 路由全景 (").append(endpoints.size()).append(" 个端点)\n\n");
-        md.append("| 方法 | 路径 | Controller | 方法 | 安全 |\n");
-        md.append("|---|---|---|---|---|\n");
-        for (ApiEndpoint ep : endpoints) {
-            md.append("| ").append(ep.getHttpMethod())
-              .append(" | `").append(ep.getPath()).append("`")
-              .append(" | ").append(ep.getControllerClass())
-              .append(" | `").append(ep.getMethodName()).append("()`")
-              .append(" | ").append(ep.isSecured() ? "需要认证" : "-")
-              .append(" |\n");
+
+        // 按 Controller 分组
+        Map<String, List<ApiEndpoint>> byController = endpoints.stream()
+                .collect(Collectors.groupingBy(ApiEndpoint::getControllerClass, LinkedHashMap::new, Collectors.toList()));
+
+        md.append("| Controller | 接口数 | 路径前缀 |\n");
+        md.append("|---|---|---|\n");
+        for (Map.Entry<String, List<ApiEndpoint>> entry : byController.entrySet()) {
+            String ctrl = entry.getKey();
+            List<ApiEndpoint> eps = entry.getValue();
+            String shortName = ctrl.substring(ctrl.lastIndexOf('.') + 1);
+            // 取第一个有意义的公共路径前缀
+            String prefix = eps.stream()
+                    .map(ApiEndpoint::getPath)
+                    .filter(p -> p != null && p.length() > 1)
+                    .findFirst().orElse("/");
+            if (prefix.length() > 8) prefix = prefix.substring(0, 8) + "…";
+            md.append("| `").append(shortName).append("`").append(" | ").append(eps.size())
+              .append(" | ").append(prefix).append(" |\n");
         }
         md.append("\n");
+
+        // 详表：每个 Controller 的端口详情
+        for (Map.Entry<String, List<ApiEndpoint>> entry : byController.entrySet()) {
+            String ctrl = entry.getKey();
+            List<ApiEndpoint> eps = entry.getValue();
+            String shortName = ctrl.substring(ctrl.lastIndexOf('.') + 1);
+
+            md.append("### ").append(shortName).append("\n\n");
+            md.append("> `").append(ctrl).append("` — ").append(eps.size()).append(" 个接口\n\n");
+            md.append("| 方法 | 路径 | 方法 | 返回类型 | 参数 | 安全 |\n");
+            md.append("|---|---|---|---|---|---|\n");
+
+            for (ApiEndpoint ep : eps) {
+                // 构造参数描述
+                List<String> paramParts = new ArrayList<>();
+                for (ApiEndpoint.ApiParam pv : ep.getPathVariables()) {
+                    paramParts.add("{" + pv.getName() + "}");
+                }
+                for (ApiEndpoint.ApiParam rp : ep.getRequestParams()) {
+                    paramParts.add(rp.getName() + (rp.isRequired() ? "" : "?"));
+                }
+                if (ep.getRequestBodyType() != null) {
+                    paramParts.add("body:" + ep.getRequestBodyType().replaceAll(".*\\.", ""));
+                }
+                String paramStr = paramParts.isEmpty() ? "-" : String.join(", ", paramParts);
+                if (paramStr.length() > 60) paramStr = paramStr.substring(0, 60) + "…";
+
+                String retType = ep.getReturnType() != null && !ep.getReturnType().equals("void")
+                        ? ep.getReturnType().replaceAll(".*\\.", "") : "-";
+
+                String summary = ep.getSummary() != null ? ep.getSummary() : ep.getMethodName();
+                if (ep.isDeprecated()) summary += " ⚠️废弃";
+
+                md.append("| ").append(ep.getHttpMethod())
+                  .append(" | `").append(ep.getPath()).append("`")
+                  .append(" | ").append(summary)
+                  .append(" | ").append(retType)
+                  .append(" | ").append(paramStr)
+                  .append(" | ").append(ep.isSecured() ? "🔒" : "")
+                  .append(" |\n");
+            }
+            md.append("\n");
+        }
     }
 
     /** Bean 依赖图 */

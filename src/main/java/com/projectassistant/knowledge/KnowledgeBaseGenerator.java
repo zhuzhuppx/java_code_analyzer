@@ -153,15 +153,80 @@ public class KnowledgeBaseGenerator {
         List<ApiEndpoint> endpoints = project.getApiEndpoints();
         if (endpoints.isEmpty()) { sb.append("## 3. API 路由\n\n无 API 端点。\n\n"); return; }
         sb.append("## 3. API 路由大全 (").append(endpoints.size()).append(" 个)\n\n");
-        sb.append("| # | 方法 | 路径 | Controller | 方法 |\n|---|---|---|---|---|\n");
-        int idx = 1;
-        for (ApiEndpoint ep : endpoints) {
-            sb.append("| ").append(idx++).append(" | ").append(ep.getHttpMethod())
-              .append(" | `").append(ep.getPath()).append("`")
-              .append(" | ").append(ep.getControllerClass())
-              .append(" | `").append(ep.getMethodName()).append("()` |\n");
+
+        // 按 Controller 分组
+        Map<String, List<ApiEndpoint>> byController = endpoints.stream()
+                .collect(Collectors.groupingBy(ApiEndpoint::getControllerClass, LinkedHashMap::new, Collectors.toList()));
+
+        for (Map.Entry<String, List<ApiEndpoint>> entry : byController.entrySet()) {
+            String controller = entry.getKey();
+            List<ApiEndpoint> eps = entry.getValue();
+            String shortName = controller.substring(controller.lastIndexOf('.') + 1);
+            sb.append("### ").append(shortName).append("\n\n");
+            sb.append("> `").append(controller).append("` — ").append(eps.size()).append(" 个接口\n\n");
+
+            for (ApiEndpoint ep : eps) {
+                // 摘要行
+                sb.append("- **").append(ep.getHttpMethod()).append("** `").append(ep.getPath()).append("`");
+                if (ep.getSummary() != null && !ep.getSummary().isEmpty()) {
+                    sb.append(" — ").append(ep.getSummary());
+                }
+                if (ep.isDeprecated()) sb.append(" ⚠️**已废弃**");
+                sb.append("\n");
+                sb.append("  - 方法: `").append(ep.getMethodName()).append("()`");
+                if (ep.getReturnType() != null && !ep.getReturnType().equals("void")) {
+                    sb.append(" → ").append(ep.getReturnType());
+                }
+                sb.append("\n");
+
+                // 路径变量
+                if (!ep.getPathVariables().isEmpty()) {
+                    sb.append("  - 路径参数: ");
+                    sb.append(ep.getPathVariables().stream()
+                            .map(p -> "`" + p.getName() + ": " + p.getType() + "`")
+                            .collect(Collectors.joining(", ")));
+                    sb.append("\n");
+                }
+
+                // 查询参数
+                if (!ep.getRequestParams().isEmpty()) {
+                    sb.append("  - 查询参数: ");
+                    sb.append(ep.getRequestParams().stream()
+                            .map(p -> "`" + p.getName() + ": " + p.getType() + "`"
+                                    + (p.isRequired() ? "" : " (可选)")
+                                    + (p.getDefaultValue() != null ? " = " + p.getDefaultValue() : ""))
+                            .collect(Collectors.joining(", ")));
+                    sb.append("\n");
+                }
+
+                // 请求体
+                if (ep.getRequestBodyType() != null) {
+                    sb.append("  - 请求体: `").append(ep.getRequestBodyType()).append("`\n");
+                }
+
+                // 请求头
+                if (!ep.getRequestHeaders().isEmpty()) {
+                    sb.append("  - 请求头: ");
+                    sb.append(ep.getRequestHeaders().stream()
+                            .map(p -> "`" + p.getName() + ": " + p.getType() + "`")
+                            .collect(Collectors.joining(", ")));
+                    sb.append("\n");
+                }
+
+                // consumes/produces
+                if (ep.getConsumes() != null || ep.getProduces() != null) {
+                    sb.append("  - 媒体类型: ");
+                    if (ep.getConsumes() != null) sb.append("请求: `").append(ep.getConsumes()).append("`");
+                    if (ep.getConsumes() != null && ep.getProduces() != null) sb.append(" ");
+                    if (ep.getProduces() != null) sb.append("响应: `").append(ep.getProduces()).append("`");
+                    sb.append("\n");
+                }
+
+                // 安全
+                if (ep.isSecured()) sb.append("  - 🔒 需认证\n");
+            }
+            sb.append("\n");
         }
-        sb.append("\n");
     }
 
     private void databaseSchema() {
@@ -564,9 +629,43 @@ public class KnowledgeBaseGenerator {
         md.append("## 3. API\n\n");
         if (eps.isEmpty()) { md.append("（无）\n\n"); }
         else {
-            md.append("| 方法 | 路径 | Controller | 方法 |\n|---|---|---|---|\n");
-            for (ApiEndpoint ep : eps) md.append("| ").append(ep.getHttpMethod()).append(" | `").append(ep.getPath()).append("` | ").append(ep.getControllerClass()).append(" | `").append(ep.getMethodName()).append("` |\n");
-            md.append("\n");
+            // 按 Controller 分组
+            Map<String, List<ApiEndpoint>> byCtrl = eps.stream()
+                    .collect(Collectors.groupingBy(ApiEndpoint::getControllerClass, LinkedHashMap::new, Collectors.toList()));
+            for (Map.Entry<String, List<ApiEndpoint>> e : byCtrl.entrySet()) {
+                String ctrl = e.getKey();
+                String shortName = ctrl.substring(ctrl.lastIndexOf('.') + 1);
+                md.append("### ").append(shortName).append("\n\n");
+                md.append("> `").append(ctrl).append("` — ").append(e.getValue().size()).append(" 个接口\n\n");
+                for (ApiEndpoint ep : e.getValue()) {
+                    md.append("- **").append(ep.getHttpMethod()).append("** `").append(ep.getPath()).append("`");
+                    if (ep.getSummary() != null && !ep.getSummary().isEmpty()) {
+                        md.append(" — ").append(ep.getSummary());
+                    }
+                    if (ep.isDeprecated()) md.append(" ⚠️已废弃");
+                    md.append("\n");
+                    if (ep.getReturnType() != null && !ep.getReturnType().equals("void")) {
+                        md.append("  - 返回: ").append(ep.getReturnType()).append("\n");
+                    }
+                    if (!ep.getPathVariables().isEmpty()) {
+                        md.append("  - 路径参数: ").append(ep.getPathVariables().stream()
+                                .map(p -> "`" + p.getName() + ": " + p.getType() + "`")
+                                .collect(Collectors.joining(", "))).append("\n");
+                    }
+                    if (!ep.getRequestParams().isEmpty()) {
+                        md.append("  - 查询参数: ").append(ep.getRequestParams().stream()
+                                .map(p -> "`" + p.getName() + ": " + p.getType() + "`"
+                                        + (p.isRequired() ? "" : " (可选)")
+                                        + (p.getDefaultValue() != null ? " = " + p.getDefaultValue() : ""))
+                                .collect(Collectors.joining(", "))).append("\n");
+                    }
+                    if (ep.getRequestBodyType() != null) {
+                        md.append("  - 请求体: `").append(ep.getRequestBodyType()).append("`\n");
+                    }
+                    if (ep.isSecured()) md.append("  - 🔒 需认证\n");
+                }
+                md.append("\n");
+            }
         }
 
         // === 4. 数据库 ===

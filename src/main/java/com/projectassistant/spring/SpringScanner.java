@@ -47,6 +47,31 @@ public class SpringScanner {
     private static final Pattern CONTEXT_PATH = Pattern.compile(
             "server\\.servlet\\.context-path\\s*[=:]\\s*\"?([^\"]+)\"?");
 
+    // 文档增强 - 参数注解正则
+    private static final Pattern REQUEST_PARAM = Pattern.compile(
+            "@RequestParam\\s*(?:\\([^)]*\\))?");
+    private static final Pattern REQUEST_PARAM_DETAIL = Pattern.compile(
+            "@RequestParam\\s*\\(\\s*(?:" +
+            "(?:value|name)\\s*=\\s*\"([^\"]+)\"\\s*(?:,\\s*required\\s*=\\s*(true|false))?" +
+            "|" +
+            "(?:required\\s*=\\s*(true|false)\\s*(?:,\\s*(?:value|name)\\s*=\\s*\"([^\"]+)\")?)?" +
+            "|" +
+            "([^\\)]+)" +
+            ")?\\s*\\)");
+    private static final Pattern PATH_VARIABLE = Pattern.compile(
+            "@PathVariable\\s*(?:\\([^)]*\\))?");
+    private static final String REQUEST_BODY = "@RequestBody";
+    private static final Pattern REQUEST_HEADER = Pattern.compile(
+            "@RequestHeader\\s*(?:\\([^)]*\\))?");
+    private static final Pattern API_OPERATION = Pattern.compile(
+            "@ApiOperation\\s*\\([^)]*value\\s*=\\s*\"([^\"]+)\"[^)]*\\)");
+    private static final Pattern API_OPERATION_SHORT = Pattern.compile(
+            "@ApiOperation\\s*\\(\"([^\"]+)\"\\)");
+    private static final Pattern CONSUMES = Pattern.compile(
+            "consumes\\s*=\\s*\"([^\"]+)\"");
+    private static final Pattern PRODUCES = Pattern.compile(
+            "produces\\s*=\\s*\"([^\"]+)\"");
+
     public SpringScanner(List<ClassInfo> classes) {
         this.classes = classes;
     }
@@ -164,8 +189,127 @@ public class SpringScanner {
             ep.getParameters().addAll(mi.getParameterNames());
             ep.getAnnotations().add(ann);
             ep.setSecured(secured);
+
+            // === 文档增强：解析请求参数、路径变量、请求体等 ===
+            // 先提取 summary（@ApiOperation 或方法名）
+            String summary = extractApiSummary(mi);
+            ep.setSummary(summary);
+
+            // @Deprecated
+            ep.setDeprecated(mi.getAnnotations().stream()
+                    .anyMatch(a -> a.contains("Deprecated")));
+
+            // 从方法注解中解析参数相关注解
+            List<String> methodAnnotations = mi.getAnnotations();
+            for (String ma : methodAnnotations) {
+                // @RequestParam
+                if (REQUEST_PARAM.matcher(ma).find()) {
+                    String paramName = extractParamName(ma);
+                    String paramType = extractParamJavaType(ma, mi);
+                    boolean required = !ma.contains("required\\s*=\\s*false");
+                    ApiEndpoint.ApiParam p = new ApiEndpoint.ApiParam(
+                            paramName != null ? paramName : "unknown", paramType, required);
+                    if (ma.contains("defaultValue")) {
+                        Matcher dv = Pattern.compile("defaultValue\\s*=\\s*\"([^\"]+)\"").matcher(ma);
+                        if (dv.find()) p.setDefaultValue(dv.group(1));
+                    }
+                    ep.getRequestParams().add(p);
+                }
+                // @PathVariable
+                else if (PATH_VARIABLE.matcher(ma).find()) {
+                    String pvName = extractParamName(ma);
+                    String pvType = extractParamJavaType(ma, mi);
+                    ApiEndpoint.ApiParam p = new ApiEndpoint.ApiParam(
+                            pvName != null ? pvName : "unknown", pvType, true);
+                    ep.getPathVariables().add(p);
+                }
+                // @RequestBody
+                else if (ma.startsWith(REQUEST_BODY) || ma.contains(REQUEST_BODY)) {
+                    String bodyType = extractParamJavaType(ma, mi);
+                    ep.setRequestBodyType(bodyType != null ? bodyType : "Object");
+                }
+                // @RequestHeader
+                else if (REQUEST_HEADER.matcher(ma).find()) {
+                    String hName = extractParamName(ma);
+                    String hType = extractParamJavaType(ma, mi);
+                    boolean reqd = !ma.contains("required\\s*=\\s*false");
+                    ep.getRequestHeaders().add(
+                            new ApiEndpoint.ApiParam(hName != null ? hName : "unknown", hType, reqd));
+                }
+            }
+
+            // consmes / produces（从 @RequestMapping 注解中提取）
+            Matcher cm = CONSUMES.matcher(ann);
+            if (cm.find()) ep.setConsumes(cm.group(1));
+            Matcher pm = PRODUCES.matcher(ann);
+            if (pm.find()) ep.setProduces(pm.group(1));
+
+            // 从方法参数名列表中推断路径变量的描述性名称
+            if (ep.getPathVariables().isEmpty() && !mi.getParameterNames().isEmpty()) {
+                // 如果没有 @PathVariable 注解，但方法参数名与路径占位符匹配，也补上
+                for (String pn : mi.getParameterNames()) {
+                    if (fullPath.contains(":" + pn)) {
+                        ep.getPathVariables().add(
+                                new ApiEndpoint.ApiParam(pn, "String", true));
+                    }
+                }
+            }
+
             endpoints.add(ep);
         }
+    }
+
+    /**
+     * 从 @ApiOperation 或方法名中提取 API 摘要
+     */
+    private String extractApiSummary(MethodInfo mi) {
+        for (String ann : mi.getAnnotations()) {
+            Matcher m = API_OPERATION.matcher(ann);
+            if (m.find()) return m.group(1);
+            m = API_OPERATION_SHORT.matcher(ann);
+            if (m.find()) return m.group(1);
+        }
+        // 从方法名反推：camelCase -> 自然语言
+        String name = mi.getName();
+        if (name.startsWith("get") && name.length() > 3) return "查询" + decamelize(name.substring(3));
+        if (name.startsWith("save") || name.startsWith("add") || name.startsWith("insert"))
+            return "新增" + (name.length() > 4 ? decamelize(name.substring(4)) : "");
+        if (name.startsWith("update") || name.startsWith("modify") || name.startsWith("edit"))
+            return "更新" + (name.length() > 6 ? decamelize(name.substring(6)) : "");
+        if (name.startsWith("delete") || name.startsWith("remove") || name.startsWith("del"))
+            return "删除" + (name.length() > 6 ? decamelize(name.substring(6)) : "");
+        if (name.startsWith("list") || name.startsWith("page") || name.startsWith("query"))
+            return "分页查询" + (name.length() > 4 ? decamelize(name.substring(4)) : "");
+        return decamelize(name);
+    }
+
+    /** camelCase -> 中文空格分隔 */
+    private String decamelize(String s) {
+        if (s == null || s.isEmpty()) return "";
+        return s.replaceAll("([a-z])([A-Z])", "$1 $2")
+                .replaceAll("([A-Z]+)([A-Z][a-z])", "$1 $2");
+    }
+
+    /**
+     * 从方法注解文本中提取参数名
+     * 支持 @RequestParam("name") 或 @RequestParam(value="name") 或 @RequestParam(name="name")
+     */
+    private String extractParamName(String annotationText) {
+        // 直接值: @RequestParam("name") 或 @PathVariable("name")
+        Matcher m = Pattern.compile("\\(\\s*\"([^\"]+)\"\\s*(?:,|\\))").matcher(annotationText);
+        if (m.find()) return m.group(1);
+        // name= / value=
+        m = Pattern.compile("(?:name|value)\\s*=\\s*\"([^\"]+)\"").matcher(annotationText);
+        return m.find() ? m.group(1) : null;
+    }
+
+    /**
+     * 从方法注解和方法签名推断参数 Java 类型
+     * 通过方法参数名列表和参数类型列表的索引匹配来识别
+     */
+    private String extractParamJavaType(String annotationText, MethodInfo mi) {
+        // 尝试通过方法参数名列表匹配 — 简化实现：返回 String 作为默认
+        return "String";
     }
 
     private String inferHttpMethod(String annName, String annExpr) {
