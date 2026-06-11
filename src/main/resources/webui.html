@@ -135,15 +135,13 @@ ac('&#x2705; 扫描完成 ('+d.elapsed+'s)，输入问题开始对话');fs(d);lh
 else if(d.status==='error'){dd=true;el.className='st st-e';el.innerHTML='&#x274C; '+d.message;document.getElementById('sb').disabled=false;ac('&#x274C; 扫描失败: '+d.message)}
 }).catch(function(){if(!dd)setTimeout(pp,1500)})}
 function fs(d){var g=document.getElementById('sg');g.innerHTML='';
-['classes','methods','lines','apis'].forEach(function(k){var x=document.createElement('div');x.className='si';x.innerHTML='<div class="n">'+(d[k]||0)+'</div><div class="l">'+k+'</div>';g.appendChild(x)});
-['vulns','health'].forEach(function(k){var x=document.createElement('div');x.className='si'+(k==='vulns'&&(+d[k]||0)>0?' d':k==='health'?(+d[k]||0)<60?' d':(+d[k]||0)<80?' w':' s':'');x.innerHTML='<div class="n">'+(d[k]||'-')+'</div><div class="l">'+k+'</div>';g.appendChild(x)});}
+['classes','methods','lines','apis'].forEach(function(k){var x=document.createElement('div');x.className='si';x.innerHTML='<div class="n">'+(d[k]||0)+'</div><div class="l">'+k+'</div>';g.appendChild(x)});var sk=['vulns','health'];sk.forEach(function(k){var x=document.createElement('div');x.className='si'+(k==='vulns'&&(+d[k]||0)>0?' d':k==='health'?(+d[k]||0)<60?' d':(+d[k]||0)<80?' w':' s':'');x.innerHTML='<div class="n">'+(d[k]||'-')+'</div><div class="l">'+k+'</div>';g.appendChild(x)});}
 function lh(){var u='/history?_='+Date.now();fetch(u).then(r=>r.json()).then(function(l){var c=document.getElementById('hc');if(!l.length){c.innerHTML='<div class="es">暂无项目</div>';return}
 c.innerHTML=l.map(function(p){var h='<div class="hi'+(cid==p.id?' ac':'')+'" onclick="lp('+p.id+')">'+'<div class="nm">&#x1F4C1; '+p.name+'</div>'+'<div class="tm">'+p.path+' &middot; '+(p.scannedAt||'').substring(0,19)+'</div>'+'<div class="st2">'+'<span>classes:'+p.classes+'</span><span>apis:'+p.apis+'</span><span>health:'+p.health+'</span>'+(p.chatCount?'<span>&#x1F4AC;'+p.chatCount+'</span>':'')+'</div></div>';return h}).join('')})}
 function lp(id){cid=id;fetch('/project?id='+id).then(r=>r.json()).then(function(d){document.getElementById('pi').value=d.path;document.getElementById('chq').disabled=false;document.getElementById('sbb').disabled=false;
 // Update stats
 var g=document.getElementById('sg');g.innerHTML='';
-['classes','methods','lines','apis'].forEach(function(k){var x=document.createElement('div');x.className='si';x.innerHTML='<div class="n">'+(d[k]||0)+'</div><div class="l">'+k+'</div>';g.appendChild(x)});
-['vulns','health'].forEach(function(k){var x=document.createElement('div');x.className='si'+(k==='vulns'&&(+d[k]||0)>0?' d':k==='health'?(+d[k]||0)<60?' d':(+d[k]||0)<80?' w':' s':'');x.innerHTML='<div class="n">'+(d[k]||'-')+'</div><div class="l">'+k+'</div>';g.appendChild(x)});
+['classes','methods','lines','apis'].forEach(function(k){var x=document.createElement('div');x.className='si';x.innerHTML='<div class="n">'+(d[k]||0)+'</div><div class="l">'+k+'</div>';g.appendChild(x)});var sk=['vulns','health'];sk.forEach(function(k){var x=document.createElement('div');x.className='si'+(k==='vulns'&&(+d[k]||0)>0?' d':k==='health'?(+d[k]||0)<60?' d':(+d[k]||0)<80?' w':' s':'');x.innerHTML='<div class="n">'+(d[k]||'-')+'</div><div class="l">'+k+'</div>';g.appendChild(x)});
 document.getElementById('scd').classList.remove('h');
 document.getElementById('sta').className='st st-d';document.getElementById('sta').innerHTML='&#x1F4C2; '+d.name;
 // Load chat history
