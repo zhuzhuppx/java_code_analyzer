@@ -119,18 +119,16 @@ public class WebServer {
 
     private static void handleChat(HttpExchange ex) throws IOException {
         if (!"POST".equals(ex.getRequestMethod())) { send405(ex); return; }
-        if (chatApiKey == null || chatApiKey.isEmpty()) {
-            sendJson(ex, 200, gson.toJson(Map.of(
-                "error", "API Key \u672A\u914D\u7F6E\uFF0C\u8BF7\u70B9\u51FB\u53F3\u4E0A\u89D2\u914D\u7F6E"
-            )));
-            return;
-        }
         String body = new BufferedReader(new InputStreamReader(ex.getRequestBody()))
             .lines().collect(Collectors.joining());
         Map<String, String> params = parseQuery(body);
         String question = params.get("question");
-        if (question == null || question.isEmpty()) {
-            sendJson(ex, 200, gson.toJson(Map.of("error", "empty question")));
+        String apiKey = params.get("apiKey");
+        if (apiKey == null || apiKey.isEmpty()) apiKey = chatApiKey;
+        if (apiKey == null || apiKey.isEmpty()) {
+            sendJson(ex, 200, gson.toJson(Map.of(
+                "error", "API Key \u672A\u914D\u7F6E\uFF0C\u8BF7\u70B9\u51FB\u53F3\u4E0A\u89D2\u914D\u7F6E"
+            )));
             return;
         }
 
@@ -160,7 +158,7 @@ public class WebServer {
             HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.deepseek.com/chat/completions"))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + chatApiKey)
+                .header("Authorization", "Bearer " + apiKey)
                 .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(reqBody)))
                 .build();
 
@@ -188,7 +186,6 @@ public class WebServer {
             String key = params.get("key");
             if (key != null && !key.isEmpty()) {
                 chatApiKey = key;
-                Files.writeString(API_KEY_FILE, key, StandardCharsets.UTF_8);
                 sendJson(ex, 200, gson.toJson(Map.of("status", "ok")));
             } else {
                 sendJson(ex, 400, gson.toJson(Map.of("error", "missing key")));
