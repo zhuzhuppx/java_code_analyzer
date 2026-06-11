@@ -87,9 +87,9 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .chf button:hover{box-shadow:0 2px 8px rgba(99,102,241,.3)}
 .chf button:disabled{opacity:.4;cursor:not-allowed}
 /* Drag handle between chat and input */
-.dr{height:6px;cursor:row-resize;flex-shrink:0;position:relative;z-index:5}
-.dr::after{content:'';display:block;height:3px;width:40px;background:#cbd5e1;border-radius:2px;position:absolute;top:1.5px;left:50%;transform:translateX(-50%);transition:background .15s,width .15s}
-.dr:hover::after,.dr:active::after{background:#6366f1;width:60px}
+.dr{height:10px;cursor:row-resize;flex-shrink:0;position:relative;z-index:5;user-select:none;-webkit-user-select:none}
+.dr::after{content:'';display:block;height:3px;width:40px;background:#cbd5e1;border-radius:2px;position:absolute;top:3.5px;left:50%;transform:translateX(-50%);transition:background .15s,width .15s,height .15s}
+.dr:hover::after,.dr:active::after{background:#6366f1;width:50px;height:4px}
 .chp{text-align:center;padding:30px 0;color:#94a3b8;font-size:13px}
 </style></head>
 <body style="display:flex;flex-direction:column;height:100vh">
@@ -145,6 +145,6 @@ fetch('/chat',{method:'POST',body:'question='+encodeURIComponent(q)+'&apiKey='+e
 function cc(){document.getElementById('chb').innerHTML='<div class="chp">对话已清除</div>'}
 function tp(){var lp=document.getElementById('lp');lp.classList.toggle('c');document.getElementById('ltg').innerHTML=lp.classList.contains('c')?'&#x25B6;':'&#x25C0;'}
 function dr(){var h=document.getElementById('rh'),l=document.getElementById('lp'),t=document.getElementById('ltg');function m(e,s,p){var n=Math.max(309,Math.min(600,s+e.clientX-p));l.style.width=n+'px';t.style.left=n+'px'}h.addEventListener('mousedown',function(e){var s=l.offsetWidth,p=h.getBoundingClientRect().left;document.body.style.cursor='col-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,p)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}
-function vdr(){var h=document.getElementById('cdr'),f=document.getElementById('chf');function m(e,s,t){var n=Math.max(60,Math.min(300,s-(e.clientY-t)));f.style.height=n+'px'}h.addEventListener('mousedown',function(e){var s=f.offsetHeight,t=h.getBoundingClientRect().top;document.body.style.cursor='row-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,t)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}
+function vdr(){var h=document.getElementById('cdr'),f=document.getElementById('chf');function m(e,s,t){e.preventDefault();var n=Math.max(60,Math.min(300,s-(e.clientY-t)));f.style.height=n+'px'}h.addEventListener('mousedown',function(e){e.preventDefault();var s=f.offsetHeight,t=h.getBoundingClientRect().top;document.body.style.cursor='row-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,t)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}
 dr();vdr();ck();lr();
 </script></body></html>
