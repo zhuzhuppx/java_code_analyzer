@@ -49,6 +49,9 @@ public class LiveDatabaseReader {
         schema.url = url;
 
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
+            // ⚠️ 强制只读，禁止任何 INSERT/UPDATE/DELETE/DDL
+            conn.setReadOnly(true);
+
             DatabaseMetaData meta = conn.getMetaData();
             schema.dbProduct = meta.getDatabaseProductName();
             schema.dbVersion = meta.getDatabaseProductVersion();

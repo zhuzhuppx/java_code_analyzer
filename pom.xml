@@ -79,16 +79,6 @@
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                     <archive>
-                        <manifestEntries>
-                            <Multi-Release>true</Multi-Release>
-                        </manifestEntries>
-                    </archive>
-                    <containerDescriptorHandlers>
-                        <containerDescriptorHandler>
-                            <handlerName>metaInf-services</handlerName>
-                        </containerDescriptorHandler>
-                    </containerDescriptorHandlers>
-                    <archive>
                         <manifest>
                             <mainClass>com.projectassistant.Main</mainClass>
                         </manifest>
