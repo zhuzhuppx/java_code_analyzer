@@ -349,14 +349,31 @@ public class ProjectScanner {
             }
         }
 
-        // 提取注解
-        Matcher am = ANNOTATION_PATTERN.matcher(clean.substring(0, cm.start()));
-        while (am.find()) {
-            ci.getAnnotations().add(am.group(1));
+        // 提取注解（从原始 content 中提取，避免 removeStringsAndComments 清空字符串值）
+        Pattern classDeclInOrig = Pattern.compile(
+                "(?:(?:public|private|protected)\\s+)?(?:abstract\\s+)?(?:final\\s+)?(?:static\\s+)?" +
+                "(class|interface|enum|@interface|record)\\s+" +
+                Pattern.quote(className) +
+                "\\s*(?:<[^>]*>)?\\s*(?:extends\\s+[^\\{]*|implements\\s+[^\\{]*|\\{|$)");
+        String origBody = "";
+        Matcher cmOrig = classDeclInOrig.matcher(content);
+        if (cmOrig.find()) {
+            // 类注解从原始 content 中提取
+            Matcher am2 = FULL_ANNOTATION.matcher(content.substring(0, cmOrig.start()));
+            while (am2.find()) {
+                String full = am2.group(0).trim();
+                ci.getAnnotations().add(full.startsWith("@") ? full.substring(1) : full);
+            }
+            // 找出原始 content 中的类体
+            int origBodyStart = findBodyStart(content, cmOrig.start());
+            int origBodyEnd = findBodyEnd(content, origBodyStart);
+            if (origBodyStart > 0 && origBodyEnd > origBodyStart) {
+                origBody = content.substring(origBodyStart, origBodyEnd);
+            }
         }
 
-        // 提取方法
-        parseMethods(classBody, ci, packageName, imports, content);
+        // 提取方法（用 origBody 提取注解以保留字符串值，用 classBody 提取方法声明）
+        parseMethods(classBody, ci, packageName, imports, origBody);
 
         // 提取字段
         parseFields(classBody, ci);
@@ -372,6 +389,8 @@ public class ProjectScanner {
                               String originalContent) {
         // 按行处理
         String[] lines = body.split("\n");
+        String[] origLines = (originalContent != null && !originalContent.isEmpty())
+                ? originalContent.split("\n") : lines;
         StringBuilder current = new StringBuilder();
         int braceDepth = 0;
         boolean inMethod = false;
@@ -407,14 +426,16 @@ public class ProjectScanner {
                         mi.setFinal(line.substring(0, Math.min(mm.start(), line.length())).contains("final"));
 
                         // 提取注解（含参数，如 @RequestMapping("/bizCustomer")）
-                        for (int j = methodStartLine; j < i; j++) {
-                            Matcher an = FULL_ANNOTATION.matcher(lines[j]);
+                        // 使用 origLines 保留字符串值（clean版已被 removeStringsAndComments 清空）
+                        for (int j = methodStartLine; j < i && j < origLines.length; j++) {
+                            Matcher an = FULL_ANNOTATION.matcher(origLines[j]);
                             while (an.find()) {
                                 String full = an.group(0).trim();
                                 mi.getAnnotations().add(full);
                                 if (full.startsWith("Override")) mi.setOverride(true);
                             }
                         }
+                        methodStartLine = i + 1; // 更新注解起始行，避免下个方法误取当前方法注解
 
                         // 提取参数
                         extractParameters(line, mi);

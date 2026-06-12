@@ -33,7 +33,8 @@ public class SpringScanner {
             "@(RequestMapping|GetMapping|PostMapping|PutMapping|DeleteMapping|PatchMapping)" +
             "\\s*(?:\\([^)]*\\))?");
     private static final Pattern MAPPING_PATH = Pattern.compile(
-            "(?:value|path)\\s*=\\s*\"([^\"]+)\"");
+            "(?:value|path)\\s*=\\s*\"([^\"]+)\"|" +
+            "(?:\\(\\s*)\"([^\"]+)\"");
     private static final Pattern METHOD_ATTR = Pattern.compile(
             "method\\s*=\\s*(?:RequestMethod\\.)?(GET|POST|PUT|DELETE|PATCH)");
     private static final Pattern AUTOWIRED = Pattern.compile(
@@ -114,10 +115,11 @@ public class SpringScanner {
         }
     }
 
-    /** 辅助：检查类注解（兼容 @Name 和 Name 两种格式） */
+    /** 辅助：检查类注解（兼容 @Name、Name、@Name(...)、Name(...) 四种格式） */
     private boolean hasAnnotation(ClassInfo ci, String name) {
         return ci.getAnnotations().stream()
-                .anyMatch(a -> a.equals(name) || a.equals("@" + name) || a.startsWith("@" + name + "("));
+                .anyMatch(a -> a.equals(name) || a.equals("@" + name) ||
+                               a.startsWith("@" + name + "(") || a.startsWith(name + "("));
     }
 
     /** 扫描所有 @RestController/@Controller 提取 API 路由 */
@@ -141,7 +143,10 @@ public class SpringScanner {
         for (String ann : ci.getAnnotations()) {
             if (ann.startsWith("RequestMapping")) {
                 Matcher m = MAPPING_PATH.matcher(ann);
-                if (m.find()) return m.group(1);
+                if (m.find()) {
+                    String path = m.group(1) != null ? m.group(1) : m.group(2);
+                    return path;
+                }
             }
         }
         return "";
@@ -311,7 +316,7 @@ public class SpringScanner {
     private String extractMethodPath(String ann) {
         Matcher m = MAPPING_PATH.matcher(ann);
         if (m.find()) {
-            String path = m.group(1);
+            String path = m.group(1) != null ? m.group(1) : m.group(2);
             // 移除占位符 {xxx} -> :xxx（兼容 OpenAPI 格式）
             return path.replaceAll("\\{([^}]+)\\}", ":$1");
         }
@@ -424,9 +429,10 @@ public class SpringScanner {
     /** 提取 @Service("xx") 中的显式 bean 名称 */
     private String extractBeanName(ClassInfo ci) {
         for (String ann : ci.getAnnotations()) {
-            Matcher m = Pattern.compile("@(Service|Component|Repository|Controller|RestController)\\s*\\(\"([^\"]+)\"\\)").matcher(ann);
+            // 兼容 @Service("xx") 和 Service("xx") 两种格式
+            Matcher m = Pattern.compile("@?(Service|Component|Repository|Controller|RestController)\\s*\\(\"([^\"]+)\"\\)").matcher(ann);
             if (m.find()) return m.group(2);
-            m = Pattern.compile("@(Service|Component|Repository|Controller|RestController)\\s*\\(\\s*value\\s*=\\s*\"([^\"]+)\"\\s*\\)").matcher(ann);
+            m = Pattern.compile("@?(Service|Component|Repository|Controller|RestController)\\s*\\(\\s*value\\s*=\\s*\"([^\"]+)\"\\s*\\)").matcher(ann);
             if (m.find()) return m.group(2);
         }
         return null;

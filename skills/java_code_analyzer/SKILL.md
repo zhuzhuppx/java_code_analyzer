@@ -7,34 +7,28 @@ metadata:
     requires: {}
 ---
 
+# java_code_analyzer 项目知识库
+
+> 由 Java老狗 自动生成 | 2026-06-12 11:17
+
 当用户询问本项目相关的任何问题时，优先使用以下信息回答。
-
-# 项目知识库
-
-> 由 ProjectAssistant 自动生成，专为大模型理解优化
-> 生成时间: 2026-06-11 14:14:01
-
----
 
 ## 1. 项目概览
 
 | 属性 | 值 |
 |---|---|
-| 项目名称 | java_code_analyzer |
-| 构建工具 | maven |
-| Java 版本 | unknown |
+| 项目 | java_code_analyzer |
+| 构建 | maven |
+| Java | unknown |
 | Spring Boot | 否 |
-| 代码总行数 | 6285 |
-| 类/接口数 | 25 |
+| 行数 | 6343 |
+| 类数 | 25 |
 | 方法数 | 348 |
-| API 端点 | 0 |
+| API | 0 |
 | 数据库表 | 0 |
-| 外部依赖 | 4 |
-| 注释率 | 20.9% |
-| 平均方法行数 | 14.3 |
-| 最大圈复杂度 | 7 |
+| 依赖 | 4 |
 
-### 外部依赖
+### 依赖
 
 ```
 com.google.code.gson:gson:2.10.1
@@ -43,76 +37,66 @@ com.h2database:h2:2.2.224
 org.junit.jupiter:junit-jupiter:5.10.0 [test]
 ```
 
-### 健康评分: **80/100**
+## 2. 架构
 
-## 2. 架构模式
-
-**架构类型**: unknown
-
-### 模块结构
+**unknown**
 
 ```
   projectassistant/
-    +-- [C] Main.java
-    analyzer/
-      +-- [C] ProjectAnalyzer.java
-    chain/
-      +-- [C] CallChain.java
-      +-- [C] CallChainAnalyzer.java
-    chat/
-      +-- [C] DeepSeekChat.java
-    config/
-      +-- [C] ConfigParser.java
-    db/
-      +-- [C] DatabaseManager.java
-    knowledge/
-      +-- [C] KnowledgeBaseGenerator.java
-    model/
-      +-- [C] ClassInfo.java
-      +-- [C] DependencyInfo.java
-      +-- [C] FieldInfo.java
-      +-- [C] MethodInfo.java
-      +-- [C] ModuleInfo.java
-      +-- [C] ProjectModel.java
-      +-- [C] ProjectStats.java
-    reporter/
-      +-- [C] ReportGenerator.java
-    scanner/
-      +-- [C] ProjectScanner.java
-      +-- [C] VulnScanner.java
-    spring/
-      +-- [C] ApiEndpoint.java
-      +-- [C] BeanInfo.java
-      +-- [C] SpringScanner.java
-    sql/
-      +-- [C] SchemaParser.java
-      +-- [C] SqlParser.java
-      +-- [C] TableInfo.java
-    web/
-      +-- [C] WebServer.java
+    [C] Main
+  analyzer/
+    [C] ProjectAnalyzer
+  chain/
+    [C] CallChain
+    [C] CallChainAnalyzer
+  chat/
+    [C] DeepSeekChat
+  config/
+    [C] ConfigParser
+  db/
+    [C] DatabaseManager
+  knowledge/
+    [C] KnowledgeBaseGenerator
+  model/
+    [C] ClassInfo
+    [C] DependencyInfo
+    [C] FieldInfo
+    [C] MethodInfo
+    [C] ModuleInfo
+    [C] ProjectModel
+    [C] ProjectStats
+  reporter/
+    [C] ReportGenerator
+  scanner/
+    [C] ProjectScanner
+    [C] VulnScanner
+  spring/
+    [C] ApiEndpoint
+    [C] BeanInfo
+    [C] SpringScanner
+  sql/
+    [C] SchemaParser
+    [C] SqlParser
+    [C] TableInfo
+  web/
+    [C] WebServer
 ```
 
-## 3. API 路由
+## 3. API
 
-无 API 端点。
+（无）
 
 ## 4. 数据库
 
-### 表结构
-
-（无结构化表信息）
-
-### Mapper SQL
-
-（未检测到 Mapper SQL）
+（无）
 
 ## 5. Bean 依赖图
 
-无（未检测到 Spring Bean）。
+（无）
 
 ## 6. 调用链
 
-无。
+（无）
 
 ## 7. 关键类
 
@@ -182,7 +166,185 @@ org.junit.jupiter:junit-jupiter:5.10.0 [test]
 
 ## 8. 类全量信息
 
-> 以下为每个类的详细字段和注解信息，大模型可据此自行推断数据库结构、业务逻辑等。
+> 以下为每个类的详细字段和注解信息，大模型可据此自行推断数据库结构、业务逻辑。
+
+### com.projectassistant
+
+```
+class Main {
+    String extension;
+    String content;
+
+    // --- 2 个方法 ---
+    void main(String[]);
+    else if(var);
+}
+```
+
+### com.projectassistant.analyzer
+
+```
+class ProjectAnalyzer {
+    ProjectModel project;
+    return findings;
+    return true;
+    return false;
+    String type;
+    String title;
+    String description;
+    int severity;
+    String suggestion;
+
+    // --- 26 个方法 ---
+    List analyze();
+    void analyzeDependencyCycles();
+    boolean hasCycle();
+    void analyzeArchitectureLayers();
+    else if(pkg.contains("") ||);
+    else if(pkg.contains("") || pkg.contains("") ||);
+    else if(pkg.contains("") || pkg.contains("") ||);
+    else if(pkg.contains("") || pkg.contains("") ||);
+    void analyzeDesignPatterns();
+    void analyzeCodeSmells();
+    else if();
+    else if(mi.getName().startsWith("") ||);
+    else if(mi.getName().startsWith("") ||);
+    void analyzeUnusedCode();
+    void analyzeTODOs();
+    void analyzeSpringStructure();
+    void analyzeNamingConventions();
+    void analyzeCohesion();
+    void analyzePublicApi();
+    void addFinding();
+    String getType();
+    String getTitle();
+    String getDescription();
+    int getSeverity();
+    String getSuggestion();
+    String getSeverityLabel();
+}
+```
+
+### com.projectassistant.chain
+
+```
+class CallChain {
+    String entryPoint;
+    String entryRole;
+
+    // --- 6 个方法 ---
+    String getEntryPoint();
+    String getEntryRole();
+    List> getCallPaths();
+    int getMaxDepth();
+    List getLongestPath();
+    String toString();
+}
+```
+
+```
+class CallChainAnalyzer {
+    Map<String, String> classRoleMap;
+    return result;
+
+    // --- 5 个方法 ---
+    void analyze();
+    void traceChain();
+    List getCriticalChains();
+    String inferRole(String);
+    List getChains();
+}
+```
+
+### com.projectassistant.chat
+
+```
+class DeepSeekChat {
+}
+```
+
+### com.projectassistant.config
+
+```
+class ConfigParser {
+    Path rootPath;
+    String filePath;
+    String type;
+    int keyCount;
+    return properties;
+
+    // --- 17 个方法 ---
+    String getFilePath();
+    String getType();
+    int getKeyCount();
+    Map parse();
+    void findAndParseConfigFiles();
+    void parseFile(Path);
+    else if(name.endsWith("") ||);
+    else if(var);
+    void parseProperties(String, Path);
+    void parseYaml(String, Path);
+    else if(var);
+    void parseLogbackXml(String, Path);
+    boolean isKeyConfig(String);
+    String getSummary();
+    String maskPassword(String);
+    List getSources();
+    Map getProperties();
+}
+```
+
+### com.projectassistant.db
+
+```
+class DatabaseManager {
+    volatile Connection conn;
+    return id;
+    return list;
+    return result;
+
+    // --- 9 个方法 ---
+    void init();
+    long saveProject(String, String);
+    void saveKnowledgeBase(long, String);
+    void saveReport(long, String, String);
+    void saveChatMessage(long, String, String);
+    List> listProjects();
+    Map getProject(long);
+    long getProjectIdForPath(String);
+    void close();
+}
+```
+
+### com.projectassistant.knowledge
+
+```
+class KnowledgeBaseGenerator {
+    ProjectModel project;
+    return m;
+
+    // --- 19 个方法 ---
+    String generate();
+    void preamble();
+    void overview();
+    int calculateHealthScore();
+    void architecture();
+    void apiCatalog();
+    void databaseSchema();
+    void beanGraph();
+    String capitalize(String);
+    void callChains();
+    void keyClasses();
+    void rawClassDetails();
+    void businessFlow();
+    String inferAction(ApiEndpoint);
+    void configurations();
+    void devGuide();
+    String shorten(String);
+    void save(String);
+    void saveSkill(String);
+}
+```
 
 ### com.projectassistant.model
 
@@ -410,184 +572,6 @@ class ProjectStats {
     int getLongMethodCount();
     int getHighComplexityCount();
     String getHealthLevel();
-}
-```
-
-### com.projectassistant
-
-```
-class Main {
-    String extension;
-    String content;
-
-    // --- 2 个方法 ---
-    void main(String[]);
-    else if(var);
-}
-```
-
-### com.projectassistant.analyzer
-
-```
-class ProjectAnalyzer {
-    ProjectModel project;
-    return findings;
-    return true;
-    return false;
-    String type;
-    String title;
-    String description;
-    int severity;
-    String suggestion;
-
-    // --- 26 个方法 ---
-    List analyze();
-    void analyzeDependencyCycles();
-    boolean hasCycle();
-    void analyzeArchitectureLayers();
-    else if(pkg.contains("") ||);
-    else if(pkg.contains("") || pkg.contains("") ||);
-    else if(pkg.contains("") || pkg.contains("") ||);
-    else if(pkg.contains("") || pkg.contains("") ||);
-    void analyzeDesignPatterns();
-    void analyzeCodeSmells();
-    else if();
-    else if(mi.getName().startsWith("") ||);
-    else if(mi.getName().startsWith("") ||);
-    void analyzeUnusedCode();
-    void analyzeTODOs();
-    void analyzeSpringStructure();
-    void analyzeNamingConventions();
-    void analyzeCohesion();
-    void analyzePublicApi();
-    void addFinding();
-    String getType();
-    String getTitle();
-    String getDescription();
-    int getSeverity();
-    String getSuggestion();
-    String getSeverityLabel();
-}
-```
-
-### com.projectassistant.chain
-
-```
-class CallChain {
-    String entryPoint;
-    String entryRole;
-
-    // --- 6 个方法 ---
-    String getEntryPoint();
-    String getEntryRole();
-    List> getCallPaths();
-    int getMaxDepth();
-    List getLongestPath();
-    String toString();
-}
-```
-
-```
-class CallChainAnalyzer {
-    Map<String, String> classRoleMap;
-    return result;
-
-    // --- 5 个方法 ---
-    void analyze();
-    void traceChain();
-    List getCriticalChains();
-    String inferRole(String);
-    List getChains();
-}
-```
-
-### com.projectassistant.chat
-
-```
-class DeepSeekChat {
-}
-```
-
-### com.projectassistant.config
-
-```
-class ConfigParser {
-    Path rootPath;
-    String filePath;
-    String type;
-    int keyCount;
-    return properties;
-
-    // --- 17 个方法 ---
-    String getFilePath();
-    String getType();
-    int getKeyCount();
-    Map parse();
-    void findAndParseConfigFiles();
-    void parseFile(Path);
-    else if(name.endsWith("") ||);
-    else if(var);
-    void parseProperties(String, Path);
-    void parseYaml(String, Path);
-    else if(var);
-    void parseLogbackXml(String, Path);
-    boolean isKeyConfig(String);
-    String getSummary();
-    String maskPassword(String);
-    List getSources();
-    Map getProperties();
-}
-```
-
-### com.projectassistant.db
-
-```
-class DatabaseManager {
-    volatile Connection conn;
-    return id;
-    return list;
-    return result;
-
-    // --- 9 个方法 ---
-    void init();
-    long saveProject(String, String);
-    void saveKnowledgeBase(long, String);
-    void saveReport(long, String, String);
-    void saveChatMessage(long, String, String);
-    List> listProjects();
-    Map getProject(long);
-    long getProjectIdForPath(String);
-    void close();
-}
-```
-
-### com.projectassistant.knowledge
-
-```
-class KnowledgeBaseGenerator {
-    ProjectModel project;
-    return m;
-
-    // --- 19 个方法 ---
-    String generate();
-    void preamble();
-    void overview();
-    int calculateHealthScore();
-    void architecture();
-    void apiCatalog();
-    void databaseSchema();
-    void beanGraph();
-    String capitalize(String);
-    void callChains();
-    void keyClasses();
-    void rawClassDetails();
-    void businessFlow();
-    String inferAction(ApiEndpoint);
-    void configurations();
-    void devGuide();
-    String shorten(String);
-    void save(String);
-    void saveSkill(String);
 }
 ```
 
@@ -915,25 +899,46 @@ class WebServer {
 
 ## 9. 业务流
 
-无法推断。
+**projectassistant**: 1 个类
+
+**analyzer**: 1 个类
+
+**chain**: 2 个类
+
+**chat**: 1 个类
+
+**config**: 1 个类
+
+**db**: 1 个类
+
+**knowledge**: 1 个类
+
+**model**: 7 个类
+
+**reporter**: 1 个类
+
+**scanner**: 2 个类
+
+**spring**: 3 个类
+
+**sql**: 3 个类
+
+**web**: 1 个类
 
 ## 10. 配置
 
-无。
+（无）
 
-## 11. 开发指南
+## 11. 对 Agent 的提示
 
-**启动类**: 未检测到
-**架构**: unknown
-| 你想问 | 看哪节 |
+| 用户想问 | 看哪节 |
 |---|---|
 | 这是什么项目？ | 1. 概览 / 2. 架构 |
-| 有哪些接口？ | 3. API 路由 |
+| 有哪些接口？ | 3. API |
 | 数据库怎么设计的？ | 4. 数据库 |
-| 改这个字段影响哪？ | 5. Bean依赖 / 6. 调用链 |
-| 帮我加个接口 | 9. 业务流 / 7. 关键类 |
-| 这个类的字段和注解？ | 8. 类全量信息 |
-| 这个配置是什么意思？ | 10. 配置 |
+| 改这个字段影响哪？ | 5. Bean / 6. 调用链 |
+| 帮我加个接口 | 8. 业务流 / 7. 关键类 |
+| 这个配置是什么意思？ | 9. 配置 |
 
 ---
-> 知识库由 ProjectAssistant 生成 | 配合大模型使用效果更佳
+> 由 Java老狗 生成 | 安装命令: `copaw skill install <this-dir>`
