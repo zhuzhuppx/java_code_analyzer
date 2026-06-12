@@ -201,9 +201,18 @@ public class LiveDatabaseReader {
             if (!lower.contains("usessl=") && !lower.contains("sslmode=")) {
                 raw += raw.contains("?") ? "&" : "?";
                 raw += "useSSL=false&allowPublicKeyRetrieval=true";
+                lower = raw.toLowerCase();
             }
             if (!lower.contains("servertimezone=") && !lower.contains("connectiontimezone=")) {
                 raw += "&serverTimezone=Asia/Shanghai";
+            }
+            // 连接超时 5 秒，避免卡住
+            if (!lower.contains("connecttimeout=")) {
+                raw += "&connectTimeout=5000";
+            }
+            // 读取超时 10 秒
+            if (!lower.contains("sockettimeout=")) {
+                raw += "&socketTimeout=10000";
             }
         }
         return raw;
