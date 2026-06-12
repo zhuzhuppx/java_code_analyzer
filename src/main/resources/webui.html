@@ -162,7 +162,7 @@ var k=localStorage.getItem('dsKey')||'';
 var acc='';
 fetch('/chat',{method:'POST',body:'question='+encodeURIComponent(q)+'&apiKey='+encodeURIComponent(k)+'&projectId='+cid,headers:{'Content-Type':'application/x-www-form-urlencoded'}}).then(function(r){
 var reader=r.body.getReader(),dec=new TextDecoder(),buf='';
-function rd(){reader.read().then(function(rt){if(rt.done){tx.innerHTML=md(acc);sc();var cb=document.createElement('button');cb.className='cpb';cb.onclick=function(){copyMsg(this)};cb.textContent='📋';di.appendChild(cb);return}
+function rd(){reader.read().then(function(rt){if(rt.done){tx.innerHTML=md(acc);sc();var cb=document.createElement('button');cb.className='cpb';cb.onclick=function(){copyMsg(this)};cb.title='复制这条消息';cb.textContent='📋';di.appendChild(cb);return}
 buf+=dec.decode(rt.value,{stream:true});var ls=buf.split('\n');buf=ls.pop();
 ls.forEach(function(l){if(!l.startsWith('data: '))return;
 try{var o=JSON.parse(l.substring(6));if(o.type==='content'){acc+=o.data;tx.innerHTML=md(acc);sc()}
@@ -170,7 +170,7 @@ else if(o.type==='error'){tx.innerHTML='<span style="color:#dc2626">'+o.data+'</
 else if(o.type==='done'){tx.innerHTML=md(acc);sc()}}catch(e){}})
 rd()})}rd()}).catch(function(){tx.innerHTML='网络错误';sc()})}
 function cc(){document.getElementById('chb').innerHTML='<div class="chp">对话已清除</div>'}
-function copyMsg(b){b.setAttribute('title','复制这条消息');var t=b.parentElement.querySelector('.tx').innerText||b.parentElement.querySelector('.tx').textContent;navigator.clipboard.writeText(t).then(function(){b.textContent='✅';setTimeout(function(){b.textContent='📋';b.removeAttribute('title')},1500)}).catch(function(){prompt('复制失败，请手动复制:',t)})}
+function copyMsg(b){var t=b.parentElement.querySelector('.tx').innerText||b.parentElement.querySelector('.tx').textContent;navigator.clipboard.writeText(t).then(function(){b.textContent='✅';setTimeout(function(){b.textContent='📋'},1500)}).catch(function(){prompt('复制失败，请手动复制:',t)})}
 function tp(){var lp=document.getElementById('lp');lp.classList.toggle('c');document.getElementById('ltg').innerHTML=lp.classList.contains('c')?'&#x25B6;':'&#x25C0;'}
 function skl(){if(cid<0)return;var a=document.createElement('a');a.href='/skill?id='+cid;a.download='';a.click()}
 function dr(){var h=document.getElementById('rh'),l=document.getElementById('lp'),t=document.getElementById('ltg');function m(e,s,p){var n=Math.max(309,Math.min(600,s+e.clientX-p));l.style.width=n+'px';t.style.left=n+'px'}h.addEventListener('mousedown',function(e){var s=l.offsetWidth,p=h.getBoundingClientRect().left;document.body.style.cursor='col-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,p)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}
