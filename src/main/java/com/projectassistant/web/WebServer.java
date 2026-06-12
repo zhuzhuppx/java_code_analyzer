@@ -268,43 +268,65 @@ public class WebServer {
         try {
             long id = Long.parseLong(idStr);
             Map<String, Object> data = DatabaseManager.getProject(id);
-            String kb = data != null && data.containsKey("kb") ? (String) data.get("kb") : null;
             String path = data != null && data.containsKey("path") ? (String) data.get("path") : "unknown";
-            if (kb == null || kb.isEmpty()) {
-                sendJson(ex, 404, gson.toJson(Map.of("error", "no knowledge base found for this project")));
-                return;
-            }
-            // Extract project name from path
             String projectName = Paths.get(path).getFileName().toString();
             if (projectName == null || projectName.isEmpty()) projectName = "project";
-            // Remove the "# 项目知识库" title from kb to avoid duplication
-            String body = kb.replaceFirst("^# 项目知识库\\s*", "");
-            body = body.replaceFirst("^> 由 Java老狗 自动生成.*?(\\n|$)", "");
-            String skill = "---\n"
-                + "name: " + projectName + "\n"
-                + "description: \"" + projectName + " 项目知识库\"\n"
-                + "metadata:\n"
-                + "  copaw:\n"
-                + "    emoji: \"\\uD83D\\uDCE6\"\n"
-                + "    requires: {}\n"
-                + "---\n\n"
-                + "当用户询问本项目相关的任何问题时，优先使用以下信息回答。\n\n"
-                + body;
 
-            // Build zip in memory
+            // Look for pre-generated skill sub-documents
+            Path skillDir = REPORTS_DIR.resolve("skills").resolve(projectName.replaceAll("[^a-zA-Z0-9._-]", "_").toLowerCase());
+            Path skillIndex = skillDir.resolve("SKILL.md");
+
+            if (!Files.exists(skillIndex)) {
+                // Fallback: generate from KB
+                String kb = data != null && data.containsKey("kb") ? (String) data.get("kb") : null;
+                if (kb == null || kb.isEmpty()) {
+                    sendJson(ex, 404, gson.toJson(Map.of("error", "no skill found for this project")));
+                    return;
+                }
+                String body = kb.replaceFirst("^# 项目知识库\\s*", "");
+                body = body.replaceFirst("^> 由 Java老狗 自动生成.*?(\\n|$)", "");
+                String skill = "---\n"
+                    + "name: " + projectName + "\n"
+                    + "description: \"" + projectName + " 项目知识库\"\n"
+                    + "metadata:\n"
+                    + "  copaw:\n"
+                    + "    emoji: \"\\uD83D\\uDCE6\"\n"
+                    + "    requires: {}\n"
+                    + "---\n\n"
+                    + "当用户询问本项目相关的任何问题时，优先使用以下信息回答。\n\n"
+                    + body;
+                String zipName = projectName + "_" + LocalDate.now().toString() + ".zip";
+                byte[] skillBytes = skill.getBytes(StandardCharsets.UTF_8);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+                    zos.putNextEntry(new ZipEntry("SKILL.md"));
+                    zos.write(skillBytes);
+                    zos.closeEntry();
+                }
+                byte[] zipBytes = baos.toByteArray();
+                ex.getResponseHeaders().add("Content-Type", "application/zip");
+                ex.getResponseHeaders().add("Content-Disposition", "attachment; filename=\"" + zipName + "\"");
+                ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                ex.sendResponseHeaders(200, zipBytes.length);
+                ex.getResponseBody().write(zipBytes);
+                ex.getResponseBody().close();
+                return;
+            }
+
+            // Zip all .md files in the skill directory
             String zipName = projectName + "_" + LocalDate.now().toString() + ".zip";
-            byte[] skillBytes = skill.getBytes(StandardCharsets.UTF_8);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-                zos.putNextEntry(new ZipEntry("SKILL.md"));
-                zos.write(skillBytes);
-                zos.closeEntry();
+            try (ZipOutputStream zos = new ZipOutputStream(baos);
+                 DirectoryStream<Path> stream = Files.newDirectoryStream(skillDir, "*.md")) {
+                for (Path mdFile : stream) {
+                    zos.putNextEntry(new ZipEntry(mdFile.getFileName().toString()));
+                    zos.write(Files.readAllBytes(mdFile));
+                    zos.closeEntry();
+                }
             }
             byte[] zipBytes = baos.toByteArray();
-
             ex.getResponseHeaders().add("Content-Type", "application/zip");
             ex.getResponseHeaders().add("Content-Disposition", "attachment; filename=\"" + zipName + "\"");
-            ex.getResponseHeaders().add("Cache-Control", "no-cache, no-store, must-revalidate");
             ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             ex.sendResponseHeaders(200, zipBytes.length);
             ex.getResponseBody().write(zipBytes);
@@ -405,6 +427,15 @@ public class WebServer {
                 String kbFile = REPORTS_DIR.resolve("knowledge_base.md").toString();
                 new KnowledgeBaseGenerator(model).save(kbFile);
                 String kbContent = Files.readString(Paths.get(kbFile));
+
+                // Generate Skill sub-documents
+                try {
+                    Path skillOut = REPORTS_DIR.resolve("skills");
+                    Files.createDirectories(skillOut);
+                    new KnowledgeBaseGenerator(model).saveSkill(skillOut.toString());
+                } catch (Exception e) {
+                    System.err.println("  ⚠️ Skill generation failed: " + e.getMessage());
+                }
 
                 // Save to DB
                 Map<String, Object> stats = new LinkedHashMap<>();
