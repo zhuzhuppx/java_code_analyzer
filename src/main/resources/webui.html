@@ -83,6 +83,9 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .cm.l .tx table{border-collapse:collapse;margin:6px 0;font-size:13px;width:100%}
 .cm.l .tx td,.cm.l .tx th{border:1px solid #e2e8f0;padding:6px 10px;text-align:left}
 .cm.l .tx th{background:#f1f5f9;font-weight:600}
+.cpb{background:none;border:none;cursor:pointer;font-size:11px;color:#94a3b8;padding:2px 6px;border-radius:4px;position:absolute;bottom:-18px;right:0;opacity:0;transition:opacity .15s}
+.cm:hover .cpb{opacity:1}.cpb:hover{color:#6366f1;background:#f1f5f9}
+.cm.r .cpb{left:0;right:auto}.cm{position:relative;padding-bottom:6px}
 .dr{height:10px;cursor:row-resize;flex-shrink:0;position:relative;z-index:5;user-select:none;-webkit-user-select:none}
 .dr::after{content:'';display:block;height:3px;width:40px;background:#cbd5e1;border-radius:2px;position:absolute;top:3.5px;left:50%;transform:translateX(-50%);transition:background .15s,width .15s,height .15s}
 .dr:hover::after,.dr:active::after{background:#6366f1;width:50px;height:4px}
@@ -109,7 +112,7 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <button class="tb" id="ltg" onclick="tp()">&#x25C0;</button>
 <!-- Right Panel - Chat Full Height -->
 <div class="rp" id="rp">
-<div class="ch"><div class="chh"><span>&#x1F4AC; 对话</span><button onclick="ck()" style="margin-left:auto">&#x1F4CB; 复制</button><button onclick="cc()">&#x1F5D1; 清除</button></div>
+<div class="ch"><div class="chh"><span>&#x1F4AC; 对话</span><button onclick="cc()">&#x1F5D1; 清除</button></div>
 <div class="chb" id="chb"><div class="chp">&#x1F50D; 扫描项目后开始对话</div></div>
 <div class="dr" id="cdr"></div>
 <div class="chf"><textarea id="chq" placeholder="询问项目... (Enter发送, Shift+Enter换行)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ask()}" disabled></textarea>
@@ -147,19 +150,19 @@ document.getElementById('sta').className='st st-d';document.getElementById('sta'
 var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';
 // Load chat history
 var b=document.getElementById('chb');b.innerHTML='';
-if(d.chats&&d.chats.length){d.chats.forEach(function(c){var side=c.role==='user'?'r':'l';var av=c.role==='user'?'&#x1F464;':'&#x1F40B;';b.innerHTML+='<div class="cm '+side+'"><div class="av">'+av+'</div><div class="tx">'+(c.role==='assistant'?md(c.content):c.content)+'</div></div>'})}else{b.innerHTML='<div class="chp">没有聊天记录，开始提问</div>'}
+if(d.chats&&d.chats.length){d.chats.forEach(function(c){var side=c.role==='user'?'r':'l';var av=c.role==='user'?'&#x1F464;':'&#x1F40B;';b.innerHTML+='<div class="cm '+side+'"><div class="av">'+av+'</div><div class="tx">'+(c.role==='assistant'?md(c.content):c.content)+'</div><button class="cpb" onclick="copyMsg(this)">&#x1F4CB;</button></div>'})}else{b.innerHTML='<div class="chp">没有聊天记录，开始提问</div>'}
 sc();lh()})}
 function sk(){var k=prompt('DeepSeek API Key:');if(k){localStorage.setItem('dsKey',k);ck()}}
 function ck(){var k=localStorage.getItem('dsKey');document.getElementById('akey').innerHTML=k?'&#x1F511; &#x2705;':'&#x1F511; Key';document.getElementById('akey').title=k?'已保存在浏览器':'未配置'}
 function ask(){var q=document.getElementById('chq').value.trim();if(!q)return;document.getElementById('chq').value='';var b=document.getElementById('chb');
-b.innerHTML+='<div class="cm r"><div class="av">&#x1F464;</div><div class="tx">'+q+'</div></div>';sc();
+b.innerHTML+='<div class="cm r"><div class="av">&#x1F464;</div><div class="tx">'+q+'</div><button class="cpb" onclick="copyMsg(this)">&#x1F4CB;</button></div>';sc();
 var di=document.createElement('div');di.className='cm l';di.innerHTML='<div class="av">&#x1F40B;</div><div class="tx"><span class="sp"></span></div>';b.appendChild(di);sc();
 var tx=di.querySelector('.tx');
 var k=localStorage.getItem('dsKey')||'';
 var acc='';
 fetch('/chat',{method:'POST',body:'question='+encodeURIComponent(q)+'&apiKey='+encodeURIComponent(k)+'&projectId='+cid,headers:{'Content-Type':'application/x-www-form-urlencoded'}}).then(function(r){
 var reader=r.body.getReader(),dec=new TextDecoder(),buf='';
-function rd(){reader.read().then(function(rt){if(rt.done){tx.innerHTML=md(acc);sc();return}
+function rd(){reader.read().then(function(rt){if(rt.done){tx.innerHTML=md(acc);sc();di.innerHTML+='<button class="cpb" onclick="copyMsg(this)">&#x1F4CB;</button>';return}
 buf+=dec.decode(rt.value,{stream:true});var ls=buf.split('\n');buf=ls.pop();
 ls.forEach(function(l){if(!l.startsWith('data: '))return;
 try{var o=JSON.parse(l.substring(6));if(o.type==='content'){acc+=o.data;tx.innerHTML=md(acc);sc()}
@@ -167,7 +170,7 @@ else if(o.type==='error'){tx.innerHTML='<span style="color:#dc2626">'+o.data+'</
 else if(o.type==='done'){tx.innerHTML=md(acc);sc()}}catch(e){}})
 rd()})}rd()}).catch(function(){tx.innerHTML='网络错误';sc()})}
 function cc(){document.getElementById('chb').innerHTML='<div class="chp">对话已清除</div>'}
-function ck(){var t=document.getElementById('chb').innerText||document.getElementById('chb').textContent;navigator.clipboard.writeText(t).then(function(){ac('&#x2705; 对话已复制到剪贴板')}).catch(function(){prompt('复制失败，请手动复制(Ctrl+C):',t)})}
+function copyMsg(b){var t=b.parentElement.querySelector('.tx').innerText||b.parentElement.querySelector('.tx').textContent;navigator.clipboard.writeText(t).then(function(){b.textContent='&#x2705;';setTimeout(function(){b.textContent='&#x1F4CB;'},1500)}).catch(function(){prompt('复制失败，请手动复制:',t)})}
 function tp(){var lp=document.getElementById('lp');lp.classList.toggle('c');document.getElementById('ltg').innerHTML=lp.classList.contains('c')?'&#x25B6;':'&#x25C0;'}
 function skl(){if(cid<0)return;var a=document.createElement('a');a.href='/skill?id='+cid;a.download='';a.click()}
 function dr(){var h=document.getElementById('rh'),l=document.getElementById('lp'),t=document.getElementById('ltg');function m(e,s,p){var n=Math.max(309,Math.min(600,s+e.clientX-p));l.style.width=n+'px';t.style.left=n+'px'}h.addEventListener('mousedown',function(e){var s=l.offsetWidth,p=h.getBoundingClientRect().left;document.body.style.cursor='col-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,p)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}
