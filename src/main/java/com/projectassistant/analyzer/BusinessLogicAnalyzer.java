@@ -5,6 +5,8 @@ import com.projectassistant.spring.ApiEndpoint;
 import com.projectassistant.sql.LiveDatabaseReader;
 import com.projectassistant.sql.LiveDatabaseReader.*;
 import com.projectassistant.sql.TableInfo;
+import com.projectassistant.relationship.RelationAnalyzer;
+import com.projectassistant.relationship.TableRelation;
 import java.util.*;
 import java.util.stream.*;
 
@@ -27,6 +29,10 @@ public class BusinessLogicAnalyzer {
     private final Map<String, List<String>> tableToServices = new LinkedHashMap<>();
     /** API 端点 → 涉及的数据库表 */
     private final Map<String, List<String>> apiToTables = new LinkedHashMap<>();
+    /** 表间关系（从代码推断） */
+    private List<TableRelation> relations = new ArrayList<>();
+    /** Entity 表名匹配关系 */
+    private final Map<String, String> entityTableMapping = new LinkedHashMap<>();
 
     public BusinessLogicAnalyzer(ProjectModel project) {
         this.project = project;
@@ -52,7 +58,12 @@ public class BusinessLogicAnalyzer {
         // 3. 分析 API 操作了哪些 Table
         analyzeApiTableRelations();
 
-        // 4. 构建完整报告
+        // 4. 分析表间关系（从代码推断外键）
+        RelationAnalyzer relAnalyzer = new RelationAnalyzer(project, entityToTable);
+        relAnalyzer.analyze();
+        this.relations = relAnalyzer.getRelations();
+
+        // 5. 构建完整报告
         return buildReport();
     }
 
@@ -457,6 +468,26 @@ public class BusinessLogicAnalyzer {
         }
         md.append("\n");
 
+        // 表间关系
+        if (!relations.isEmpty()) {
+            md.append("## 表间关联关系\n\n");
+            md.append("（从代码推断，替代外键）\n\n");
+            md.append("| 源表 | 关联 | 目标表 | 发现方式 |\n|---|---|---|---|\n");
+            for (TableRelation r : relations) {
+                String icon = switch (r.relationType) {
+                    case "ONE_TO_MANY" -> "1→N";
+                    case "MANY_TO_ONE" -> "N→1";
+                    case "MANY_TO_MANY" -> "M→N";
+                    default -> "关联";
+                };
+                md.append("| `").append(r.sourceTable).append(".").append(r.sourceColumn)
+                  .append("` | ").append(icon)
+                  .append(" | `").append(r.targetTable).append(".").append(r.targetColumn)
+                  .append("` | ").append(r.discoveredFrom).append(" |\n");
+            }
+            md.append("\n");
+        }
+
         // API 数据流详情
         md.append("## API 数据流详情\n\n");
         md.append("> 每个接口的完整调用链和操作的数据表\n\n");
@@ -492,6 +523,9 @@ public class BusinessLogicAnalyzer {
 
         return md.toString();
     }
+
+    /** 获取发现的表间关联关系 */
+    public List<TableRelation> getRelations() { return relations; }
 
     // ───────── API 数据流分析 ─────────
 

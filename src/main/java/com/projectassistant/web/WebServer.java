@@ -8,6 +8,8 @@ import com.projectassistant.analyzer.ProjectAnalyzer;
 import com.projectassistant.analyzer.ProjectAnalyzer.AnalysisResult;
 import com.projectassistant.analyzer.BusinessLogicAnalyzer;
 import com.projectassistant.knowledge.KnowledgeBaseGenerator;
+import com.projectassistant.query.QueryAdvisor;
+import com.projectassistant.relationship.TableRelation;
 import com.projectassistant.reporter.ReportGenerator;
 import com.projectassistant.sql.LiveDatabaseReader;
 import com.sun.net.httpserver.*;
@@ -58,6 +60,7 @@ public class WebServer {
         server.createContext("/dbconnect", WebServer::handleDbConnect);
         server.createContext("/business", WebServer::handleBusiness);
         server.createContext("/api-flow", WebServer::handleApiFlow);
+        server.createContext("/nl-query", WebServer::handleNaturalQuery);
         server.setExecutor(Executors.newFixedThreadPool(4));
         server.start();
         System.out.println("  Java老狗 Web started: http://localhost:" + port);
@@ -549,6 +552,106 @@ public class WebServer {
         ProjectAnalyzer analyzer = new ProjectAnalyzer(model);
         analyzer.analyze();
         return model;
+    }
+
+    /** 自然语言查询：根据用户问题生成 SQL */
+    private static void handleNaturalQuery(HttpExchange ex) throws IOException {
+        if (!"POST".equals(ex.getRequestMethod())) {
+            sendJson(ex, 405, gson.toJson(Map.of("error", "method not allowed")));
+            return;
+        }
+        try {
+            String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            Map<String, Object> params = gson.fromJson(body, Map.class);
+            String question = (String) params.getOrDefault("question", "");
+            if (question.isEmpty()) {
+                sendJson(ex, 400, gson.toJson(Map.of("error", "missing question")));
+                return;
+            }
+
+            long projectId = params.containsKey("projectId") ? ((Number) params.get("projectId")).longValue() : -1;
+            List<TableRelation> relations = List.of();
+            LiveDatabaseReader.DatabaseSchema dbSchema = null;
+
+            // 尝试从缓存获取业务分析结果中的关系和数据库信息
+            // 如果有 projectId，重新扫描并分析关系
+            if (projectId >= 0) {
+                try {
+                    Map<String, Object> data = DatabaseManager.getProject(projectId);
+                    if (data != null && data.containsKey("path")) {
+                        ProjectModel model = buildModel((String) data.get("path"));
+
+                        // 先尝试用已有数据库连接获取 schema
+                        // 如果没有连数据库，扫描也能用代码推断的关系
+                        BusinessLogicAnalyzer biz = new BusinessLogicAnalyzer(model);
+                        if (params.containsKey("dbUrl")) {
+                            try {
+                                LiveDatabaseReader dbReader = new LiveDatabaseReader(
+                                    (String) params.get("dbUrl"),
+                                    (String) params.getOrDefault("dbUser", ""),
+                                    (String) params.getOrDefault("dbPass", "")
+                                );
+                                dbSchema = dbReader.readSchema();
+                                biz.setDatabaseSchema(dbSchema);
+                            } catch (Exception e) {
+                                System.err.println("  ⚠️ DB fetch failed: " + e.getMessage());
+                            }
+                        }
+                        biz.analyze();
+                        relations = biz.getRelations();
+                        if (dbSchema == null) dbSchema = getDbSchemaFromParams(params);
+                    }
+                } catch (Exception e) {
+                    System.err.println("  ⚠️ 扫描失败: " + e.getMessage());
+                }
+            }
+
+            // 如果没有项目扫描结果，尝试只用数据库 schema
+            if (relations.isEmpty() && params.containsKey("dbUrl")) {
+                try {
+                    LiveDatabaseReader dbReader = new LiveDatabaseReader(
+                        (String) params.get("dbUrl"),
+                        (String) params.getOrDefault("dbUser", ""),
+                        (String) params.getOrDefault("dbPass", "")
+                    );
+                    dbSchema = dbReader.readSchema();
+                } catch (Exception e) {
+                    sendJson(ex, 400, gson.toJson(Map.of("error", "数据库连接失败: " + e.getMessage())));
+                    return;
+                }
+            }
+
+            QueryAdvisor advisor = new QueryAdvisor(relations, dbSchema);
+            QueryAdvisor.QuerySuggestion suggestion = advisor.suggest(question);
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("status", "ok");
+            result.put("sql", suggestion.sql);
+            result.put("explanations", suggestion.explanations);
+            result.put("confidence", suggestion.confidence);
+            result.put("hasSchema", dbSchema != null);
+            sendJson(ex, 200, gson.toJson(result));
+
+        } catch (Exception e) {
+            sendJson(ex, 500, gson.toJson(Map.of(
+                "error", "查询失败: " + e.getClass().getSimpleName() + ": " +
+                    (e.getMessage() != null ? e.getMessage() : "未知错误")
+            )));
+        }
+    }
+
+    private static LiveDatabaseReader.DatabaseSchema getDbSchemaFromParams(Map<String, Object> params) {
+        if (!params.containsKey("dbUrl")) return null;
+        try {
+            LiveDatabaseReader dbReader = new LiveDatabaseReader(
+                (String) params.get("dbUrl"),
+                (String) params.getOrDefault("dbUser", ""),
+                (String) params.getOrDefault("dbPass", "")
+            );
+            return dbReader.readSchema();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ========== Utility ==========

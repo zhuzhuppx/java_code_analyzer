@@ -117,6 +117,14 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <button class="btn btn-p" id="dbb" onclick="dbConnect()" style="padding:5px 10px;font-size:12px">&#x1F517;</button></div>
 <div id="dbr" style="font-size:12px;color:#64748b;margin-top:2px;line-height:1.5"></div>
 <div id="dbt" style="max-height:200px;overflow-y:auto;display:none;margin-top:4px"></div>
+</div>
+<!-- 智能查询 -->
+<div style="border-top:1px solid #e2e8f0;padding-top:8px;margin:8px 0">
+<div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px">&#x1F50D; 智能查询</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<input id="nqi" placeholder="问个问题，如：统计每个用户的订单数" style="padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:12px;outline:none;font-family:inherit" onkeydown="if(event.key==='Enter')nlQuery()">
+<button class="btn btn-p" onclick="nlQuery()" style="padding:5px 10px;font-size:12px">&#x1F3AF; 生成查询</button>
+<div id="nqr" style="font-size:11px;color:#64748b;margin-top:2px;line-height:1.5"></div>
 </div></div>
 <div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px"><span>&#x1F4C5; 项目历史</span><button class="btn btn-g bs" onclick="lh()">&#x1F504;</button></div>
 <div id="hc" style="max-height:400px;overflow-y:auto"></div></div>
@@ -356,6 +364,29 @@ function viewFlow(idx){
     h+='</pre>';
     ac(h);
     hideFlowList();
+}
+function nlQuery(){
+    var q=document.getElementById('nqi').value.trim();
+    if(!q){document.getElementById('nqr').innerHTML='请输入问题';return}
+    var nqr=document.getElementById('nqr');nqr.innerHTML='⏳ 思考中...';
+    var body={question:q};
+    if(cid>=0)body.projectId=cid;
+    var dbu=document.getElementById('dbu'),dbn=document.getElementById('dbn'),dbp=document.getElementById('dbp');
+    if(dbu.value)body.dbUrl=dbu.value;
+    if(dbn.value)body.dbUser=dbn.value;
+    if(dbp.value)body.dbPass=dbp.value;
+    fetch('/nl-query',{method:'POST',body:JSON.stringify(body),headers:{'Content-Type':'application/json'}})
+    .then(function(r){return r.json()})
+    .then(function(d){
+        if(d.error){nqr.innerHTML='❌ '+d.error;return}
+        var h='<b>🔍 智能查询结果</b><br>';
+        for(var i=0;i<d.explanations.length;i++)h+=d.explanations[i]+'<br>';
+        h+='<br><pre style="font-size:12px;background:#f1f5f9;padding:8px;border-radius:4px;overflow-x:auto">'+d.sql.replace(/</g,'&lt;')+'</pre>';
+        h+='<br><div style="font-size:11px;color:#94a3b8">⬆️ 复制到数据库工具执行</div>';
+        ac(h);
+        nqr.innerHTML='✅ 已生成';
+    })
+    .catch(function(e){nqr.innerHTML='❌ '+e.message});
 }
 function dr(){var h=document.getElementById('rh'),l=document.getElementById('lp'),t=document.getElementById('ltg');function m(e,s,p){var n=Math.max(309,Math.min(600,s+e.clientX-p));l.style.width=n+'px';t.style.left=n+'px'}h.addEventListener('mousedown',function(e){var s=l.offsetWidth,p=h.getBoundingClientRect().left;document.body.style.cursor='col-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,p)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}
 function vdr(){var h=document.getElementById('cdr'),f=document.querySelector('.chf');function m(e,s,t){e.preventDefault();if(!f)return;var n=Math.max(60,Math.min(300,s-(e.clientY-t)));f.style.height=n+'px'}h.addEventListener('mousedown',function(e){e.preventDefault();if(!f)return;var s=f.offsetHeight,t=h.getBoundingClientRect().top;document.body.style.cursor='row-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,t)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}
