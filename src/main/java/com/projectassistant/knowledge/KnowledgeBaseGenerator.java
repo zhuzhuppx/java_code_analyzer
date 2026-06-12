@@ -49,6 +49,14 @@ public class KnowledgeBaseGenerator {
         sb.append("> 由 Java老狗 自动生成，专为大模型理解优化\n");
         sb.append("> 生成时间: ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
           .append("\n\n---\n\n");
+        sb.append("## ⚠️ 使用规则\n\n");
+        sb.append("**你在回答本项目的问题时，必须严格遵守以下规则：**\n\n");
+        sb.append("1. **只使用知识库中明确列出的信息。** 不要编造、猜测或补全任何未列出的内容。\n");
+        sb.append("2. **API 文档必须严格依据「3. API 路由大全」生成。** 每个接口的路径、方法、参数、返回值都以此为唯一来源。\n");
+        sb.append("3. **不要自行推断未出现的 API、字段或表。** 如果某个 API 未在「3. API 路由大全」中出现，则它不存在。\n");
+        sb.append("4. **接口描述以知识库中的 summary 为准。** 如果 summary 为空，直接使用方法名作为描述。\n");
+        sb.append("5. **参数信息以知识库为准。** 路径参数、查询参数、请求体类型都来自扫描结果，不要额外添加。\n\n");
+        sb.append("**违反上述规则的后果：** 用户会得到错误的 API 文档，导致开发故障。请务必遵守。\n\n---\n\n");
     }
 
     private void overview() {
