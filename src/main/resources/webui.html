@@ -106,7 +106,7 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <div class="ig"><input id="pi" placeholder="/path/to/project" value="{{DEFAULT_PATH}}" onkeydown="if(event.key==='Enter')scan()">
 <button class="btn btn-p" id="sb" onclick="scan()">&#x1F680;</button></div>
 <div class="st st-i" id="sta">&#x23F3; 输入路径</div>
-<div class="h" id="scd"><div class="sg" id="sg"></div><div style="margin-top:6px;display:flex;gap:4px"><button class="btn btn-g bs" id="skb" onclick="skl()" disabled style="opacity:.4;flex:1;padding:5px 8px">&#x1F4E6; 导出 Skill</button></div><div id="skt" style="font-size:11px;color:#94a3b8;margin-top:2px;text-align:center;display:none">解压后运行: copaw skill install ./SKILL.md所在目录</div></div>
+<div class="h" id="scd"><div class="sg" id="sg"></div><div style="margin-top:6px;display:flex;gap:4px"><button class="btn btn-g bs" id="skb" onclick="skl()" disabled style="opacity:.4;flex:1;padding:5px 8px">&#x1F4E6; 导出 Skill</button><button class="btn btn-g bs" id="bzb" onclick="biz()" disabled style="opacity:.4;flex:1;padding:5px 8px">&#x1F50D; 业务分析</button></div><div id="skt" style="font-size:11px;color:#94a3b8;margin-top:2px;text-align:center;display:none">解压后运行: copaw skill install ./SKILL.md所在目录</div></div>
 <div style="border-top:1px solid #e2e8f0;padding-top:8px;margin:8px 0">
 <div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px">&#x1F5C4;&#xFE0F; 数据库连接 <span style="font-weight:400;color:#94a3b8;font-size:11px">&#x1F512; 只读</span></div>
 <div style="display:flex;flex-direction:column;gap:4px">
@@ -145,7 +145,7 @@ if(d.status==='running'){el.className='st st-r';el.innerHTML='<span class="sp"><
 if(d.phase&&d.phase!==ph){ph=d.phase;ac(d.phase+' ('+d.elapsed+'s)')}
 setTimeout(pp,1500)}
 else if(d.status==='done'){dd=true;el.className='st st-d';el.innerHTML='&#x2705; 完成('+d.elapsed+'s)';document.getElementById('sb').disabled=false;document.getElementById('scd').classList.remove('h');document.getElementById('chq').disabled=false;document.getElementById('sbb').disabled=false;
-if(d.projectId){cid=d.projectId;var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block'}
+if(d.projectId){cid=d.projectId;var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1'}
 ac('&#x2705; 扫描完成 ('+d.elapsed+'s)，输入问题开始对话');fs(d);lh()}
 else if(d.status==='error'){dd=true;el.className='st st-e';el.innerHTML='&#x274C; '+d.message;document.getElementById('sb').disabled=false;ac('&#x274C; 扫描失败: '+d.message)}
 }).catch(function(){if(!dd)setTimeout(pp,1500)})}
@@ -159,7 +159,7 @@ var g=document.getElementById('sg');g.innerHTML='';
 ['classes','methods','lines','apis'].forEach(function(k){var x=document.createElement('div');x.className='si';x.innerHTML='<div class="n">'+(d[k]||0)+'</div><div class="l">'+k+'</div>';g.appendChild(x)});var sk=['vulns','health'];sk.forEach(function(k){var x=document.createElement('div');x.className='si'+(k==='vulns'&&(+d[k]||0)>0?' d':k==='health'?(+d[k]||0)<60?' d':(+d[k]||0)<80?' w':' s':'');x.innerHTML='<div class="n">'+(d[k]||'-')+'</div><div class="l">'+k+'</div>';g.appendChild(x)});
 document.getElementById('scd').classList.remove('h');
 document.getElementById('sta').className='st st-d';document.getElementById('sta').innerHTML='&#x1F4C2; '+d.name;
-var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';
+var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1';
 // Load chat history
 var b=document.getElementById('chb');b.innerHTML='';
 if(d.chats&&d.chats.length){d.chats.forEach(function(c){var side=c.role==='user'?'r':'l';var av=c.role==='user'?'&#x1F464;':'&#x1F40B;';b.innerHTML+='<div class="cm '+side+'"><div class="av">'+av+'</div><div class="tx">'+(c.role==='assistant'?md(c.content):c.content)+'</div><button class="cpb" onclick="copyMsg(this)" title="复制这条消息">&#x1F4CB;</button><button class="wpb" onclick="exportMsg(this)" title="导出到 Word">&#x1F4C4;</button></div>'})}else{b.innerHTML='<div class="chp">没有聊天记录，开始提问</div>'}
@@ -295,6 +295,18 @@ function ew(){
 }
 function tp(){var lp=document.getElementById('lp');lp.classList.toggle('c');document.getElementById('ltg').innerHTML=lp.classList.contains('c')?'&#x25B6;':'&#x25C0;'}
 function skl(){if(cid<0)return;var a=document.createElement('a');a.href='/skill?id='+cid;a.download='';a.click()}
+function biz(){
+    if(cid<0)return;
+    var b=document.getElementById('bzb');b.disabled=true;b.style.opacity='.4';b.textContent='分析中...';
+    fetch('/business',{method:'POST',body:JSON.stringify({projectId:cid}),headers:{'Content-Type':'application/json'}})
+    .then(function(r){return r.json()})
+    .then(function(d){
+        b.disabled=false;b.style.opacity='1';b.textContent='🔍 业务分析';
+        if(d.error){ac('❌ 业务分析失败: '+d.error);return}
+        ac('<b>📊 业务逻辑分析 — '+d.projectName+'</b><br>Entity: '+d.totalEntities+' | 表: '+d.totalTables+' | API: '+d.totalApis+'<br><pre style="font-size:12px;max-height:500px;overflow-y:auto">'+d.markdown.replace(/</g,'&lt;')+'</pre>');
+    })
+    .catch(function(e){b.disabled=false;b.style.opacity='1';b.textContent='🔍 业务分析';ac('❌ 请求失败: '+e.message)});
+}
 function dr(){var h=document.getElementById('rh'),l=document.getElementById('lp'),t=document.getElementById('ltg');function m(e,s,p){var n=Math.max(309,Math.min(600,s+e.clientX-p));l.style.width=n+'px';t.style.left=n+'px'}h.addEventListener('mousedown',function(e){var s=l.offsetWidth,p=h.getBoundingClientRect().left;document.body.style.cursor='col-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,p)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}
 function vdr(){var h=document.getElementById('cdr'),f=document.querySelector('.chf');function m(e,s,t){e.preventDefault();if(!f)return;var n=Math.max(60,Math.min(300,s-(e.clientY-t)));f.style.height=n+'px'}h.addEventListener('mousedown',function(e){e.preventDefault();if(!f)return;var s=f.offsetHeight,t=h.getBoundingClientRect().top;document.body.style.cursor='row-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,t)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}
 dr();vdr();ck();lh();

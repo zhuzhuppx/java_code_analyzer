@@ -6,6 +6,7 @@ import com.projectassistant.scanner.ProjectScanner;
 import com.projectassistant.spring.SpringScanner;
 import com.projectassistant.analyzer.ProjectAnalyzer;
 import com.projectassistant.analyzer.ProjectAnalyzer.AnalysisResult;
+import com.projectassistant.analyzer.BusinessLogicAnalyzer;
 import com.projectassistant.knowledge.KnowledgeBaseGenerator;
 import com.projectassistant.reporter.ReportGenerator;
 import com.projectassistant.sql.LiveDatabaseReader;
@@ -55,6 +56,7 @@ public class WebServer {
         server.createContext("/apikey", WebServer::handleApiKey);
         server.createContext("/skill", WebServer::handleSkill);
         server.createContext("/dbconnect", WebServer::handleDbConnect);
+        server.createContext("/business", WebServer::handleBusiness);
         server.setExecutor(Executors.newFixedThreadPool(4));
         server.start();
         System.out.println("  Java老狗 Web started: http://localhost:" + port);
@@ -381,6 +383,80 @@ public class WebServer {
         } catch (Exception e) {
             sendJson(ex, 500, gson.toJson(Map.of(
                 "error", "连接失败: " + e.getClass().getSimpleName() + ": " +
+                    (e.getMessage() != null ? e.getMessage() : "未知错误")
+            )));
+        }
+    }
+
+    private static void handleBusiness(HttpExchange ex) throws IOException {
+        if (!"POST".equals(ex.getRequestMethod())) {
+            sendJson(ex, 405, gson.toJson(Map.of("error", "method not allowed")));
+            return;
+        }
+        try {
+            String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            Map<String, Object> params = gson.fromJson(body, Map.class);
+            long projectId = params.containsKey("projectId") ? ((Number) params.get("projectId")).longValue() : -1;
+
+            if (projectId < 0) {
+                sendJson(ex, 400, gson.toJson(Map.of("error", "missing projectId")));
+                return;
+            }
+
+            // 从 DB 获取项目信息
+            Map<String, Object> data = DatabaseManager.getProject(projectId);
+            if (data == null || !data.containsKey("path")) {
+                sendJson(ex, 404, gson.toJson(Map.of("error", "project not found")));
+                return;
+            }
+            String projectPath = (String) data.get("path");
+
+            // 重新扫描项目（需要完整模型）
+            ProjectModel model = new ProjectScanner(projectPath).scan();
+            SpringScanner springScanner = new SpringScanner(model.getClasses());
+            springScanner.scan();
+            model.setApiEndpoints(springScanner.getEndpoints());
+            model.setBeanDependencies(springScanner.getBeanDependencies());
+            model.setProjectPattern(springScanner.getProjectPattern());
+            model.setSpringBoot(springScanner.isSpringBoot());
+            model.setConfigProperties(springScanner.getConfigProperties());
+            model.setBeanInfos(new ArrayList<>(springScanner.getBeanInfoMap().values()));
+
+            ProjectAnalyzer analyzer = new ProjectAnalyzer(model);
+            analyzer.analyze();
+
+            // 执行业务分析
+            BusinessLogicAnalyzer biz = new BusinessLogicAnalyzer(model);
+
+            // 如果有数据库连接信息，也传进去
+            if (params.containsKey("dbUrl")) {
+                try {
+                    String dbUrl = (String) params.get("dbUrl");
+                    String dbUser = (String) params.getOrDefault("dbUser", "");
+                    String dbPass = (String) params.getOrDefault("dbPass", "");
+                    LiveDatabaseReader dbReader = new LiveDatabaseReader(dbUrl, dbUser, dbPass);
+                    biz.setDatabaseSchema(dbReader.readSchema());
+                } catch (Exception e) {
+                    // 数据库连接失败不影响代码分析
+                    System.err.println("  ⚠️ DB schema fetch failed: " + e.getMessage());
+                }
+            }
+
+            BusinessLogicAnalyzer.BusinessReport report = biz.analyze();
+            String markdown = biz.toMarkdown(report);
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("status", "ok");
+            result.put("markdown", markdown);
+            result.put("totalEntities", report.totalEntities);
+            result.put("totalTables", report.totalTables);
+            result.put("totalApis", report.totalApis);
+            result.put("projectName", model.getProjectName());
+            sendJson(ex, 200, gson.toJson(result));
+
+        } catch (Exception e) {
+            sendJson(ex, 500, gson.toJson(Map.of(
+                "error", "分析失败: " + e.getClass().getSimpleName() + ": " +
                     (e.getMessage() != null ? e.getMessage() : "未知错误")
             )));
         }
