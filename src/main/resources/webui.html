@@ -83,9 +83,9 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .cm.l .tx table{border-collapse:collapse;margin:6px 0;font-size:13px;width:100%}
 .cm.l .tx td,.cm.l .tx th{border:1px solid #e2e8f0;padding:6px 10px;text-align:left}
 .cm.l .tx th{background:#f1f5f9;font-weight:600}
-.cpb{background:none;border:none;cursor:pointer;font-size:11px;color:#94a3b8;padding:2px 6px;border-radius:4px;position:absolute;bottom:-18px;right:0;opacity:0;transition:opacity .15s}
-.cm:hover .cpb{opacity:1}.cpb:hover{color:#6366f1;background:#f1f5f9}
-.cm.r .cpb{left:0;right:auto}.cm{position:relative;padding-bottom:6px}
+.cpb{background:#f1f5f9;border:1px solid #e2e8f0;cursor:pointer;font-size:14px;color:#64748b;padding:2px 8px;border-radius:6px;position:absolute;left:8px;bottom:-16px;line-height:1.6;z-index:5;opacity:.4;transition:opacity .2s,background .2s}
+.cm:hover .cpb{opacity:1}.cpb:hover{background:#e2e8f0;color:#475569}
+.cm{position:relative;padding-bottom:14px}
 .dr{height:10px;cursor:row-resize;flex-shrink:0;position:relative;z-index:5;user-select:none;-webkit-user-select:none}
 .dr::after{content:'';display:block;height:3px;width:40px;background:#cbd5e1;border-radius:2px;position:absolute;top:3.5px;left:50%;transform:translateX(-50%);transition:background .15s,width .15s,height .15s}
 .dr:hover::after,.dr:active::after{background:#6366f1;width:50px;height:4px}
@@ -162,7 +162,7 @@ var k=localStorage.getItem('dsKey')||'';
 var acc='';
 fetch('/chat',{method:'POST',body:'question='+encodeURIComponent(q)+'&apiKey='+encodeURIComponent(k)+'&projectId='+cid,headers:{'Content-Type':'application/x-www-form-urlencoded'}}).then(function(r){
 var reader=r.body.getReader(),dec=new TextDecoder(),buf='';
-function rd(){reader.read().then(function(rt){if(rt.done){tx.innerHTML=md(acc);sc();di.innerHTML+='<button class="cpb" onclick="copyMsg(this)">&#x1F4CB;</button>';return}
+function rd(){reader.read().then(function(rt){if(rt.done){tx.innerHTML=md(acc);sc();var cb=document.createElement('button');cb.className='cpb';cb.onclick=function(){copyMsg(this)};cb.textContent='📋';di.appendChild(cb);return}
 buf+=dec.decode(rt.value,{stream:true});var ls=buf.split('\n');buf=ls.pop();
 ls.forEach(function(l){if(!l.startsWith('data: '))return;
 try{var o=JSON.parse(l.substring(6));if(o.type==='content'){acc+=o.data;tx.innerHTML=md(acc);sc()}
