@@ -31,8 +31,8 @@ public class KnowledgeBaseGenerator {
         sb.setLength(0);
         preamble();
         overview();
+        apiCatalog();           // 提前到第3位，确保截断时不丢API信息
         architecture();
-        apiCatalog();
         databaseSchema();
         beanGraph();
         callChains();

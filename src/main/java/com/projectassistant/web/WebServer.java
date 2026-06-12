@@ -169,8 +169,8 @@ public class WebServer {
                 try { kbContext = Files.readString(kbPath); } catch (Exception ignored) {}
             }
         }
-        if (kbContext.length() > 30000)
-            kbContext = kbContext.substring(0, 30000) + "\n... (truncated)";
+        if (kbContext.length() > 90000)
+            kbContext = kbContext.substring(0, 90000) + "\n... (truncated)";
         ex.getResponseHeaders().add("Content-Type", "text/event-stream; charset=utf-8");
         ex.getResponseHeaders().add("Cache-Control", "no-cache");
         ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
