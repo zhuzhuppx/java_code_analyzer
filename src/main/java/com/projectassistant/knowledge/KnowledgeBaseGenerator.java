@@ -574,27 +574,66 @@ public class KnowledgeBaseGenerator {
         Path skillDir = Paths.get(outputDir, sanitize(project.getProjectName()));
         Files.createDirectories(skillDir);
 
-        StringBuilder md = new StringBuilder();
-        md.append("---\n");
-        md.append("name: ").append(sanitize(project.getProjectName())).append("\n");
-        md.append("description: \"");
-        md.append(project.getProjectName()).append(" 项目知识库");
-        md.append(" — ").append(project.getClasses().size()).append(" 个类, ");
-        md.append(project.getApiEndpoints().size()).append(" 个 API, ");
-        md.append(project.getDatabaseTables().size()).append(" 张表\"\n");
-        md.append("metadata:\n");
-        md.append("  copaw:\n");
-        md.append("    emoji: \"📦\"\n");
-        md.append("    requires: {}\n");
-        md.append("---\n\n");
-
-        // 项目知识正文：内容和 generate() 一致，但多了 agent 使用提示
-        md.append("# ").append(project.getProjectName()).append(" 项目知识库\n\n");
-        md.append("> 由 Java老狗 自动生成 | ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))).append("\n\n");
-        md.append("当用户询问本项目相关的任何问题时，优先使用以下信息回答。\n\n");
-
-        // === 1. 概览 ===
         ProjectStats s = project.getStats();
+
+        // ───── SKILL.md (index only — small) ─────
+        StringBuilder index = new StringBuilder();
+        index.append("---\n");
+        index.append("name: ").append(sanitize(project.getProjectName())).append("\n");
+        index.append("description: \"");
+        index.append(project.getProjectName()).append(" 项目知识库");
+        index.append(" — ").append(project.getClasses().size()).append(" 个类, ");
+        index.append(project.getApiEndpoints().size()).append(" 个 API, ");
+        index.append(project.getDatabaseTables().size()).append(" 张表\"\n");
+        index.append("metadata:\n");
+        index.append("  copaw:\n");
+        index.append("    emoji: \"📦\"\n");
+        index.append("    requires: {}\n");
+        index.append("---\n\n");
+        index.append("# ").append(project.getProjectName()).append(" 项目知识库\n\n");
+        index.append("> 由 Java老狗 自动生成 | ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))).append("\n\n");
+        index.append("## 目录\n\n");
+        index.append("| 文件 | 内容 |\n|---|---|\n");
+        index.append("| [overview.md](overview.md) | 项目概览、架构、依赖 |\n");
+        index.append("| [api-routes.md](api-routes.md) | 所有 API 端点及映射信息 |\n");
+        index.append("| [database.md](database.md) | 数据库表结构、字段、索引 |\n");
+        index.append("| [beans.md](beans.md) | Bean 依赖图与注入关系 |\n");
+        index.append("| [call-chains.md](call-chains.md) | 关键调用链 |\n");
+        index.append("| [classes.md](classes.md) | 所有类的详细信息 |\n");
+        index.append("| [business-flows.md](business-flows.md) | 业务流（按模块分组） |\n");
+        index.append("| [config.md](config.md) | 配置属性说明 |\n\n");
+        index.append("## 操作指引\n\n");
+        index.append("> 当用户询问本项目相关问题时，按需 `read_file` 读取对应的子文档。\n\n");
+        index.append("| 用户想问 | 读哪个文件 |\n|---|---|\n");
+        index.append("| 这是什么项目？ | overview.md |\n");
+        index.append("| 有哪些接口？ | api-routes.md |\n");
+        index.append("| 数据库怎么设计的？ | database.md |\n");
+        index.append("| 改这个字段影响哪？ | beans.md / call-chains.md |\n");
+        index.append("| 帮我加个接口 | overview.md + classes.md |\n");
+        index.append("| 这个配置是什么意思？ | config.md |\n\n");
+        index.append("---\n> 由 Java老狗 生成 | 安装命令: `copaw skill install <this-dir>`\n");
+
+        Files.writeString(skillDir.resolve("SKILL.md"), index.toString());
+
+        // ───── Sub-documents ─────
+        writeOverview(skillDir, s);
+        writeApiRoutes(skillDir);
+        writeDatabase(skillDir);
+        writeBeans(skillDir);
+        writeCallChains(skillDir);
+        writeClasses(skillDir);
+        writeBusinessFlows(skillDir);
+        writeConfig(skillDir);
+
+        System.out.println("  ✅ 项目 Skill 已生成: " + skillDir.toAbsolutePath());
+        System.out.println("  📦 安装命令: copaw skill install " + skillDir.toAbsolutePath());
+    }
+
+    // ────── Skill sub-document writers ──────
+
+    private void writeOverview(Path skillDir, ProjectStats s) throws IOException {
+        StringBuilder md = new StringBuilder();
+        md.append("# 项目概览\n\n");
         md.append("## 1. 项目概览\n\n");
         md.append("| 属性 | 值 |\n|---|---|\n");
         md.append("| 项目 | ").append(project.getProjectName()).append(" |\n");
@@ -609,7 +648,7 @@ public class KnowledgeBaseGenerator {
         md.append("| 依赖 | ").append(project.getDependencies().size()).append(" |\n\n");
 
         if (!project.getDependencies().isEmpty()) {
-            md.append("### 依赖\n\n```\n");
+            md.append("## 依赖\n\n```\n");
             for (DependencyInfo dep : project.getDependencies()) {
                 md.append(dep.getGroupId()).append(":").append(dep.getArtifactId()).append(":").append(dep.getVersion());
                 if (dep.getScope() != null && !"compile".equals(dep.getScope())) md.append(" [").append(dep.getScope()).append("]");
@@ -618,8 +657,7 @@ public class KnowledgeBaseGenerator {
             md.append("```\n\n");
         }
 
-        // === 2. 架构 ===
-        md.append("## 2. 架构\n\n**").append(project.getProjectPattern()).append("**\n\n```\n");
+        md.append("## 架构图\n\n**").append(project.getProjectPattern()).append("**\n\n```\n");
         Map<String, List<ClassInfo>> pkgMap = project.getClasses().stream()
                 .collect(Collectors.groupingBy(ClassInfo::getPackageName, TreeMap::new, Collectors.toList()));
         for (Map.Entry<String, List<ClassInfo>> e : pkgMap.entrySet()) {
@@ -630,61 +668,60 @@ public class KnowledgeBaseGenerator {
                 md.append("    ").append(icon).append(" ").append(ci.getSimpleName()).append("\n");
             }
         }
-        md.append("```\n\n");
+        md.append("```\n");
+        Files.writeString(skillDir.resolve("overview.md"), md.toString());
+    }
 
-        // === 3. API ===
+    private void writeApiRoutes(Path skillDir) throws IOException {
         List<ApiEndpoint> eps = project.getApiEndpoints();
-        md.append("## 3. API\n\n");
-        if (eps.isEmpty()) { md.append("（无）\n\n"); }
-        else {
-            // 按 Controller 分组
-            Map<String, List<ApiEndpoint>> byCtrl = eps.stream()
-                    .collect(Collectors.groupingBy(ApiEndpoint::getControllerClass, LinkedHashMap::new, Collectors.toList()));
-            for (Map.Entry<String, List<ApiEndpoint>> e : byCtrl.entrySet()) {
-                String ctrl = e.getKey();
-                String shortName = ctrl.substring(ctrl.lastIndexOf('.') + 1);
-                md.append("### ").append(shortName).append("\n\n");
-                md.append("> `").append(ctrl).append("` — ").append(e.getValue().size()).append(" 个接口\n\n");
-                for (ApiEndpoint ep : e.getValue()) {
-                    md.append("- **").append(ep.getHttpMethod()).append("** `").append(ep.getPath()).append("`");
-                    if (ep.getSummary() != null && !ep.getSummary().isEmpty()) {
-                        md.append(" — ").append(ep.getSummary());
-                    }
-                    if (ep.isDeprecated()) md.append(" ⚠️已废弃");
-                    md.append("\n");
-                    if (ep.getReturnType() != null && !ep.getReturnType().equals("void")) {
-                        md.append("  - 返回: ").append(ep.getReturnType()).append("\n");
-                    }
-                    if (!ep.getPathVariables().isEmpty()) {
-                        md.append("  - 路径参数: ").append(ep.getPathVariables().stream()
-                                .map(p -> "`" + p.getName() + ": " + p.getType() + "`")
-                                .collect(Collectors.joining(", "))).append("\n");
-                    }
-                    if (!ep.getRequestParams().isEmpty()) {
-                        md.append("  - 查询参数: ").append(ep.getRequestParams().stream()
-                                .map(p -> "`" + p.getName() + ": " + p.getType() + "`"
-                                        + (p.isRequired() ? "" : " (可选)")
-                                        + (p.getDefaultValue() != null ? " = " + p.getDefaultValue() : ""))
-                                .collect(Collectors.joining(", "))).append("\n");
-                    }
-                    if (ep.getRequestBodyType() != null) {
-                        md.append("  - 请求体: `").append(ep.getRequestBodyType()).append("`\n");
-                    }
-                    if (ep.isSecured()) md.append("  - 🔒 需认证\n");
-                }
-                md.append("\n");
-            }
-        }
+        StringBuilder md = new StringBuilder();
+        md.append("# API 路由\n\n");
+        if (eps.isEmpty()) { md.append("（无）\n"); Files.writeString(skillDir.resolve("api-routes.md"), md.toString()); return; }
 
-        // === 4. 数据库 ===
+        Map<String, List<ApiEndpoint>> byCtrl = eps.stream()
+                .collect(Collectors.groupingBy(ApiEndpoint::getControllerClass, LinkedHashMap::new, Collectors.toList()));
+        for (Map.Entry<String, List<ApiEndpoint>> e : byCtrl.entrySet()) {
+            String ctrl = e.getKey();
+            String shortName = ctrl.substring(ctrl.lastIndexOf('.') + 1);
+            md.append("### ").append(shortName).append("\n\n");
+            md.append("> `").append(ctrl).append("` — ").append(e.getValue().size()).append(" 个接口\n\n");
+            for (ApiEndpoint ep : e.getValue()) {
+                md.append("- **").append(ep.getHttpMethod()).append("** `").append(ep.getPath()).append("`");
+                if (ep.getSummary() != null && !ep.getSummary().isEmpty()) md.append(" — ").append(ep.getSummary());
+                if (ep.isDeprecated()) md.append(" ⚠️已废弃");
+                md.append("\n");
+                if (ep.getReturnType() != null && !ep.getReturnType().equals("void"))
+                    md.append("  - 返回: ").append(ep.getReturnType()).append("\n");
+                if (!ep.getPathVariables().isEmpty()) {
+                    md.append("  - 路径参数: ").append(ep.getPathVariables().stream()
+                            .map(p -> "`" + p.getName() + ": " + p.getType() + "`")
+                            .collect(Collectors.joining(", "))).append("\n");
+                }
+                if (!ep.getRequestParams().isEmpty()) {
+                    md.append("  - 查询参数: ").append(ep.getRequestParams().stream()
+                            .map(p -> "`" + p.getName() + ": " + p.getType() + "`"
+                                    + (p.isRequired() ? "" : " (可选)")
+                                    + (p.getDefaultValue() != null ? " = " + p.getDefaultValue() : ""))
+                            .collect(Collectors.joining(", "))).append("\n");
+                }
+                if (ep.getRequestBodyType() != null) md.append("  - 请求体: `").append(ep.getRequestBodyType()).append("`\n");
+                if (ep.isSecured()) md.append("  - 🔒 需认证\n");
+            }
+            md.append("\n");
+        }
+        Files.writeString(skillDir.resolve("api-routes.md"), md.toString());
+    }
+
+    private void writeDatabase(Path skillDir) throws IOException {
         List<TableInfo> tables = project.getDatabaseTables();
         Map<String, String> mapperSql = project.getMapperSql();
-        md.append("## 4. 数据库\n\n");
+        StringBuilder md = new StringBuilder();
+        md.append("# 数据库\n\n");
 
         if (!tables.isEmpty()) {
-            md.append("### 表结构 (").append(tables.size()).append(" 张表)\n\n");
+            md.append("## 表结构 (").append(tables.size()).append(" 张表)\n\n");
             for (TableInfo t : tables) {
-                md.append("#### ").append(t.getTableName()).append("\n\n");
+                md.append("### ").append(t.getTableName()).append("\n\n");
                 if (t.getEntityClass() != null) md.append("Entity: ").append(t.getEntityClass()).append("\n\n");
                 md.append("| 字段 | 列 | 类型 | PK | 自增 | 可空 |\n|---|---|---|---|---|---|\n");
                 for (TableInfo.Column col : t.getColumns())
@@ -694,26 +731,29 @@ public class KnowledgeBaseGenerator {
         }
 
         if (!mapperSql.isEmpty()) {
-            md.append("### Mapper SQL (").append(mapperSql.size()).append(" 条)\n\n");
+            md.append("## Mapper SQL (").append(mapperSql.size()).append(" 条)\n\n");
             for (Map.Entry<String, String> entry : mapperSql.entrySet()) {
-                md.append("**").append(entry.getKey()).append("**\n\n```sql\n").append(entry.getValue()).append("\n```\n\n");
+                md.append("### ").append(entry.getKey()).append("\n\n```sql\n").append(entry.getValue()).append("\n```\n\n");
             }
         }
 
-        if (tables.isEmpty() && mapperSql.isEmpty()) {
-            md.append("（无）\n\n");
-        }
+        if (tables.isEmpty() && mapperSql.isEmpty()) md.append("（无）\n");
+        Files.writeString(skillDir.resolve("database.md"), md.toString());
+    }
 
-        // === 5. Bean ===
+    private void writeBeans(Path skillDir) throws IOException {
         List<BeanInfo> binfs = project.getBeanInfos();
-        md.append("## 5. Bean 依赖图\n\n");
+        Map<String, List<String>> deps = project.getBeanDependencies();
+        StringBuilder md = new StringBuilder();
+        md.append("# Bean 依赖图\n\n");
+
         if (binfs.isEmpty()) {
-            md.append("（无）\n\n");
+            md.append("（无）\n");
         } else {
             Map<String, List<BeanInfo>> byRole = binfs.stream()
                     .collect(Collectors.groupingBy(BeanInfo::getRole, LinkedHashMap::new, Collectors.toList()));
             for (Map.Entry<String, List<BeanInfo>> roleEntry : byRole.entrySet()) {
-                md.append("### ").append(capitalize(roleEntry.getKey())).append(" (").append(roleEntry.getValue().size()).append(")\n\n");
+                md.append("## ").append(capitalize(roleEntry.getKey())).append(" (").append(roleEntry.getValue().size()).append(")\n\n");
                 for (BeanInfo bi : roleEntry.getValue()) {
                     md.append("- **").append(shorten(bi.getClassName())).append("**");
                     if (bi.isPrimary()) md.append(" 🏆");
@@ -732,39 +772,46 @@ public class KnowledgeBaseGenerator {
                 }
                 md.append("\n");
             }
-            Map<String, List<String>> deps = project.getBeanDependencies();
             if (!deps.isEmpty()) {
-                md.append("依赖关系:\n```\n");
+                md.append("## 依赖关系\n\n```\n");
                 for (Map.Entry<String, List<String>> e : deps.entrySet())
                     md.append(shorten(e.getKey())).append(" → ").append(e.getValue().stream().map(this::shorten).collect(Collectors.joining(", "))).append("\n");
                 md.append("```\n\n");
             }
         }
+        Files.writeString(skillDir.resolve("beans.md"), md.toString());
+    }
 
-        // === 6. 调用链 ===
+    private void writeCallChains(Path skillDir) throws IOException {
         List<String> chains = project.getCriticalChains();
-        md.append("## 6. 调用链\n\n");
-        if (chains.isEmpty()) { md.append("（无）\n\n"); }
-        else { for (String c : chains) md.append("- ").append(c).append("\n"); md.append("\n"); }
+        StringBuilder md = new StringBuilder();
+        md.append("# 调用链\n\n");
+        if (chains.isEmpty()) { md.append("（无）\n"); }
+        else { for (String c : chains) md.append("- ").append(c).append("\n"); }
+        Files.writeString(skillDir.resolve("call-chains.md"), md.toString());
+    }
 
-        // === 7. 关键类 ===
-        md.append("## 7. 关键类\n\n");
-        for (Map.Entry<String, List<ClassInfo>> e : pkgMap.entrySet()) {
-            md.append("### ").append(e.getKey()).append("\n\n");
-            for (ClassInfo ci : e.getValue()) {
-                md.append("- **").append(ci.getSimpleName()).append("** (").append(ci.getType()).append(") — ").append(ci.getMethods().size()).append(" 方法, ").append(ci.getFields().size()).append(" 字段");
-                if (!ci.getAnnotations().isEmpty()) md.append(", @").append(String.join(" @", ci.getAnnotations()));
-                md.append("\n");
-            }
-            md.append("\n");
-        }
-
-        // === 8. 类全量信息 ===
-        md.append("## 8. 类全量信息\n\n");
+    private void writeClasses(Path skillDir) throws IOException {
+        Map<String, List<ClassInfo>> pkgMap = project.getClasses().stream()
+                .collect(Collectors.groupingBy(ClassInfo::getPackageName, TreeMap::new, Collectors.toList()));
+        StringBuilder md = new StringBuilder();
+        md.append("# 类信息\n\n");
         md.append("> 以下为每个类的详细字段和注解信息，大模型可据此自行推断数据库结构、业务逻辑。\n\n");
+
         for (String pkg : pkgMap.keySet()) {
             List<ClassInfo> classes = pkgMap.get(pkg);
-            md.append("### ").append(pkg).append("\n\n");
+            md.append("## ").append(pkg).append("\n\n");
+            md.append("| 类名 | 类型 | 方法数 | 字段数 | 注解 |\n|---|---|---|---|---|\n");
+            for (ClassInfo ci : classes) {
+                String annotations = ci.getAnnotations().isEmpty() ? "" : "@" + String.join(" @", ci.getAnnotations());
+                md.append("| `").append(ci.getSimpleName()).append("` | ")
+                  .append(ci.getType()).append(" | ").append(ci.getMethods().size())
+                  .append(" | ").append(ci.getFields().size())
+                  .append(" | ").append(annotations).append(" |\n");
+            }
+            md.append("\n");
+
+            // 类全量详情
             for (ClassInfo ci : classes) {
                 if (!ci.getAnnotations().isEmpty()) {
                     md.append("```\n");
@@ -797,9 +844,16 @@ public class KnowledgeBaseGenerator {
                 md.append("}\n").append("```\n\n");
             }
         }
+        Files.writeString(skillDir.resolve("classes.md"), md.toString());
+    }
 
-        // === 9. 业务流 ===
-        md.append("## 9. 业务流\n\n");
+    private void writeBusinessFlows(Path skillDir) throws IOException {
+        List<ApiEndpoint> eps = project.getApiEndpoints();
+        Map<String, List<ClassInfo>> pkgMap = project.getClasses().stream()
+                .collect(Collectors.groupingBy(ClassInfo::getPackageName, TreeMap::new, Collectors.toList()));
+        StringBuilder md = new StringBuilder();
+        md.append("# 业务流\n\n");
+
         if (!eps.isEmpty()) {
             Map<String, List<ApiEndpoint>> byPrefix = new TreeMap<>();
             for (ApiEndpoint ep : eps) {
@@ -810,37 +864,26 @@ public class KnowledgeBaseGenerator {
             for (Map.Entry<String, List<ApiEndpoint>> e : byPrefix.entrySet()) {
                 String mod = e.getKey().replace("/", "");
                 if (mod.isEmpty()) mod = "ROOT";
-                md.append("**").append(mod).append("**: ");
-                md.append(e.getValue().stream().map(ep -> ep.getHttpMethod() + " `" + ep.getPath() + "`").collect(Collectors.joining(", ")));
+                md.append("## ").append(mod).append("\n\n");
+                md.append(e.getValue().stream().map(ep -> "- " + ep.getHttpMethod() + " `" + ep.getPath() + "`").collect(Collectors.joining("\n")));
                 md.append("\n\n");
             }
         } else {
             for (String pkg : pkgMap.keySet()) {
                 String[] parts = pkg.split("\\.");
-                md.append("**").append(parts[parts.length-1]).append("**: ").append(pkgMap.get(pkg).size()).append(" 个类\n\n");
+                md.append("## ").append(parts[parts.length-1]).append("\n\n").append(pkgMap.get(pkg).size()).append(" 个类\n\n");
             }
         }
+        Files.writeString(skillDir.resolve("business-flows.md"), md.toString());
+    }
 
-        // === 10. 配置 ===
+    private void writeConfig(Path skillDir) throws IOException {
         Map<String, String> config = project.getConfigProperties();
-        md.append("## 10. 配置\n\n");
-        if (config.isEmpty()) { md.append("（无）\n\n"); }
-        else { for (Map.Entry<String, String> e : config.entrySet()) md.append("- `").append(e.getKey()).append("`: ").append(e.getValue()).append("\n"); md.append("\n"); }
-
-        // === 11. Agent 提示 ===
-        md.append("## 11. 对 Agent 的提示\n\n");
-        md.append("| 用户想问 | 看哪节 |\n|---|---|\n");
-        md.append("| 这是什么项目？ | 1. 概览 / 2. 架构 |\n");
-        md.append("| 有哪些接口？ | 3. API |\n");
-        md.append("| 数据库怎么设计的？ | 4. 数据库 |\n");
-        md.append("| 改这个字段影响哪？ | 5. Bean / 6. 调用链 |\n");
-        md.append("| 帮我加个接口 | 8. 业务流 / 7. 关键类 |\n");
-        md.append("| 这个配置是什么意思？ | 9. 配置 |\n\n");
-        md.append("---\n> 由 Java老狗 生成 | 安装命令: `copaw skill install <this-dir>`\n");
-
-        Files.writeString(skillDir.resolve("SKILL.md"), md.toString());
-        System.out.println("  ✅ 项目 Skill 已生成: " + skillDir.toAbsolutePath());
-        System.out.println("  📦 安装命令: copaw skill install " + skillDir.toAbsolutePath());
+        StringBuilder md = new StringBuilder();
+        md.append("# 配置\n\n");
+        if (config.isEmpty()) { md.append("（无）\n"); }
+        else { for (Map.Entry<String, String> e : config.entrySet()) md.append("- `").append(e.getKey()).append("`: ").append(e.getValue()).append("\n"); }
+        Files.writeString(skillDir.resolve("config.md"), md.toString());
     }
 
     private String sanitize(String name) {
