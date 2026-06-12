@@ -83,8 +83,9 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .cm.l .tx table{border-collapse:collapse;margin:6px 0;font-size:13px;width:100%}
 .cm.l .tx td,.cm.l .tx th{border:1px solid #e2e8f0;padding:6px 10px;text-align:left}
 .cm.l .tx th{background:#f1f5f9;font-weight:600}
-.cpb{margin:0;background:#f1f5f9;border:0;cursor:pointer;font-size:20px;color:#64748b;padding:0;position:absolute;left:32px;bottom:-20px;line-height:1.6;z-index:5;opacity:.4;transition:opacity .2s,background .2s}
-.cm:hover .cpb{opacity:1}.cpb:hover{background:#e2e8f0;color:#475569}
+.cpb,.wpb{margin:0;background:#f1f5f9;border:0;cursor:pointer;font-size:20px;color:#64748b;padding:0;position:absolute;bottom:-20px;line-height:1.6;z-index:5;opacity:.4;transition:opacity .2s,background .2s}
+.cpb{left:32px}.wpb{left:58px}
+.cm:hover .cpb,.cm:hover .wpb{opacity:1}.cpb:hover,.wpb:hover{background:#e2e8f0;color:#475569}
 .cm{position:relative;padding-bottom:14px}
 .dr{height:10px;cursor:row-resize;flex-shrink:0;position:relative;z-index:5;user-select:none;-webkit-user-select:none}
 .dr::after{content:'';display:block;height:3px;width:40px;background:#cbd5e1;border-radius:2px;position:absolute;top:3.5px;left:50%;transform:translateX(-50%);transition:background .15s,width .15s,height .15s}
@@ -150,19 +151,19 @@ document.getElementById('sta').className='st st-d';document.getElementById('sta'
 var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';
 // Load chat history
 var b=document.getElementById('chb');b.innerHTML='';
-if(d.chats&&d.chats.length){d.chats.forEach(function(c){var side=c.role==='user'?'r':'l';var av=c.role==='user'?'&#x1F464;':'&#x1F40B;';b.innerHTML+='<div class="cm '+side+'"><div class="av">'+av+'</div><div class="tx">'+(c.role==='assistant'?md(c.content):c.content)+'</div><button class="cpb" onclick="copyMsg(this)" title="复制这条消息">&#x1F4CB;</button></div>'})}else{b.innerHTML='<div class="chp">没有聊天记录，开始提问</div>'}
+if(d.chats&&d.chats.length){d.chats.forEach(function(c){var side=c.role==='user'?'r':'l';var av=c.role==='user'?'&#x1F464;':'&#x1F40B;';b.innerHTML+='<div class="cm '+side+'"><div class="av">'+av+'</div><div class="tx">'+(c.role==='assistant'?md(c.content):c.content)+'</div><button class="cpb" onclick="copyMsg(this)" title="复制这条消息">&#x1F4CB;</button><button class="wpb" onclick="exportMsg(this)" title="导出到 Word">&#x1F4C4;</button></div>'})}else{b.innerHTML='<div class="chp">没有聊天记录，开始提问</div>'}
 sc();lh()})}
 function sk(){var k=prompt('DeepSeek API Key:');if(k){localStorage.setItem('dsKey',k);ck()}}
 function ck(){var k=localStorage.getItem('dsKey');document.getElementById('akey').innerHTML=k?'&#x1F511; &#x2705;':'&#x1F511; Key';document.getElementById('akey').title=k?'已保存在浏览器':'未配置'}
 function ask(){var q=document.getElementById('chq').value.trim();if(!q)return;document.getElementById('chq').value='';var b=document.getElementById('chb');
-b.innerHTML+='<div class="cm r"><div class="av">&#x1F464;</div><div class="tx">'+q+'</div><button class="cpb" onclick="copyMsg(this)" title="复制这条消息">&#x1F4CB;</button></div>';sc();
+b.innerHTML+='<div class="cm r"><div class="av">&#x1F464;</div><div class="tx">'+q+'</div><button class="cpb" onclick="copyMsg(this)" title="复制这条消息">&#x1F4CB;</button><button class="wpb" onclick="exportMsg(this)" title="导出到 Word">&#x1F4C4;</button></div>';sc();
 var di=document.createElement('div');di.className='cm l';di.innerHTML='<div class="av">&#x1F40B;</div><div class="tx"><span class="sp"></span></div>';b.appendChild(di);sc();
 var tx=di.querySelector('.tx');
 var k=localStorage.getItem('dsKey')||'';
 var acc='';
 fetch('/chat',{method:'POST',body:'question='+encodeURIComponent(q)+'&apiKey='+encodeURIComponent(k)+'&projectId='+cid,headers:{'Content-Type':'application/x-www-form-urlencoded'}}).then(function(r){
 var reader=r.body.getReader(),dec=new TextDecoder(),buf='';
-function rd(){reader.read().then(function(rt){if(rt.done){tx.innerHTML=md(acc);sc();var cb=document.createElement('button');cb.className='cpb';cb.onclick=function(){copyMsg(this)};cb.title='复制这条消息';cb.textContent='📋';di.appendChild(cb);return}
+function rd(){reader.read().then(function(rt){if(rt.done){tx.innerHTML=md(acc);sc();var cb=document.createElement('button');cb.className='cpb';cb.onclick=function(){copyMsg(this)};cb.title='复制这条消息';cb.textContent='📋';di.appendChild(cb);var wb=document.createElement('button');wb.className='wpb';wb.onclick=function(){exportMsg(this)};wb.title='导出到 Word';wb.textContent='📄';di.appendChild(wb);return}
 buf+=dec.decode(rt.value,{stream:true});var ls=buf.split('\n');buf=ls.pop();
 ls.forEach(function(l){if(!l.startsWith('data: '))return;
 try{var o=JSON.parse(l.substring(6));if(o.type==='content'){acc+=o.data;tx.innerHTML=md(acc);sc()}
@@ -189,6 +190,35 @@ function copyMsg(b){
             b.textContent='✅';setTimeout(function(){b.textContent='📋'},1500)
         }).catch(function(){prompt('复制失败:',plain)})
     }
+}
+function exportMsg(b){
+    var cm=b.parentElement;
+    var isUser=cm.classList.contains('r');
+    var tx=cm.querySelector('.tx');
+    if(!tx||!tx.innerHTML){alert('没有可导出的内容');return}
+    var h='<html><head><meta charset="utf-8"><style>'+
+        'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.6;color:#1e293b;max-width:800px;margin:0 auto;padding:20px}'+
+        '.m{margin:12px 0;padding:14px 18px;border-radius:8px}'+
+        '.u{background:#eef2ff;border-left:4px solid #6366f1}'+
+        '.a{background:#fff;border:1px solid #e2e8f0;border-left:4px solid #10b981}'+
+        'pre{background:#1e293b;color:#e2e8f0;padding:12px;border-radius:6px;overflow-x:auto;font-size:13px}'+
+        'code{background:#f1f5f9;padding:2px 5px;border-radius:4px;font-size:13px}'+
+        'table{border-collapse:collapse;margin:8px 0;width:100%}'+
+        'td,th{border:1px solid #e2e8f0;padding:6px 10px}'+
+        'th{background:#f1f5f9}'+
+        'blockquote{border-left:3px solid #6366f1;padding:4px 12px;margin:6px 0;color:#475569}'+
+        'hr{border:none;border-top:1px dashed #e2e8f0;margin:12px 0}'+
+        '</style></head><body>';
+    h+='<h2 style="color:#6366f1;border-bottom:2px solid #e2e8f0;padding-bottom:8px">'+(isUser?'👤 你':'🐶 Java老狗')+'</h2>';
+    h+='<p style="color:#94a3b8;font-size:12px">导出时间: '+new Date().toLocaleString()+'</p>';
+    h+='<div class="m '+(isUser?'u':'a')+'">'+tx.innerHTML+'</div></body></html>';
+    var b2=new Blob([h],{type:'application/msword'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(b2);
+    a.download='message_'+(isUser?'user':'assistant')+'_'+Date.now()+'.doc';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(a.href)},5e3);
+    b.textContent='✅';setTimeout(function(){b.textContent='📄'},1500);
 }
 function ew(){
     var msgs=document.querySelectorAll('#chb .cm');
