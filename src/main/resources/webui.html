@@ -112,7 +112,7 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <button class="tb" id="ltg" onclick="tp()">&#x25C0;</button>
 <!-- Right Panel - Chat Full Height -->
 <div class="rp" id="rp">
-<div class="ch"><div class="chh"><span>&#x1F4AC; 对话</span><button onclick="cc()">&#x1F5D1; 清除</button></div>
+<div class="ch"><div class="chh"><span>&#x1F4AC; 对话</span><div><button onclick="ew()" title="导出为 Word 文档">&#x1F4C4; Word</button><button onclick="cc()" title="清除对话">&#x1F5D1; 清除</button></div></div>
 <div class="chb" id="chb"><div class="chp">&#x1F50D; 扫描项目后开始对话</div></div>
 <div class="dr" id="cdr"></div>
 <div class="chf"><textarea id="chq" placeholder="询问项目... (Enter发送, Shift+Enter换行)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ask()}" disabled></textarea>
@@ -170,7 +170,58 @@ else if(o.type==='error'){tx.innerHTML='<span style="color:#dc2626">'+o.data+'</
 else if(o.type==='done'){tx.innerHTML=md(acc);sc()}}catch(e){}})
 rd()})}rd()}).catch(function(){tx.innerHTML='网络错误';sc()})}
 function cc(){document.getElementById('chb').innerHTML='<div class="chp">对话已清除</div>'}
-function copyMsg(b){var t=b.parentElement.querySelector('.tx').innerText||b.parentElement.querySelector('.tx').textContent;navigator.clipboard.writeText(t).then(function(){b.textContent='✅';setTimeout(function(){b.textContent='📋'},1500)}).catch(function(){prompt('复制失败，请手动复制:',t)})}
+function copyMsg(b){
+    var tx=b.parentElement.querySelector('.tx');
+    var plain=tx.innerText||tx.textContent;
+    var rich='<html><body style="font-family:-apple-system,sans-serif;font-size:14px;line-height:1.6">'+tx.innerHTML+'</body></html>';
+    var pb=new Blob([rich],{type:'text/html'});
+    var tb=new Blob([plain],{type:'text/plain'});
+    try{
+        navigator.clipboard.write([new ClipboardItem({'text/html':pb,'text/plain':tb})]).then(function(){
+            b.textContent='✅';setTimeout(function(){b.textContent='📋'},1500)
+        }).catch(function(){
+            navigator.clipboard.writeText(plain).then(function(){
+                b.textContent='✅';setTimeout(function(){b.textContent='📋'},1500)
+            }).catch(function(){prompt('复制失败:',plain)})
+        })
+    }catch(e){
+        navigator.clipboard.writeText(plain).then(function(){
+            b.textContent='✅';setTimeout(function(){b.textContent='📋'},1500)
+        }).catch(function(){prompt('复制失败:',plain)})
+    }
+}
+function ew(){
+    var msgs=document.querySelectorAll('#chb .cm');
+    if(!msgs.length){alert('没有可导出的对话');return}
+    var h='<html><head><meta charset="utf-8"><style>'+
+        'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.6;color:#1e293b;max-width:800px;margin:0 auto;padding:20px}'+
+        '.m{margin:12px 0;padding:10px 16px;border-radius:8px}'+
+        '.u{background:#eef2ff;border-left:4px solid #6366f1}'+
+        '.a{background:#fff;border:1px solid #e2e8f0;border-left:4px solid #10b981}'+
+        'pre{background:#1e293b;color:#e2e8f0;padding:12px;border-radius:6px;overflow-x:auto;font-size:13px}'+
+        'code{background:#f1f5f9;padding:2px 5px;border-radius:4px;font-size:13px}'+
+        'table{border-collapse:collapse;margin:8px 0;width:100%}'+
+        'td,th{border:1px solid #e2e8f0;padding:6px 10px}'+
+        'th{background:#f1f5f9}'+
+        'blockquote{border-left:3px solid #6366f1;padding:4px 12px;margin:6px 0;color:#475569}'+
+        'hr{border:none;border-top:1px dashed #e2e8f0;margin:12px 0}'+
+        '</style></head><body>';
+    h+='<h1 style="color:#6366f1;border-bottom:2px solid #e2e8f0;padding-bottom:10px">Java老狗 - 对话记录</h1>';
+    h+='<p style="color:#94a3b8;font-size:12px;margin-bottom:20px">导出时间: '+new Date().toLocaleString()+'</p>';
+    msgs.forEach(function(m){
+        var isUser=m.classList.contains('r');
+        var tx=m.querySelector('.tx');
+        if(!tx)return;
+        h+='<div class="m '+(isUser?'u':'a')+'"><strong>'+(isUser?'👤 你':'🐶 Java老狗')+'</strong><hr>'+tx.innerHTML+'</div>';
+    });
+    h+='</body></html>';
+    var b=new Blob([h],{type:'application/msword'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='对话记录_'+new Date().toISOString().substring(0,10)+'.doc';
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
 function tp(){var lp=document.getElementById('lp');lp.classList.toggle('c');document.getElementById('ltg').innerHTML=lp.classList.contains('c')?'&#x25B6;':'&#x25C0;'}
 function skl(){if(cid<0)return;var a=document.createElement('a');a.href='/skill?id='+cid;a.download='';a.click()}
 function dr(){var h=document.getElementById('rh'),l=document.getElementById('lp'),t=document.getElementById('ltg');function m(e,s,p){var n=Math.max(309,Math.min(600,s+e.clientX-p));l.style.width=n+'px';t.style.left=n+'px'}h.addEventListener('mousedown',function(e){var s=l.offsetWidth,p=h.getBoundingClientRect().left;document.body.style.cursor='col-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,p)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}
