@@ -3,6 +3,7 @@ package com.projectassistant.web;
 import com.projectassistant.db.DatabaseManager;
 import com.projectassistant.model.ProjectModel;
 import com.projectassistant.scanner.ProjectScanner;
+import com.projectassistant.spring.SpringScanner;
 import com.projectassistant.analyzer.ProjectAnalyzer;
 import com.projectassistant.analyzer.ProjectAnalyzer.AnalysisResult;
 import com.projectassistant.knowledge.KnowledgeBaseGenerator;
@@ -375,7 +376,17 @@ public class WebServer {
                 phase = "Scanning files...";
                 ProjectModel model = new ProjectScanner(projectPath.toString()).scan();
 
-                phase = "Analyzing...";
+                phase = "Analyzing Spring...";
+                SpringScanner springScanner = new SpringScanner(model.getClasses());
+                springScanner.scan();
+                model.setApiEndpoints(springScanner.getEndpoints());
+                model.setBeanDependencies(springScanner.getBeanDependencies());
+                model.setProjectPattern(springScanner.getProjectPattern());
+                model.setSpringBoot(springScanner.isSpringBoot());
+                model.setConfigProperties(springScanner.getConfigProperties());
+                model.setBeanInfos(new ArrayList<>(springScanner.getBeanInfoMap().values()));
+
+                phase = "Deep analyzing...";
                 ProjectAnalyzer analyzer = new ProjectAnalyzer(model);
                 List<AnalysisResult> results = analyzer.analyze();
 
