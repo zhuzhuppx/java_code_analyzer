@@ -40,6 +40,13 @@
             <version>2.2.224</version>
         </dependency>
 
+        <!-- MySQL JDBC 驱动 -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.3.0</version>
+        </dependency>
+
         <!-- 测试 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -71,6 +78,16 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
+                    <archive>
+                        <manifestEntries>
+                            <Multi-Release>true</Multi-Release>
+                        </manifestEntries>
+                    </archive>
+                    <containerDescriptorHandlers>
+                        <containerDescriptorHandler>
+                            <handlerName>metaInf-services</handlerName>
+                        </containerDescriptorHandler>
+                    </containerDescriptorHandlers>
                     <archive>
                         <manifest>
                             <mainClass>com.projectassistant.Main</mainClass>

@@ -107,6 +107,17 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <button class="btn btn-p" id="sb" onclick="scan()">&#x1F680;</button></div>
 <div class="st st-i" id="sta">&#x23F3; 输入路径</div>
 <div class="h" id="scd"><div class="sg" id="sg"></div><div style="margin-top:6px;display:flex;gap:4px"><button class="btn btn-g bs" id="skb" onclick="skl()" disabled style="opacity:.4;flex:1;padding:5px 8px">&#x1F4E6; 导出 Skill</button></div><div id="skt" style="font-size:11px;color:#94a3b8;margin-top:2px;text-align:center;display:none">解压后运行: copaw skill install ./SKILL.md所在目录</div></div>
+<div style="border-top:1px solid #e2e8f0;padding-top:8px;margin:8px 0">
+<div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px">&#x1F5C4;&#xFE0F; 数据库连接</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<input id="dbu" placeholder="jdbc:mysql://localhost:3306/dbname" style="padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:12px;outline:none;font-family:inherit">
+<div style="display:flex;gap:4px">
+<input id="dbn" placeholder="用户" style="flex:1;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:12px;outline:none;font-family:inherit">
+<input id="dbp" placeholder="密码" type="password" style="flex:1;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:12px;outline:none;font-family:inherit">
+<button class="btn btn-p" id="dbb" onclick="dbConnect()" style="padding:5px 10px;font-size:12px">&#x1F517;</button></div>
+<div id="dbr" style="font-size:12px;color:#64748b;margin-top:2px;line-height:1.5"></div>
+<div id="dbt" style="max-height:200px;overflow-y:auto;display:none;margin-top:4px"></div>
+</div></div>
 <div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px"><span>&#x1F4C5; 项目历史</span><button class="btn btn-g bs" onclick="lh()">&#x1F504;</button></div>
 <div id="hc" style="max-height:400px;overflow-y:auto"></div></div>
 </div></div>
@@ -190,6 +201,36 @@ function copyMsg(b){
             b.textContent='✅';setTimeout(function(){b.textContent='📋'},1500)
         }).catch(function(){prompt('复制失败:',plain)})
     }
+}
+function dbConnect(){
+    var url=document.getElementById('dbu').value.trim();
+    var user=document.getElementById('dbn').value.trim();
+    var pass=document.getElementById('dbp').value;
+    if(!url){document.getElementById('dbr').innerHTML='<span style="color:#ef4444">请输入连接 URL</span>';return}
+    document.getElementById('dbb').disabled=true;
+    document.getElementById('dbr').innerHTML='&#x23F3; 连接中...';
+    document.getElementById('dbt').style.display='none';
+    fetch('/dbconnect',{method:'POST',body:JSON.stringify({url:url,user:user,password:pass}),headers:{'Content-Type':'application/json'}})
+    .then(function(r){return r.json()})
+    .then(function(d){
+        document.getElementById('dbb').disabled=false;
+        if(d.error){
+            document.getElementById('dbr').innerHTML='<span style="color:#ef4444">&#x274C; '+d.error+'</span>';
+            return;
+        }
+        document.getElementById('dbr').innerHTML='<span style="color:#16a34a">&#x2705; '+d.dbProduct+' '+d.dbVersion+' — '+d.tableCount+' 张表</span>';
+        var tb=document.getElementById('dbt');tb.style.display='block';tb.innerHTML='<div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px">表列表:</div>';
+        d.tables.forEach(function(t){
+            tb.innerHTML+='<div style="padding:4px 6px;margin:2px 0;background:#f8fafc;border-radius:4px;font-size:11px;display:flex;justify-content:space-between">'+
+                '<span><b>'+t.name+'</b></span><span style="color:#94a3b8">'+t.columns+' 列'+(t.comment?' — '+t.comment:'')+'</span></div>';
+        });
+        // 在对话区显示数据库结构
+        ac('<b>&#x1F5C4;&#xFE0F; 数据库连接成功</b><br>'+d.dbProduct+' '+d.dbVersion+' — '+d.tableCount+' 张表<br><pre style="font-size:12px;max-height:300px;overflow-y:auto">'+d.markdown.replace(/</g,'&lt;')+'</pre>');
+    })
+    .catch(function(e){
+        document.getElementById('dbb').disabled=false;
+        document.getElementById('dbr').innerHTML='<span style="color:#ef4444">&#x274C; 请求失败: '+e.message+'</span>';
+    });
 }
 function exportMsg(b){
     var cm=b.parentElement;

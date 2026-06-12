@@ -8,6 +8,7 @@ import com.projectassistant.analyzer.ProjectAnalyzer;
 import com.projectassistant.analyzer.ProjectAnalyzer.AnalysisResult;
 import com.projectassistant.knowledge.KnowledgeBaseGenerator;
 import com.projectassistant.reporter.ReportGenerator;
+import com.projectassistant.sql.LiveDatabaseReader;
 import com.sun.net.httpserver.*;
 import java.io.*;
 import java.net.*;
@@ -53,6 +54,7 @@ public class WebServer {
         server.createContext("/chat", WebServer::handleChat);
         server.createContext("/apikey", WebServer::handleApiKey);
         server.createContext("/skill", WebServer::handleSkill);
+        server.createContext("/dbconnect", WebServer::handleDbConnect);
         server.setExecutor(Executors.newFixedThreadPool(4));
         server.start();
         System.out.println("  Java老狗 Web started: http://localhost:" + port);
@@ -333,6 +335,54 @@ public class WebServer {
             ex.getResponseBody().close();
         } catch (NumberFormatException e) {
             sendJson(ex, 400, gson.toJson(Map.of("error", "invalid id")));
+        }
+    }
+
+    private static void handleDbConnect(HttpExchange ex) throws IOException {
+        if (!"POST".equals(ex.getRequestMethod())) {
+            sendJson(ex, 405, gson.toJson(Map.of("error", "method not allowed")));
+            return;
+        }
+        try {
+            String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            Map<String, Object> params = gson.fromJson(body, Map.class);
+            String url = (String) params.getOrDefault("url", "");
+            String user = (String) params.getOrDefault("user", "");
+            String password = (String) params.getOrDefault("password", "");
+            if (url.isEmpty()) {
+                sendJson(ex, 400, gson.toJson(Map.of("error", "missing url")));
+                return;
+            }
+            LiveDatabaseReader reader = new LiveDatabaseReader(url, user, password);
+            LiveDatabaseReader.DatabaseSchema schema = reader.readSchema();
+            String md = reader.toMarkdown(schema);
+
+            // 构造返回结果
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("status", "ok");
+            result.put("dbProduct", schema.dbProduct);
+            result.put("dbVersion", schema.dbVersion);
+            result.put("tableCount", schema.tables.size());
+            result.put("markdown", md);
+
+            // 表列表（概览）
+            List<Map<String, Object>> tableList = new ArrayList<>();
+            for (LiveDatabaseReader.TableSchema t : schema.tables) {
+                Map<String, Object> tm = new LinkedHashMap<>();
+                tm.put("name", t.name);
+                tm.put("type", t.type);
+                tm.put("columns", t.columns.size());
+                tm.put("comment", t.comment != null ? t.comment : "");
+                tableList.add(tm);
+            }
+            result.put("tables", tableList);
+
+            sendJson(ex, 200, gson.toJson(result));
+        } catch (Exception e) {
+            sendJson(ex, 500, gson.toJson(Map.of(
+                "error", "连接失败: " + e.getClass().getSimpleName() + ": " +
+                    (e.getMessage() != null ? e.getMessage() : "未知错误")
+            )));
         }
     }
 
