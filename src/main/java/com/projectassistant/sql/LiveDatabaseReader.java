@@ -11,21 +11,18 @@ public class LiveDatabaseReader {
 
     // 显式注册常见 JDBC 驱动（解决 fat JAR 中 SPI 文件被覆盖问题）
     static {
+        registerDriver("com.mysql.cj.jdbc.Driver", "MySQL");
+        registerDriver("org.postgresql.Driver", "PostgreSQL");
+        registerDriver("org.h2.Driver", "H2");
+    }
+
+    private static void registerDriver(String className, String label) {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            // MySQL driver not available
-        }
-        try {
-            Class.forName("org.postgresql.Driver");
-        } catch (ClassNotFoundException e) {
-            // PostgreSQL driver not available
-        }
-        try {
-            Class.forName("org.h2.Driver");
-        } catch (ClassNotFoundException e) {
-            // H2 driver not available
-        }
+            java.sql.Driver driver = (java.sql.Driver) Class.forName(className)
+                    .getDeclaredConstructor().newInstance();
+            DriverManager.registerDriver(driver);
+            System.err.println("  [DB] Registered: " + label);
+        } catch (Exception e) { /* not available */ }
     }
 
     private final String url;
@@ -48,7 +45,10 @@ public class LiveDatabaseReader {
         DatabaseSchema schema = new DatabaseSchema();
         schema.url = url;
 
-        try (Connection conn = DriverManager.getConnection(url, user, password)) {
+        // 自动补充 MySQL 常用参数（SSL、时区）
+        String connUrl = autoFixUrl(url);
+
+        try (Connection conn = DriverManager.getConnection(connUrl, user, password)) {
             // ⚠️ 强制只读，禁止任何 INSERT/UPDATE/DELETE/DDL
             conn.setReadOnly(true);
 
@@ -191,6 +191,22 @@ public class LiveDatabaseReader {
                 ts.foreignKeys.add(fks);
             }
         }
+    }
+
+    /** 自动补全 JDBC URL 的常用参数 */
+    private static String autoFixUrl(String raw) {
+        if (raw.startsWith("jdbc:mysql://")) {
+            // 确保有 useSSL / serverTimezone 等常用参数
+            String lower = raw.toLowerCase();
+            if (!lower.contains("usessl=") && !lower.contains("sslmode=")) {
+                raw += raw.contains("?") ? "&" : "?";
+                raw += "useSSL=false&allowPublicKeyRetrieval=true";
+            }
+            if (!lower.contains("servertimezone=") && !lower.contains("connectiontimezone=")) {
+                raw += "&serverTimezone=Asia/Shanghai";
+            }
+        }
+        return raw;
     }
 
     /** 将数据库结构输出为 Markdown 知识库格式 */
