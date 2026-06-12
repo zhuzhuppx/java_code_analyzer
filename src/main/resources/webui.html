@@ -106,7 +106,7 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <div class="ig"><input id="pi" placeholder="/path/to/project" value="{{DEFAULT_PATH}}" onkeydown="if(event.key==='Enter')scan()">
 <button class="btn btn-p" id="sb" onclick="scan()">&#x1F680;</button></div>
 <div class="st st-i" id="sta">&#x23F3; 输入路径</div>
-<div class="h" id="scd"><div class="sg" id="sg"></div><div style="margin-top:6px;display:flex;gap:4px"><button class="btn btn-g bs" id="skb" onclick="skl()" disabled style="opacity:.4;flex:1;padding:5px 8px">&#x1F4E6; 导出 Skill</button><button class="btn btn-g bs" id="bzb" onclick="biz()" disabled style="opacity:.4;flex:1;padding:5px 8px">&#x1F50D; 业务分析</button></div><div id="skt" style="font-size:11px;color:#94a3b8;margin-top:2px;text-align:center;display:none">解压后运行: copaw skill install ./SKILL.md所在目录</div></div>
+<div class="h" id="scd"><div class="sg" id="sg"></div><div style="margin-top:6px;display:flex;gap:4px"><button class="btn btn-g bs" id="skb" onclick="skl()" disabled style="opacity:.4;flex:1;padding:5px 8px">&#x1F4E6; 导出 Skill</button><button class="btn btn-g bs" id="bzb" onclick="biz()" disabled style="opacity:.4;flex:1;padding:5px 8px">&#x1F50D; 业务分析</button></div><div style="margin-top:4px;display:flex;gap:4px"><button class="btn btn-g bs" id="afb" onclick="showFlowList()" disabled style="opacity:.4;flex:1;padding:5px 8px;font-size:11px">&#x1F500; 数据流</button><button class="btn btn-g bs" id="afd" onclick="hideFlowList()" style="display:none;flex:1;padding:5px 8px;font-size:11px;background:#e2e8f0">&#x2716; 关闭</button></div><div id="afl" style="display:none;margin-top:4px;background:#f8fafc;border-radius:6px;padding:4px;max-height:200px;overflow-y:auto;font-size:11px"></div><div id="skt" style="font-size:11px;color:#94a3b8;margin-top:2px;text-align:center;display:none">解压后运行: copaw skill install ./SKILL.md所在目录</div></div>
 <div style="border-top:1px solid #e2e8f0;padding-top:8px;margin:8px 0">
 <div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px">&#x1F5C4;&#xFE0F; 数据库连接 <span style="font-weight:400;color:#94a3b8;font-size:11px">&#x1F512; 只读</span></div>
 <div style="display:flex;flex-direction:column;gap:4px">
@@ -304,8 +304,58 @@ function biz(){
         b.disabled=false;b.style.opacity='1';b.textContent='🔍 业务分析';
         if(d.error){ac('❌ 业务分析失败: '+d.error);return}
         ac('<b>📊 业务逻辑分析 — '+d.projectName+'</b><br>Entity: '+d.totalEntities+' | 表: '+d.totalTables+' | API: '+d.totalApis+'<br><pre style="font-size:12px;max-height:500px;overflow-y:auto">'+d.markdown.replace(/</g,'&lt;')+'</pre>');
+        // 启用数据流按钮
+        var afb=document.getElementById('afb');afb.disabled=false;afb.style.opacity='1';
     })
     .catch(function(e){b.disabled=false;b.style.opacity='1';b.textContent='🔍 业务分析';ac('❌ 请求失败: '+e.message)});
+}
+var flowData=null;
+function showFlowList(){
+    var afl=document.getElementById('afl'),afd=document.getElementById('afd'),afb=document.getElementById('afb');
+    if(flowData){afl.style.display='block';afd.style.display='block';afb.style.display='none';return}
+    afl.innerHTML='<div style="padding:8px;text-align:center;color:#94a3b8">⏳ 加载中...</div>';afl.style.display='block';
+    afb.style.display='none';afd.style.display='block';
+    fetch('/api-flow',{method:'POST',body:JSON.stringify({projectId:cid}),headers:{'Content-Type':'application/json'}})
+    .then(function(r){return r.json()})
+    .then(function(d){
+        if(d.error){afl.innerHTML='<div style="padding:8px;color:red">'+d.error+'</div>';return}
+        flowData=d.flows;
+        var h='';
+        for(var i=0;i<d.flows.length;i++){
+            var f=d.flows[i],key=f.apiMethod+' '+f.apiPath,label=key.length>33?key.substring(0,30)+'...':key;
+            var tbls=f.tables.length>0?f.tables.join(', '):'';
+            h+='<div onclick="viewFlow('+i+')" style="padding:5px 6px;cursor:pointer;border-radius:4px;border-bottom:1px solid #e2e8f0" onmouseover="this.style.background=\'#e2e8f0\'" onmouseout="this.style.background=\'transparent\'">';
+            h+='<div style="font-size:11px;font-weight:500">'+label+'</div>';
+            if(tbls)h+='<div style="font-size:10px;color:#64748b">→ '+tbls+'</div>';
+            h+='</div>';
+        }
+        afl.innerHTML=h;
+    })
+    .catch(function(e){afl.innerHTML='<div style="padding:8px;color:red">请求失败: '+e.message+'</div>'});
+}
+function hideFlowList(){
+    document.getElementById('afl').style.display='none';
+    document.getElementById('afd').style.display='none';
+    document.getElementById('afb').style.display='block';
+}
+function viewFlow(idx){
+    if(!flowData||idx>=flowData.length)return;
+    var f=flowData[idx];
+    var h='<b>🔀 数据流: '+f.apiMethod+' '+f.apiPath+'</b><br>';
+    h+='CRUD: '+f.crud+' | 涉及表: '+(f.tables.length>0?f.tables.join(', '):'（未识别）')+'<br><br>';
+    h+='<b>调用链:</b><br><pre style="font-size:12px;line-height:1.6;margin:0">';
+    for(var i=0;i<f.chainSteps.length;i++){
+        var s=f.chainSteps[i];
+        var indent='';
+        for(var j=0;j<i;j++)indent+='  ';
+        h+=indent+'└─ '+s.method;
+        if(s.tables&&s.tables.length>0)h+=' → '+s.tables.join(', ');
+        if(s.operation)h+=' ['+s.operation+']';
+        h+='\n';
+    }
+    h+='</pre>';
+    ac(h);
+    hideFlowList();
 }
 function dr(){var h=document.getElementById('rh'),l=document.getElementById('lp'),t=document.getElementById('ltg');function m(e,s,p){var n=Math.max(309,Math.min(600,s+e.clientX-p));l.style.width=n+'px';t.style.left=n+'px'}h.addEventListener('mousedown',function(e){var s=l.offsetWidth,p=h.getBoundingClientRect().left;document.body.style.cursor='col-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,p)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}
 function vdr(){var h=document.getElementById('cdr'),f=document.querySelector('.chf');function m(e,s,t){e.preventDefault();if(!f)return;var n=Math.max(60,Math.min(300,s-(e.clientY-t)));f.style.height=n+'px'}h.addEventListener('mousedown',function(e){e.preventDefault();if(!f)return;var s=f.offsetHeight,t=h.getBoundingClientRect().top;document.body.style.cursor='row-resize';document.body.style.userSelect='none';var mc=function(ev){m(ev,s,t)};document.addEventListener('mousemove',mc);document.addEventListener('mouseup',function(){document.body.style.cursor='';document.body.style.userSelect='';document.removeEventListener('mousemove',mc)},{once:true})})}

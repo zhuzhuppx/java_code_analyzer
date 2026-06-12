@@ -448,15 +448,182 @@ public class BusinessLogicAnalyzer {
 
         // API 视角
         md.append("## API → 数据表 映射\n\n");
-        md.append("| API | 操作的表 |\n|---|---|\n");
+        md.append("| API | 操作的表 | 数据流 |\n|---|---|---|\n");
         for (Map.Entry<String, List<String>> e : apiToTables.entrySet()) {
             String tables = e.getValue().isEmpty() ? "（未识别）" :
                     e.getValue().stream().map(t -> "`" + t + "`").collect(Collectors.joining(", "));
-            md.append("| `").append(e.getKey()).append("` | ").append(tables).append(" |\n");
+            String flowIcon = e.getValue().isEmpty() ? "" : "🔀";
+            md.append("| `").append(e.getKey()).append("` | ").append(tables).append(" | ").append(flowIcon).append(" |\n");
         }
         md.append("\n");
 
+        // API 数据流详情
+        md.append("## API 数据流详情\n\n");
+        md.append("> 每个接口的完整调用链和操作的数据表\n\n");
+
+        List<ApiDataFlow> flows = analyzeApiDataFlows();
+        if (flows.isEmpty()) {
+            md.append("（无可用的调用链数据）\n\n");
+        } else {
+            for (ApiDataFlow flow : flows) {
+                md.append("### ").append(flow.apiMethod).append(" `").append(flow.apiPath).append("`\n\n");
+                md.append("**CRUD**: ").append(flow.crud).append("  \n");
+                if (!flow.tables.isEmpty()) {
+                    md.append("**涉及表**: ").append(flow.tables.stream()
+                            .map(t -> "`" + t + "`").collect(Collectors.joining(", "))).append("\n\n");
+                }
+                md.append("**调用链**:\n\n");
+                for (int i = 0; i < flow.chainSteps.size(); i++) {
+                    ApiFlowStep step = flow.chainSteps.get(i);
+                    String indent = "  ".repeat(i);
+                    md.append(indent).append("└─ **").append(step.method).append("**");
+                    if (!step.tables.isEmpty()) {
+                        md.append(" → ").append(step.tables.stream()
+                                .map(t -> "`" + t + "`").collect(Collectors.joining(", ")));
+                    }
+                    if (!step.operation.isEmpty()) {
+                        md.append(" [").append(step.operation).append("]");
+                    }
+                    md.append("\n");
+                }
+                md.append("\n");
+            }
+        }
+
         return md.toString();
+    }
+
+    // ───────── API 数据流分析 ─────────
+
+    /**
+     * 分析每个 API 的完整数据流（调用链 + 数据表）
+     */
+    public List<ApiDataFlow> analyzeApiDataFlows() {
+        List<ApiDataFlow> results = new ArrayList<>();
+        List<com.projectassistant.chain.CallChain> callChains = project.getCallChains();
+        if (callChains == null || callChains.isEmpty()) return results;
+
+        for (com.projectassistant.chain.CallChain chain : callChains) {
+            if (!"API".equals(chain.getEntryRole())) continue;
+
+            // 匹配 API 端点
+            String entry = chain.getEntryPoint();
+            String ctrlMethod = entry.contains("(") ? entry.substring(0, entry.indexOf('(')) : entry;
+
+            // 找匹配的 ApiEndpoint
+            for (ApiEndpoint ep : project.getApiEndpoints()) {
+                String controller = ep.getControllerClass();
+                String ctrlSimple = controller.substring(controller.lastIndexOf('.') + 1);
+                String epMethod = ep.getMethodName();
+                // 判断是否匹配
+                if (!matchEntryToEndpoint(ctrlSimple, epMethod, ctrlMethod)) continue;
+
+                ApiDataFlow flow = new ApiDataFlow();
+                flow.apiMethod = ep.getHttpMethod();
+                flow.apiPath = ep.getPath();
+                flow.crud = inferCrud(ep.getHttpMethod(), ep.getPath(), ep.getMethodName());
+                flow.entryPoint = entry;
+
+                // 遍历所有调用路径，取最长路径
+                List<String> longestPath = chain.getLongestPath();
+                Set<String> allTables = new LinkedHashSet<>();
+
+                for (String stepMethod : longestPath) {
+                    ApiFlowStep step = new ApiFlowStep();
+                    step.method = stepMethod;
+                    step.tables = findTablesForMethod(stepMethod);
+                    step.operation = inferStepOperation(stepMethod, step.tables);
+                    allTables.addAll(step.tables);
+                    flow.chainSteps.add(step);
+                }
+
+                flow.tables = new ArrayList<>(allTables);
+                results.add(flow);
+                break;
+            }
+        }
+
+        // 对没有调用链的 API 也生成简单数据流
+        for (ApiEndpoint ep : project.getApiEndpoints()) {
+            String apiKey = ep.getHttpMethod() + " " + ep.getPath();
+            boolean found = results.stream().anyMatch(f ->
+                    f.apiMethod.equals(ep.getHttpMethod()) && f.apiPath.equals(ep.getPath()));
+            if (!found) {
+                ApiDataFlow flow = new ApiDataFlow();
+                flow.apiMethod = ep.getHttpMethod();
+                flow.apiPath = ep.getPath();
+                flow.crud = inferCrud(ep.getHttpMethod(), ep.getPath(), ep.getMethodName());
+                flow.tables = apiToTables.getOrDefault(apiKey, List.of());
+                // 生成简化步骤
+                String controller = ep.getControllerClass();
+                String ctrlSimple = controller.substring(controller.lastIndexOf('.') + 1);
+                String ctrlStep = ctrlSimple + "." + (ep.getMethodName() != null ? ep.getMethodName() : "handle");
+                ApiFlowStep step = new ApiFlowStep();
+                step.method = ctrlStep;
+                step.tables = flow.tables;
+                step.operation = flow.crud;
+                flow.chainSteps.add(step);
+                results.add(flow);
+            }
+        }
+
+        return results;
+    }
+
+    private boolean matchEntryToEndpoint(String ctrlSimple, String epMethod, String entryMethod) {
+        // 格式: UserController.createUser  匹配  UserController + createUser
+        String ctrlPart = entryMethod.contains(".") ? entryMethod.substring(0, entryMethod.indexOf('.')) : "";
+        String methodPart = entryMethod.contains(".") ? entryMethod.substring(entryMethod.indexOf('.') + 1) : entryMethod;
+        return ctrlPart.equals(ctrlSimple) && (epMethod == null || methodPart.isEmpty() || methodPart.equals(epMethod));
+    }
+
+    private List<String> findTablesForMethod(String method) {
+        // 从方法名推断涉及的表
+        List<String> tables = new ArrayList<>();
+        String className = method.contains(".") ? method.substring(0, method.indexOf('.')) : method;
+
+        // 检查是否是 Service/Repository
+        String svcKey = className;
+        List<String> svcTables = tableToServices.get(svcKey);
+        if (svcTables != null) tables.addAll(svcTables);
+
+        // 检查类名中是否含 Entity 名
+        for (Map.Entry<String, String> e : entityToTable.entrySet()) {
+            if (className.contains(e.getKey())) {
+                if (!tables.contains(e.getValue())) tables.add(e.getValue());
+            }
+            // 方法名中是否包含 Entity 名
+            if (method.contains(e.getKey())) {
+                if (!tables.contains(e.getValue())) tables.add(e.getValue());
+            }
+        }
+
+        // 检查数据库操作关键词
+        String lower = method.toLowerCase();
+        for (Map.Entry<String, String> e : entityToTable.entrySet()) {
+            String entityLower = e.getKey().toLowerCase();
+            if (lower.contains(entityLower)) {
+                if (!tables.contains(e.getValue())) tables.add(e.getValue());
+            }
+        }
+
+        return tables;
+    }
+
+    private String inferStepOperation(String method, List<String> tables) {
+        String lower = method.toLowerCase();
+        if (lower.contains("insert") || lower.contains("save") || lower.contains("add") || lower.contains("create"))
+            return "INSERT";
+        if (lower.contains("delete") || lower.contains("remove") || lower.contains("del"))
+            return "DELETE";
+        if (lower.contains("update") || lower.contains("edit") || lower.contains("modify") || lower.contains("set"))
+            return "UPDATE";
+        if (lower.contains("select") || lower.contains("find") || lower.contains("get") || lower.contains("query")
+                || lower.contains("list") || lower.contains("page") || lower.contains("search"))
+            return "SELECT";
+        if (lower.contains("mapper") || lower.contains("repository") || lower.contains("dao"))
+            return "SQL";
+        return "";
     }
 
     // ────── 报告模型 ──────
@@ -477,5 +644,22 @@ public class BusinessLogicAnalyzer {
         public List<String> apiEndpoints = new ArrayList<>();
         public List<String> crudOperations = new ArrayList<>();
         public List<String> services = new ArrayList<>();
+    }
+
+    /** API 数据流 */
+    public static class ApiDataFlow {
+        public String apiMethod;
+        public String apiPath;
+        public String crud;
+        public String entryPoint;
+        public List<String> tables = new ArrayList<>();
+        public List<ApiFlowStep> chainSteps = new ArrayList<>();
+    }
+
+    /** 数据流中的一步 */
+    public static class ApiFlowStep {
+        public String method;
+        public List<String> tables = new ArrayList<>();
+        public String operation = "";
     }
 }

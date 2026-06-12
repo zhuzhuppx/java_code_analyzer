@@ -57,6 +57,7 @@ public class WebServer {
         server.createContext("/skill", WebServer::handleSkill);
         server.createContext("/dbconnect", WebServer::handleDbConnect);
         server.createContext("/business", WebServer::handleBusiness);
+        server.createContext("/api-flow", WebServer::handleApiFlow);
         server.setExecutor(Executors.newFixedThreadPool(4));
         server.start();
         System.out.println("  Java老狗 Web started: http://localhost:" + port);
@@ -412,23 +413,9 @@ public class WebServer {
             String projectPath = (String) data.get("path");
 
             // 重新扫描项目（需要完整模型）
-            ProjectModel model = new ProjectScanner(projectPath).scan();
-            SpringScanner springScanner = new SpringScanner(model.getClasses());
-            springScanner.scan();
-            model.setApiEndpoints(springScanner.getEndpoints());
-            model.setBeanDependencies(springScanner.getBeanDependencies());
-            model.setProjectPattern(springScanner.getProjectPattern());
-            model.setSpringBoot(springScanner.isSpringBoot());
-            model.setConfigProperties(springScanner.getConfigProperties());
-            model.setBeanInfos(new ArrayList<>(springScanner.getBeanInfoMap().values()));
+            ProjectModel model = buildModel(projectPath);
 
-            ProjectAnalyzer analyzer = new ProjectAnalyzer(model);
-            analyzer.analyze();
-
-            // 执行业务分析
             BusinessLogicAnalyzer biz = new BusinessLogicAnalyzer(model);
-
-            // 如果有数据库连接信息，也传进去
             if (params.containsKey("dbUrl")) {
                 try {
                     String dbUrl = (String) params.get("dbUrl");
@@ -437,7 +424,6 @@ public class WebServer {
                     LiveDatabaseReader dbReader = new LiveDatabaseReader(dbUrl, dbUser, dbPass);
                     biz.setDatabaseSchema(dbReader.readSchema());
                 } catch (Exception e) {
-                    // 数据库连接失败不影响代码分析
                     System.err.println("  ⚠️ DB schema fetch failed: " + e.getMessage());
                 }
             }
@@ -460,6 +446,109 @@ public class WebServer {
                     (e.getMessage() != null ? e.getMessage() : "未知错误")
             )));
         }
+    }
+
+    /** API 数据流分析 */
+    private static void handleApiFlow(HttpExchange ex) throws IOException {
+        if (!"POST".equals(ex.getRequestMethod())) {
+            sendJson(ex, 405, gson.toJson(Map.of("error", "method not allowed")));
+            return;
+        }
+        try {
+            String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            Map<String, Object> params = gson.fromJson(body, Map.class);
+            long projectId = params.containsKey("projectId") ? ((Number) params.get("projectId")).longValue() : -1;
+
+            if (projectId < 0) {
+                sendJson(ex, 400, gson.toJson(Map.of("error", "missing projectId")));
+                return;
+            }
+
+            Map<String, Object> data = DatabaseManager.getProject(projectId);
+            if (data == null || !data.containsKey("path")) {
+                sendJson(ex, 404, gson.toJson(Map.of("error", "project not found")));
+                return;
+            }
+
+            ProjectModel model = buildModel((String) data.get("path"));
+
+            BusinessLogicAnalyzer biz = new BusinessLogicAnalyzer(model);
+            if (params.containsKey("dbUrl")) {
+                try {
+                    LiveDatabaseReader dbReader = new LiveDatabaseReader(
+                        (String) params.get("dbUrl"),
+                        (String) params.getOrDefault("dbUser", ""),
+                        (String) params.getOrDefault("dbPass", "")
+                    );
+                    biz.setDatabaseSchema(dbReader.readSchema());
+                } catch (Exception e) {
+                    System.err.println("  ⚠️ DB schema fetch failed: " + e.getMessage());
+                }
+            }
+
+            biz.analyze();
+            List<BusinessLogicAnalyzer.ApiDataFlow> flows = biz.analyzeApiDataFlows();
+
+            // 可选：只返回指定 API 的数据流
+            String filterApi = (String) params.getOrDefault("api", "");
+            if (!filterApi.isEmpty()) {
+                String finalFilter = filterApi;
+                flows = flows.stream()
+                    .filter(f -> (f.apiMethod + " " + f.apiPath).equals(finalFilter)
+                              || f.apiPath.equals(finalFilter))
+                    .collect(Collectors.toList());
+            }
+
+            // 转为 JSON 安全的数据
+            List<Map<String, Object>> flowList = new ArrayList<>();
+            for (BusinessLogicAnalyzer.ApiDataFlow flow : flows) {
+                Map<String, Object> fm = new LinkedHashMap<>();
+                fm.put("apiMethod", flow.apiMethod);
+                fm.put("apiPath", flow.apiPath);
+                fm.put("tables", flow.tables);
+                fm.put("crud", flow.crud);
+
+                List<Map<String, Object>> steps = new ArrayList<>();
+                for (BusinessLogicAnalyzer.ApiFlowStep step : flow.chainSteps) {
+                    Map<String, Object> sm = new LinkedHashMap<>();
+                    sm.put("method", step.method);
+                    sm.put("tables", step.tables);
+                    sm.put("operation", step.operation);
+                    steps.add(sm);
+                }
+                fm.put("chainSteps", steps);
+                flowList.add(fm);
+            }
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("status", "ok");
+            result.put("flows", flowList);
+            result.put("total", flowList.size());
+            sendJson(ex, 200, gson.toJson(result));
+
+        } catch (Exception e) {
+            sendJson(ex, 500, gson.toJson(Map.of(
+                "error", "数据流分析失败: " + e.getClass().getSimpleName() + ": " +
+                    (e.getMessage() != null ? e.getMessage() : "未知错误")
+            )));
+        }
+    }
+
+    /** 提取公共的 model 构建逻辑 */
+    private static ProjectModel buildModel(String projectPath) throws IOException {
+        ProjectModel model = new ProjectScanner(projectPath).scan();
+        SpringScanner springScanner = new SpringScanner(model.getClasses());
+        springScanner.scan();
+        model.setApiEndpoints(springScanner.getEndpoints());
+        model.setBeanDependencies(springScanner.getBeanDependencies());
+        model.setProjectPattern(springScanner.getProjectPattern());
+        model.setSpringBoot(springScanner.isSpringBoot());
+        model.setConfigProperties(springScanner.getConfigProperties());
+        model.setBeanInfos(new ArrayList<>(springScanner.getBeanInfoMap().values()));
+
+        ProjectAnalyzer analyzer = new ProjectAnalyzer(model);
+        analyzer.analyze();
+        return model;
     }
 
     // ========== Utility ==========
