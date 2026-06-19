@@ -11,6 +11,7 @@ import com.projectassistant.knowledge.KnowledgeBaseGenerator;
 import com.projectassistant.query.QueryAdvisor;
 import com.projectassistant.relationship.TableRelation;
 import com.projectassistant.reporter.ReportGenerator;
+import com.projectassistant.simulation.*;
 import com.projectassistant.sql.LiveDatabaseReader;
 import com.sun.net.httpserver.*;
 import java.io.*;
@@ -61,6 +62,9 @@ public class WebServer {
         server.createContext("/business", WebServer::handleBusiness);
         server.createContext("/api-flow", WebServer::handleApiFlow);
         server.createContext("/nl-query", WebServer::handleNaturalQuery);
+        server.createContext("/sim-presets", WebServer::handleSimPresets);
+        server.createContext("/simulate", WebServer::handleSimulate);
+        server.createContext("/interact", WebServer::handleInteract);
         server.setExecutor(Executors.newFixedThreadPool(4));
         server.start();
         System.out.println("  Java老狗 Web started: http://localhost:" + port);
@@ -652,6 +656,162 @@ public class WebServer {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // ========== 社会推演 ==========
+
+    /** 获取预设场景和人格 */
+    private static void handleSimPresets(HttpExchange ex) throws IOException {
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        // 预设场景
+        List<Map<String, Object>> scenarios = new ArrayList<>();
+        String[][] sceneList = {
+            {"new_boss", "新领导空降", "部门空降了一位新领导，作为中层管理者你会怎么做？"},
+            {"bonus", "奖金分配", "团队完成大项目，如何分配奖金？"},
+            {"trust", "信任考验", "同事泄露了机密请求你保密，怎么选？"}
+        };
+        for (String[] s : sceneList) {
+            Map<String, Object> sm = new LinkedHashMap<>();
+            sm.put("id", s[0]); sm.put("title", s[1]); sm.put("desc", s[2]);
+            scenarios.add(sm);
+        }
+        result.put("scenarios", scenarios);
+
+        // 预设人格
+        List<Map<String, Object>> personalities = new ArrayList<>();
+        String[][] persList = {
+            {"conservative", "保守谨慎型", "好奇2 尽责8 外向3 宜人6 神经质4 — 求稳、保守、注重安全"},
+            {"ambitious", "进取野心型", "好奇7 尽责7 外向8 宜人3 神经质3 — 进取、有野心、看重权力"},
+            {"righteous", "正直固执型", "好奇4 尽责9 外向4 宜人2 神经质6 — 讲原则、较真、不妥协"},
+            {"sociable", "社交活跃型", "好奇7 尽责4 外向9 宜人8 神经质3 — 外向热情、注重人际关系"},
+            {"analytical", "理性分析型", "好奇6 尽责9 外向2 宜人5 神经质5 — 冷静理性、效率优先"}
+        };
+        for (String[] p : persList) {
+            Map<String, Object> pm = new LinkedHashMap<>();
+            pm.put("id", p[0]); pm.put("label", p[1]); pm.put("desc", p[2]);
+            personalities.add(pm);
+        }
+        result.put("personalities", personalities);
+
+        sendJson(ex, 200, gson.toJson(result));
+    }
+
+    /** 执行场景推演 */
+    private static void handleSimulate(HttpExchange ex) throws IOException {
+        if (!"POST".equals(ex.getRequestMethod())) {
+            sendJson(ex, 405, gson.toJson(Map.of("error", "method not allowed")));
+            return;
+        }
+        try {
+            String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            Map<String, Object> params = gson.fromJson(body, Map.class);
+
+            String scenarioId = (String) params.getOrDefault("scenario", "new_boss");
+            List<Map<String, Object>> participants = (List<Map<String, Object>>) params.get("participants");
+            if (participants == null || participants.isEmpty()) {
+                sendJson(ex, 400, gson.toJson(Map.of("error", "missing participants")));
+                return;
+            }
+
+            // 构建人员
+            List<Person> persons = new ArrayList<>();
+            for (Map<String, Object> p : participants) {
+                String name = (String) p.getOrDefault("name", "未命名");
+                String personalityId = (String) p.getOrDefault("personality", "");
+                Person person = new Person(name, Personality.fromPreset(personalityId));
+                // 自定义人格参数
+                if (p.containsKey("openness"))
+                    person.personality.openness = ((Number) p.get("openness")).doubleValue();
+                if (p.containsKey("conscientiousness"))
+                    person.personality.conscientiousness = ((Number) p.get("conscientiousness")).doubleValue();
+                if (p.containsKey("extraversion"))
+                    person.personality.extraversion = ((Number) p.get("extraversion")).doubleValue();
+                if (p.containsKey("agreeableness"))
+                    person.personality.agreeableness = ((Number) p.get("agreeableness")).doubleValue();
+                if (p.containsKey("neuroticism"))
+                    person.personality.neuroticism = ((Number) p.get("neuroticism")).doubleValue();
+                persons.add(person);
+            }
+
+            Scenario scenario = Scenario.getPreset(scenarioId);
+            SimulationEngine engine = new SimulationEngine();
+            SimulationResult simResult = engine.simulate(scenario, persons);
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("status", "ok");
+            result.put("markdown", simResult.toMarkdown());
+            result.put("decisions", simResult.decisions);
+            result.put("narrative", simResult.narrative);
+            result.put("summary", simResult.summary);
+            sendJson(ex, 200, gson.toJson(result));
+
+        } catch (Exception e) {
+            sendJson(ex, 500, gson.toJson(Map.of(
+                "error", "推演失败: " + e.getClass().getSimpleName() + ": " +
+                    (e.getMessage() != null ? e.getMessage() : "未知错误")
+            )));
+        }
+    }
+
+    /** 两人互动推演 */
+    private static void handleInteract(HttpExchange ex) throws IOException {
+        if (!"POST".equals(ex.getRequestMethod())) {
+            sendJson(ex, 405, gson.toJson(Map.of("error", "method not allowed")));
+            return;
+        }
+        try {
+            String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            Map<String, Object> params = gson.fromJson(body, Map.class);
+
+            Map<String, Object> p1data = (Map<String, Object>) params.get("personA");
+            Map<String, Object> p2data = (Map<String, Object>) params.get("personB");
+            String context = (String) params.getOrDefault("context", "偶然相遇");
+
+            if (p1data == null || p2data == null) {
+                sendJson(ex, 400, gson.toJson(Map.of("error", "missing personA or personB")));
+                return;
+            }
+
+            Person a = buildPersonFromParams(p1data);
+            Person b = buildPersonFromParams(p2data);
+
+            SimulationEngine engine = new SimulationEngine();
+            SimulationEngine.InteractionResult ir = engine.interact(a, b, context);
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("status", "ok");
+            result.put("markdown", ir.toMarkdown());
+            result.put("aMoodChange", ir.aMoodChange);
+            result.put("bMoodChange", ir.bMoodChange);
+            result.put("attitudeChange", ir.attitudeChange);
+            result.put("trustChange", ir.trustChange);
+            result.put("narrative", ir.narrative);
+            sendJson(ex, 200, gson.toJson(result));
+
+        } catch (Exception e) {
+            sendJson(ex, 500, gson.toJson(Map.of(
+                "error", "互动失败: " + e.getClass().getSimpleName() + ": " +
+                    (e.getMessage() != null ? e.getMessage() : "未知错误")
+            )));
+        }
+    }
+
+    private static Person buildPersonFromParams(Map<String, Object> p) {
+        String name = (String) p.getOrDefault("name", "未命名");
+        String personalityId = (String) p.getOrDefault("personality", "");
+        Person person = new Person(name, Personality.fromPreset(personalityId));
+        if (p.containsKey("openness"))
+            person.personality.openness = ((Number) p.get("openness")).doubleValue();
+        if (p.containsKey("conscientiousness"))
+            person.personality.conscientiousness = ((Number) p.get("conscientiousness")).doubleValue();
+        if (p.containsKey("extraversion"))
+            person.personality.extraversion = ((Number) p.get("extraversion")).doubleValue();
+        if (p.containsKey("agreeableness"))
+            person.personality.agreeableness = ((Number) p.get("agreeableness")).doubleValue();
+        if (p.containsKey("neuroticism"))
+            person.personality.neuroticism = ((Number) p.get("neuroticism")).doubleValue();
+        return person;
     }
 
     // ========== Utility ==========
