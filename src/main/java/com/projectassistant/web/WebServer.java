@@ -12,7 +12,11 @@ import com.projectassistant.query.QueryAdvisor;
 import com.projectassistant.relationship.TableRelation;
 import com.projectassistant.reporter.ReportGenerator;
 import com.projectassistant.sql.LiveDatabaseReader;
+import com.projectassistant.sql.SqlParser;
+import com.projectassistant.sql.SchemaParser;
+import com.projectassistant.sql.TableInfo;
 import com.sun.net.httpserver.*;
+import java.io.File;
 import java.io.*;
 import java.net.*;
 import java.net.http.*;
@@ -725,6 +729,27 @@ public class WebServer {
                 model.setSpringBoot(springScanner.isSpringBoot());
                 model.setConfigProperties(springScanner.getConfigProperties());
                 model.setBeanInfos(new ArrayList<>(springScanner.getBeanInfoMap().values()));
+
+                // 扫描 Mapper XML → 收集数据库表结构和 SQL
+                List<Path> xmlFiles = new ArrayList<>();
+                try (var paths = java.nio.file.Files.walk(projectPath)) {
+                    paths.filter(p -> p.toString().endsWith(".xml"))
+                         .filter(p -> !p.toString().contains("target" + File.separator))
+                         .filter(p -> p.toString().contains("mapper") || p.toString().contains("Mapper") ||
+                                      p.toString().contains("mybatis") || p.toString().contains("sqlmap") ||
+                                      p.toString().contains("resources") || p.toString().contains("/dao/") ||
+                                      p.toString().contains("/Dao/"))
+                         .forEach(xmlFiles::add);
+                }
+                SqlParser sqlParser = new SqlParser(model.getClasses(), xmlFiles);
+                sqlParser.scan();
+                List<TableInfo> tables = sqlParser.getTables();
+                if (!tables.isEmpty()) model.setDatabaseTables(tables);
+                if (!sqlParser.getMapperSql().isEmpty()) model.setMapperSql(sqlParser.getMapperSql());
+
+                SchemaParser schemaParser = new SchemaParser(model.getClasses(), xmlFiles);
+                List<TableInfo> schemaTables = schemaParser.parse();
+                if (!schemaTables.isEmpty()) model.setDatabaseTables(schemaTables);
 
                 phase = "Deep analyzing...";
                 ProjectAnalyzer analyzer = new ProjectAnalyzer(model);
