@@ -261,7 +261,7 @@ function exportMsg(b){
     h+='<h2 style="color:#6366f1;border-bottom:2px solid #e2e8f0;padding-bottom:8px">'+(isUser?'👤 你':'🐶 Java老狗')+'</h2>';
     h+='<p style="color:#94a3b8;font-size:12px">导出时间: '+new Date().toLocaleString()+'</p>';
     h+='<div class="m '+(isUser?'u':'a')+'">'+tx.innerHTML+'</div></body></html>';
-    var b2=new Blob([h],{type:'application/msword'});
+    var b2=new Blob(['\uFEFF'+h],{type:'application/msword;charset=utf-8'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(b2);
     a.download='message_'+(isUser?'user':'assistant')+'_'+Date.now()+'.doc';
@@ -294,7 +294,7 @@ function ew(){
         h+='<div class="m '+(isUser?'u':'a')+'"><strong>'+(isUser?'👤 你':'🐶 Java老狗')+'</strong><hr>'+tx.innerHTML+'</div>';
     });
     h+='</body></html>';
-    var b=new Blob([h],{type:'application/msword'});
+    var b=new Blob(['\uFEFF'+h],{type:'application/msword;charset=utf-8'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(b);
     a.download='对话记录_'+new Date().toISOString().substring(0,10)+'.doc';
