@@ -117,6 +117,9 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <button class="btn btn-p" id="dbb" onclick="dbConnect()" style="padding:5px 10px;font-size:12px">&#x1F517;</button></div>
 <div id="dbr" style="font-size:12px;color:#64748b;margin-top:2px;line-height:1.5"></div>
 <div id="dbt" style="max-height:200px;overflow-y:auto;display:none;margin-top:4px"></div>
+<div id="db-actions" style="display:none;margin-top:4px;gap:4px">
+<button class="btn btn-g bs" id="dbsb" onclick="dbSkill()" style="flex:1;padding:5px 8px;font-size:11px">&#x1F4E6; 用数据库生成 Skill</button>
+</div>
 </div>
 <!-- 智能查询 -->
 <div style="border-top:1px solid #e2e8f0;padding-top:8px;margin:8px 0">
@@ -139,7 +142,7 @@ body,html{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <button onclick="ask()" id="sbb" disabled>&#x27A1;</button></div></div></div>
 </div>
 <script>
-var cr,ph='',dd=false,cid=-1;
+var cr,ph='',dd=false,cid=-1,dbParams={};
 function md(t){try{return marked.parse(t)}catch(e){return '<pre>'+t.replace(/</g,'&lt;')+'</pre>'}}
 function sc(){var e=document.getElementById('chb');e.scrollTop=e.scrollHeight}
 function ac(m){var b=document.getElementById('chb');b.innerHTML+='<div class="cm l"><div class="av">&#x1F40B;</div><div class="tx">'+m+'</div></div>';sc()}
@@ -153,7 +156,7 @@ if(d.status==='running'){el.className='st st-r';el.innerHTML='<span class="sp"><
 if(d.phase&&d.phase!==ph){ph=d.phase;ac(d.phase+' ('+d.elapsed+'s)')}
 setTimeout(pp,1500)}
 else if(d.status==='done'){dd=true;el.className='st st-d';el.innerHTML='&#x2705; 完成('+d.elapsed+'s)';document.getElementById('sb').disabled=false;document.getElementById('scd').classList.remove('h');document.getElementById('chq').disabled=false;document.getElementById('sbb').disabled=false;
-if(d.projectId){cid=d.projectId;var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1'}
+if(d.projectId){cid=d.projectId;var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1';if(dbParams.dbUrl){document.getElementById('dbsb').disabled=false}}
 ac('&#x2705; 扫描完成 ('+d.elapsed+'s)，输入问题开始对话');fs(d);lh()}
 else if(d.status==='error'){dd=true;el.className='st st-e';el.innerHTML='&#x274C; '+d.message;document.getElementById('sb').disabled=false;ac('&#x274C; 扫描失败: '+d.message)}
 }).catch(function(){if(!dd)setTimeout(pp,1500)})}
@@ -168,6 +171,8 @@ var g=document.getElementById('sg');g.innerHTML='';
 document.getElementById('scd').classList.remove('h');
 document.getElementById('sta').className='st st-d';document.getElementById('sta').innerHTML='&#x1F4C2; '+d.name;
 var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1';
+// 如果已有数据库连接，启用 dbSkill 按钮
+if(dbParams.dbUrl){document.getElementById('dbsb').disabled=false}
 // Load chat history
 var b=document.getElementById('chb');b.innerHTML='';
 if(d.chats&&d.chats.length){d.chats.forEach(function(c){var side=c.role==='user'?'r':'l';var av=c.role==='user'?'&#x1F464;':'&#x1F40B;';b.innerHTML+='<div class="cm '+side+'"><div class="av">'+av+'</div><div class="tx">'+(c.role==='assistant'?md(c.content):c.content)+'</div><button class="cpb" onclick="copyMsg(this)" title="复制这条消息">&#x1F4CB;</button><button class="wpb" onclick="exportMsg(this)" title="导出到 Word">&#x1F4C4;</button></div>'})}else{b.innerHTML='<div class="chp">没有聊天记录，开始提问</div>'}
@@ -218,6 +223,7 @@ function dbConnect(){
     document.getElementById('dbb').disabled=true;
     document.getElementById('dbr').innerHTML='&#x23F3; 连接中...';
     document.getElementById('dbt').style.display='none';
+    document.getElementById('db-actions').style.display='none';
     fetch('/dbconnect',{method:'POST',body:JSON.stringify({url:url,user:user,password:pass}),headers:{'Content-Type':'application/json'}})
     .then(function(r){return r.json()})
     .then(function(d){
@@ -232,6 +238,12 @@ function dbConnect(){
             tb.innerHTML+='<div style="padding:4px 6px;margin:2px 0;background:#f8fafc;border-radius:4px;font-size:11px;display:flex;justify-content:space-between">'+
                 '<span><b>'+t.name+'</b></span><span style="color:#94a3b8">'+t.columns+' 列'+(t.comment?' — '+t.comment:'')+'</span></div>';
         });
+        // 保存数据库连接参数，显示用数据库生成 Skill 按钮
+        dbParams={dbUrl:url,dbUser:user,dbPass:pass};
+        var dbActs=document.getElementById('db-actions');
+        dbActs.style.display='flex';
+        if(cid>=0) document.getElementById('dbsb').disabled=false;
+        else document.getElementById('dbsb').disabled=true;
         // 在对话区显示数据库结构
         ac('<b>&#x1F5C4;&#xFE0F; 数据库连接成功</b><br>'+d.dbProduct+' '+d.dbVersion+' — '+d.tableCount+' 张表<br><pre style="font-size:12px;max-height:300px;overflow-y:auto">'+d.markdown.replace(/</g,'&lt;')+'</pre>');
     })
@@ -303,6 +315,20 @@ function ew(){
 }
 function tp(){var lp=document.getElementById('lp');lp.classList.toggle('c');document.getElementById('ltg').innerHTML=lp.classList.contains('c')?'&#x25B6;':'&#x25C0;'}
 function skl(){if(cid<0)return;var a=document.createElement('a');a.href='/skill?id='+cid;a.download='';a.click()}
+function dbSkill(){
+    if(cid<0||!dbParams.dbUrl){alert('请先连接数据库');return}
+    var b=document.getElementById('dbsb');b.disabled=true;b.textContent='⏳ 生成中...';
+    fetch('/db-skill',{method:'POST',body:JSON.stringify({projectId:cid,dbUrl:dbParams.dbUrl,dbUser:dbParams.dbUser,dbPass:dbParams.dbPass}),headers:{'Content-Type':'application/json'}})
+    .then(function(r){
+        if(!r.ok){return r.json().then(function(d){throw new Error(d.error||'生成失败')})}
+        return r.blob().then(function(blob){
+            var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='skill_'+cid+'_db.zip';a.click();URL.revokeObjectURL(a.href);
+            ac('✅ 基于真实数据库的 Skill 已下载！');
+        });
+    })
+    .catch(function(e){ac('❌ 数据库 Skill 生成失败: '+e.message)})
+    .finally(function(){b.disabled=false;b.textContent='📦 用数据库生成 Skill'});
+}
 function biz(){
     if(cid<0)return;
     var b=document.getElementById('bzb');b.disabled=true;b.style.opacity='.4';b.textContent='分析中...';

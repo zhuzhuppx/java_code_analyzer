@@ -61,6 +61,7 @@ public class WebServer {
         server.createContext("/chat", WebServer::handleChat);
         server.createContext("/apikey", WebServer::handleApiKey);
         server.createContext("/skill", WebServer::handleSkill);
+        server.createContext("/db-skill", WebServer::handleDbSkill);
         server.createContext("/dbconnect", WebServer::handleDbConnect);
         server.createContext("/business", WebServer::handleBusiness);
         server.createContext("/api-flow", WebServer::handleApiFlow);
@@ -346,6 +347,139 @@ public class WebServer {
         } catch (NumberFormatException e) {
             sendJson(ex, 400, gson.toJson(Map.of("error", "invalid id")));
         }
+    }
+
+    /**
+     * 从实时数据库读取表结构，生成 Skill（替代代码解析的表名）
+     * POST /db-skill   body: { projectId, dbUrl, dbUser?, dbPass? }
+     */
+    private static void handleDbSkill(HttpExchange ex) throws IOException {
+        if (!"POST".equals(ex.getRequestMethod())) {
+            sendJson(ex, 405, gson.toJson(Map.of("error", "method not allowed")));
+            return;
+        }
+        try {
+            String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            Map<String, Object> params = gson.fromJson(body, Map.class);
+            long projectId = params.containsKey("projectId") ? ((Number) params.get("projectId")).longValue() : -1;
+            String dbUrl = (String) params.getOrDefault("dbUrl", "");
+            if (projectId < 0 || dbUrl.isEmpty()) {
+                sendJson(ex, 400, gson.toJson(Map.of("error", "missing projectId or dbUrl")));
+                return;
+            }
+
+            Map<String, Object> data = DatabaseManager.getProject(projectId);
+            if (data == null || !data.containsKey("path")) {
+                sendJson(ex, 404, gson.toJson(Map.of("error", "project not found")));
+                return;
+            }
+            String projectPath = (String) data.get("path");
+            String projectName = Paths.get(projectPath).getFileName().toString();
+            if (projectName == null || projectName.isEmpty()) projectName = "project";
+
+            // 1. 扫描项目代码
+            ProjectModel model = buildModel(projectPath);
+
+            // 2. 连接实时数据库获取真实表结构
+            String dbUser = (String) params.getOrDefault("dbUser", "");
+            String dbPass = (String) params.getOrDefault("dbPass", "");
+            LiveDatabaseReader reader = new LiveDatabaseReader(dbUrl, dbUser, dbPass);
+            LiveDatabaseReader.DatabaseSchema dbSchema = reader.readSchema();
+
+            // 3. 用实时数据库表结构覆盖代码解析结果
+            List<TableInfo> realTables = convertDbSchemaToTableInfo(dbSchema);
+            model.setDatabaseTables(realTables);
+
+            // 4. 重新生成 Skill（带真实表信息）
+            KnowledgeBaseGenerator gen = new KnowledgeBaseGenerator(model);
+            Path skillOut = REPORTS_DIR.resolve("skills");
+            Files.createDirectories(skillOut);
+            gen.saveSkill(skillOut.toString());
+
+            // 5. 读取生成的 Skill 文件打包返回
+            String safeName = projectName.replaceAll("[^a-zA-Z0-9._-]", "_").toLowerCase();
+            Path skillDir = skillOut.resolve(safeName);
+            Path skillIndex = skillDir.resolve("SKILL.md");
+
+            if (!Files.exists(skillIndex)) {
+                sendJson(ex, 500, gson.toJson(Map.of("error", "skill generation failed")));
+                return;
+            }
+
+            String zipName = projectName + "_db_" + LocalDate.now().toString() + ".zip";
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+                try (var files = Files.newDirectoryStream(skillDir, "*.md")) {
+                    for (Path f : files) {
+                        zos.putNextEntry(new ZipEntry(f.getFileName().toString()));
+                        zos.write(Files.readAllBytes(f));
+                        zos.closeEntry();
+                    }
+                }
+            }
+
+            byte[] zipBytes = baos.toByteArray();
+            ex.getResponseHeaders().add("Content-Type", "application/zip");
+            ex.getResponseHeaders().add("Content-Disposition", "attachment; filename=\"" + zipName + "\"");
+            ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            ex.sendResponseHeaders(200, zipBytes.length);
+            ex.getResponseBody().write(zipBytes);
+            ex.getResponseBody().close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            sendJson(ex, 500, gson.toJson(Map.of(
+                "error", "生成失败: " + e.getClass().getSimpleName() + ": " +
+                    (e.getMessage() != null ? e.getMessage() : "未知错误")
+            )));
+        }
+    }
+
+    /** 将实时数据库 Schema 转为 TableInfo 列表 */
+    private static List<TableInfo> convertDbSchemaToTableInfo(LiveDatabaseReader.DatabaseSchema schema) {
+        List<TableInfo> tables = new ArrayList<>();
+        for (LiveDatabaseReader.TableSchema ts : schema.tables) {
+            TableInfo ti = new TableInfo();
+            ti.setTableName(ts.name);
+            ti.setComment(ts.comment != null ? ts.comment : "");
+            for (LiveDatabaseReader.ColumnSchema cs : ts.columns) {
+                TableInfo.Column col = new TableInfo.Column();
+                col.setFieldName(cs.name);          // 没有 Java 字段名，用列名代替
+                col.setColumnName(cs.name);
+                col.setPrimaryKey(cs.primaryKey);
+                col.setNullable(cs.nullable);
+                col.setAutoIncrement(cs.autoIncrement);
+                col.setLength(cs.size);
+                col.setComment(cs.comment != null ? cs.comment : "");
+                col.setJavaType(mapJdbcType(cs.jdbcType));  // JDBC→Java 类型映射
+                col.setSqlType(mapJdbcType(cs.jdbcType));
+                ti.getColumns().add(col);
+            }
+            tables.add(ti);
+        }
+        return tables;
+    }
+
+    /** JDBC 类型名 → 常见 SQL / Java 类型名 */
+    private static String mapJdbcType(String jdbcType) {
+        if (jdbcType == null) return "VARCHAR";
+        return switch (jdbcType.toUpperCase()) {
+            case "INTEGER", "INT" -> "INT";
+            case "BIGINT" -> "BIGINT";
+            case "SMALLINT" -> "SMALLINT";
+            case "TINYINT" -> "TINYINT";
+            case "FLOAT" -> "FLOAT";
+            case "DOUBLE" -> "DOUBLE";
+            case "REAL" -> "REAL";
+            case "DECIMAL", "NUMERIC" -> "DECIMAL";
+            case "VARCHAR", "CHAR", "NVARCHAR", "NCHAR" -> "VARCHAR";
+            case "TEXT", "LONGVARCHAR", "CLOB" -> "TEXT";
+            case "DATE" -> "DATE";
+            case "TIME" -> "TIME";
+            case "TIMESTAMP", "DATETIME" -> "DATETIME";
+            case "BLOB", "LONGVARBINARY", "BINARY" -> "BLOB";
+            case "BOOLEAN", "BIT" -> "BOOLEAN";
+            default -> "VARCHAR";
+        };
     }
 
     private static void handleDbConnect(HttpExchange ex) throws IOException {
