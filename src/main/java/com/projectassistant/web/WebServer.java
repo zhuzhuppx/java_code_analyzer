@@ -493,6 +493,7 @@ public class WebServer {
             String url = (String) params.getOrDefault("url", "");
             String user = (String) params.getOrDefault("user", "");
             String password = (String) params.getOrDefault("password", "");
+            long projectId = params.containsKey("projectId") ? ((Number) params.get("projectId")).longValue() : -1;
             if (url.isEmpty()) {
                 sendJson(ex, 400, gson.toJson(Map.of("error", "missing url")));
                 return;
@@ -520,6 +521,12 @@ public class WebServer {
                 tableList.add(tm);
             }
             result.put("tables", tableList);
+
+            // 若指定了 projectId，将数据库连接信息保存到项目记录中
+            if (projectId >= 0) {
+                DatabaseManager.saveDbConfig(projectId, url, user, password);
+                result.put("saved", true);
+            }
 
             sendJson(ex, 200, gson.toJson(result));
         } catch (Exception e) {

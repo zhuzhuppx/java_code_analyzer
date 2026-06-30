@@ -224,6 +224,35 @@ public class DatabaseManager {
         return result;
     }
 
+    public static synchronized void saveDbConfig(long projectId, String dbUrl, String dbUser, String dbPass) {
+        try {
+            // 读当前 stats_json
+            String statsJson = null;
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT stats_json FROM projects WHERE id=?")) {
+                ps.setLong(1, projectId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) statsJson = rs.getString("stats_json");
+                }
+            }
+            if (statsJson == null) statsJson = "{}";
+            @SuppressWarnings("unchecked")
+            Map<String, Object> stats = new com.google.gson.Gson().fromJson(statsJson, Map.class);
+            stats.put("dbUrl", dbUrl);
+            stats.put("dbUser", dbUser != null ? dbUser : "");
+            stats.put("dbPass", dbPass != null ? dbPass : "");
+            String updatedJson = new com.google.gson.Gson().toJson(stats);
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE projects SET stats_json=? WHERE id=?")) {
+                ps.setString(1, updatedJson);
+                ps.setLong(2, projectId);
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            System.err.println("DB saveDbConfig error: " + e.getMessage());
+        }
+    }
+
     public static synchronized long getProjectIdForPath(String path) {
         return pathCache.getOrDefault(path, -1L);
     }

@@ -157,10 +157,12 @@ if(d.phase&&d.phase!==ph){ph=d.phase;ac(d.phase+' ('+d.elapsed+'s)')}
 setTimeout(pp,1500)}
 else if(d.status==='done'){dd=true;el.className='st st-d';el.innerHTML='&#x2705; 完成('+d.elapsed+'s)';document.getElementById('sb').disabled=false;document.getElementById('scd').classList.remove('h');document.getElementById('chq').disabled=false;document.getElementById('sbb').disabled=false;
 if(d.projectId){cid=d.projectId;var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1';
-if(dbParams.dbUrl){
-  document.getElementById('dbu').value=dbParams.dbUrl;
-  document.getElementById('dbn').value=dbParams.dbUser||'';
-  document.getElementById('dbp').value=dbParams.dbPass||'';
+if(d.dbUrl){
+  dbParams={dbUrl:d.dbUrl,dbUser:d.dbUser||'',dbPass:d.dbPass||''};
+  document.getElementById('dbu').value=d.dbUrl;
+  document.getElementById('dbn').value=d.dbUser||'';
+  document.getElementById('dbp').value=d.dbPass||'';
+  document.getElementById('dbr').innerHTML='<span style="color:#16a34a">&#x1F504; 已保存数据库连接</span>';
   document.getElementById('dbsb').disabled=false;
   document.getElementById('db-actions').style.display='flex';
 }}
@@ -178,11 +180,13 @@ var g=document.getElementById('sg');g.innerHTML='';
 document.getElementById('scd').classList.remove('h');
 document.getElementById('sta').className='st st-d';document.getElementById('sta').innerHTML='&#x1F4C2; '+d.name;
 var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1';
-// 恢复数据库连接状态（切换项目时保持）
-if(dbParams.dbUrl){
-  document.getElementById('dbu').value=dbParams.dbUrl;
-  document.getElementById('dbn').value=dbParams.dbUser||'';
-  document.getElementById('dbp').value=dbParams.dbPass||'';
+// 从项目记录恢复数据库连接
+if(d.dbUrl){
+  dbParams={dbUrl:d.dbUrl,dbUser:d.dbUser||'',dbPass:d.dbPass||''};
+  document.getElementById('dbu').value=d.dbUrl;
+  document.getElementById('dbn').value=d.dbUser||'';
+  document.getElementById('dbp').value=d.dbPass||'';
+  document.getElementById('dbr').innerHTML='<span style="color:#16a34a">&#x1F504; 已保存数据库连接</span>';
   document.getElementById('dbsb').disabled=false;
   document.getElementById('db-actions').style.display='flex';
 }
@@ -237,7 +241,9 @@ function dbConnect(){
     document.getElementById('dbr').innerHTML='&#x23F3; 连接中...';
     document.getElementById('dbt').style.display='none';
     document.getElementById('db-actions').style.display='none';
-    fetch('/dbconnect',{method:'POST',body:JSON.stringify({url:url,user:user,password:pass}),headers:{'Content-Type':'application/json'}})
+    var body={url:url,user:user,password:pass};
+    if(cid>=0)body.projectId=cid;
+    fetch('/dbconnect',{method:'POST',body:JSON.stringify(body),headers:{'Content-Type':'application/json'}})
     .then(function(r){return r.json()})
     .then(function(d){
         document.getElementById('dbb').disabled=false;
