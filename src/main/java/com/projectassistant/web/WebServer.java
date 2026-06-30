@@ -61,7 +61,6 @@ public class WebServer {
         server.createContext("/chat", WebServer::handleChat);
         server.createContext("/apikey", WebServer::handleApiKey);
         server.createContext("/skill", WebServer::handleSkill);
-        server.createContext("/db-skill", WebServer::handleDbSkill);
         server.createContext("/dbconnect", WebServer::handleDbConnect);
         server.createContext("/business", WebServer::handleBusiness);
         server.createContext("/api-flow", WebServer::handleApiFlow);
@@ -91,10 +90,24 @@ public class WebServer {
 
     private static void handleScan(HttpExchange ex) throws IOException {
         if (!"POST".equals(ex.getRequestMethod())) { send405(ex); return; }
-        String body = new BufferedReader(new InputStreamReader(ex.getRequestBody()))
-            .lines().collect(Collectors.joining());
-        Map<String, String> params = parseQuery(body);
-        String projectPath = params.get("path");
+        String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        Map<String, String> params;
+        String projectPath;
+        String dbUrl = null, dbUser = null, dbPass = null;
+        // 支持 JSON 和 form-urlencoded 两种格式
+        if (body.startsWith("{")) {
+            Map<String, Object> json = gson.fromJson(body, Map.class);
+            projectPath = (String) json.get("path");
+            if (json.containsKey("dbUrl")) dbUrl = (String) json.get("dbUrl");
+            if (json.containsKey("dbUser")) dbUser = (String) json.get("dbUser");
+            if (json.containsKey("dbPass")) dbPass = (String) json.get("dbPass");
+        } else {
+            params = parseQuery(body);
+            projectPath = params.get("path");
+            dbUrl = params.get("dbUrl");
+            dbUser = params.get("dbUser");
+            dbPass = params.get("dbPass");
+        }
         if (projectPath == null || projectPath.isEmpty()) {
             sendJson(ex, 400, gson.toJson(Map.of("error", "missing path")));
             return;
@@ -103,7 +116,7 @@ public class WebServer {
             sendJson(ex, 409, gson.toJson(Map.of("error", "scan already running")));
             return;
         }
-        currentTask = new ScanTask(Paths.get(projectPath));
+        currentTask = new ScanTask(Paths.get(projectPath), dbUrl, dbUser, dbPass);
         Thread t = new Thread(currentTask::run);
         t.setDaemon(true);
         t.start();
@@ -346,91 +359,6 @@ public class WebServer {
             ex.getResponseBody().close();
         } catch (NumberFormatException e) {
             sendJson(ex, 400, gson.toJson(Map.of("error", "invalid id")));
-        }
-    }
-
-    /**
-     * 从实时数据库读取表结构，生成 Skill（替代代码解析的表名）
-     * POST /db-skill   body: { projectId, dbUrl, dbUser?, dbPass? }
-     */
-    private static void handleDbSkill(HttpExchange ex) throws IOException {
-        if (!"POST".equals(ex.getRequestMethod())) {
-            sendJson(ex, 405, gson.toJson(Map.of("error", "method not allowed")));
-            return;
-        }
-        try {
-            String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-            Map<String, Object> params = gson.fromJson(body, Map.class);
-            long projectId = params.containsKey("projectId") ? ((Number) params.get("projectId")).longValue() : -1;
-            String dbUrl = (String) params.getOrDefault("dbUrl", "");
-            if (projectId < 0 || dbUrl.isEmpty()) {
-                sendJson(ex, 400, gson.toJson(Map.of("error", "missing projectId or dbUrl")));
-                return;
-            }
-
-            Map<String, Object> data = DatabaseManager.getProject(projectId);
-            if (data == null || !data.containsKey("path")) {
-                sendJson(ex, 404, gson.toJson(Map.of("error", "project not found")));
-                return;
-            }
-            String projectPath = (String) data.get("path");
-            String projectName = Paths.get(projectPath).getFileName().toString();
-            if (projectName == null || projectName.isEmpty()) projectName = "project";
-
-            // 1. 扫描项目代码
-            ProjectModel model = buildModel(projectPath);
-
-            // 2. 连接实时数据库获取真实表结构
-            String dbUser = (String) params.getOrDefault("dbUser", "");
-            String dbPass = (String) params.getOrDefault("dbPass", "");
-            LiveDatabaseReader reader = new LiveDatabaseReader(dbUrl, dbUser, dbPass);
-            LiveDatabaseReader.DatabaseSchema dbSchema = reader.readSchema();
-
-            // 3. 用实时数据库表结构覆盖代码解析结果
-            List<TableInfo> realTables = convertDbSchemaToTableInfo(dbSchema);
-            model.setDatabaseTables(realTables);
-
-            // 4. 重新生成 Skill（带真实表信息）
-            KnowledgeBaseGenerator gen = new KnowledgeBaseGenerator(model);
-            Path skillOut = REPORTS_DIR.resolve("skills");
-            Files.createDirectories(skillOut);
-            gen.saveSkill(skillOut.toString());
-
-            // 5. 读取生成的 Skill 文件打包返回
-            String safeName = projectName.replaceAll("[^a-zA-Z0-9._-]", "_").toLowerCase();
-            Path skillDir = skillOut.resolve(safeName);
-            Path skillIndex = skillDir.resolve("SKILL.md");
-
-            if (!Files.exists(skillIndex)) {
-                sendJson(ex, 500, gson.toJson(Map.of("error", "skill generation failed")));
-                return;
-            }
-
-            String zipName = projectName + "_db_" + LocalDate.now().toString() + ".zip";
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-                try (var files = Files.newDirectoryStream(skillDir, "*.md")) {
-                    for (Path f : files) {
-                        zos.putNextEntry(new ZipEntry(f.getFileName().toString()));
-                        zos.write(Files.readAllBytes(f));
-                        zos.closeEntry();
-                    }
-                }
-            }
-
-            byte[] zipBytes = baos.toByteArray();
-            ex.getResponseHeaders().add("Content-Type", "application/zip");
-            ex.getResponseHeaders().add("Content-Disposition", "attachment; filename=\"" + zipName + "\"");
-            ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-            ex.sendResponseHeaders(200, zipBytes.length);
-            ex.getResponseBody().write(zipBytes);
-            ex.getResponseBody().close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            sendJson(ex, 500, gson.toJson(Map.of(
-                "error", "生成失败: " + e.getClass().getSimpleName() + ": " +
-                    (e.getMessage() != null ? e.getMessage() : "未知错误")
-            )));
         }
     }
 
@@ -842,14 +770,23 @@ public class WebServer {
 
     static class ScanTask {
         final Path projectPath;
+        final String dbUrl;
+        final String dbUser;
+        final String dbPass;
         volatile boolean running;
         volatile String error;
         volatile long startTime;
         volatile int classes, methods, lines, apis, chains, findings, vulns, health;
         volatile String phase;
         volatile long projectId = -1;
+        volatile boolean usedLiveDb;
 
-        ScanTask(Path projectPath) { this.projectPath = projectPath; }
+        ScanTask(Path projectPath, String dbUrl, String dbUser, String dbPass) {
+            this.projectPath = projectPath;
+            this.dbUrl = dbUrl;
+            this.dbUser = dbUser;
+            this.dbPass = dbPass;
+        }
 
         boolean isRunning() { return running; }
 
@@ -891,6 +828,22 @@ public class WebServer {
                 SchemaParser schemaParser = new SchemaParser(model.getClasses(), xmlFiles);
                 List<TableInfo> schemaTables = schemaParser.parse();
                 if (!schemaTables.isEmpty()) model.setDatabaseTables(schemaTables);
+
+                // 如果提供了实时数据库连接，优先用真实表结构覆盖代码解析结果
+                boolean usedLiveDb = false;
+                if (dbUrl != null && !dbUrl.isEmpty()) {
+                    phase = "Connecting to live database...";
+                    try {
+                        LiveDatabaseReader dbReader = new LiveDatabaseReader(dbUrl, dbUser != null ? dbUser : "", dbPass != null ? dbPass : "");
+                        LiveDatabaseReader.DatabaseSchema dbSchema = dbReader.readSchema();
+                        List<TableInfo> realTables = convertDbSchemaToTableInfo(dbSchema);
+                        model.setDatabaseTables(realTables);
+                        usedLiveDb = true;
+                        System.out.println("  [Scan] 使用实时数据库 (" + dbSchema.dbProduct + " " + dbSchema.dbVersion + ")，共 " + dbSchema.tables.size() + " 张表");
+                    } catch (Exception e) {
+                        System.err.println("  ⚠️ 实时数据库连接失败: " + e.getMessage() + "，使用 Mapper 解析的表结构");
+                    }
+                }
 
                 phase = "Deep analyzing...";
                 ProjectAnalyzer analyzer = new ProjectAnalyzer(model);
@@ -971,6 +924,10 @@ public class WebServer {
             if (projectId > 0) m.put("projectId", projectId);
             if (running) m.put("phase", phase);
             if (error != null) m.put("message", error);
+            // 扫描完成后标记是否使用了实时数据库
+            if (!running && error == null) {
+                m.put("usedLiveDb", usedLiveDb);
+            }
             return gson.toJson(m);
         }
 
