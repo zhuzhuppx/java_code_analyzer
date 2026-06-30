@@ -156,7 +156,14 @@ if(d.status==='running'){el.className='st st-r';el.innerHTML='<span class="sp"><
 if(d.phase&&d.phase!==ph){ph=d.phase;ac(d.phase+' ('+d.elapsed+'s)')}
 setTimeout(pp,1500)}
 else if(d.status==='done'){dd=true;el.className='st st-d';el.innerHTML='&#x2705; 完成('+d.elapsed+'s)';document.getElementById('sb').disabled=false;document.getElementById('scd').classList.remove('h');document.getElementById('chq').disabled=false;document.getElementById('sbb').disabled=false;
-if(d.projectId){cid=d.projectId;var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1';if(dbParams.dbUrl){document.getElementById('dbsb').disabled=false}}
+if(d.projectId){cid=d.projectId;var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1';
+if(dbParams.dbUrl){
+  document.getElementById('dbu').value=dbParams.dbUrl;
+  document.getElementById('dbn').value=dbParams.dbUser||'';
+  document.getElementById('dbp').value=dbParams.dbPass||'';
+  document.getElementById('dbsb').disabled=false;
+  document.getElementById('db-actions').style.display='flex';
+}}
 ac('&#x2705; 扫描完成 ('+d.elapsed+'s)，输入问题开始对话');fs(d);lh()}
 else if(d.status==='error'){dd=true;el.className='st st-e';el.innerHTML='&#x274C; '+d.message;document.getElementById('sb').disabled=false;ac('&#x274C; 扫描失败: '+d.message)}
 }).catch(function(){if(!dd)setTimeout(pp,1500)})}
@@ -171,8 +178,14 @@ var g=document.getElementById('sg');g.innerHTML='';
 document.getElementById('scd').classList.remove('h');
 document.getElementById('sta').className='st st-d';document.getElementById('sta').innerHTML='&#x1F4C2; '+d.name;
 var skb=document.getElementById('skb');skb.disabled=false;skb.style.opacity='1';document.getElementById('skt').style.display='block';var bzb=document.getElementById('bzb');bzb.disabled=false;bzb.style.opacity='1';
-// 如果已有数据库连接，启用 dbSkill 按钮
-if(dbParams.dbUrl){document.getElementById('dbsb').disabled=false}
+// 恢复数据库连接状态（切换项目时保持）
+if(dbParams.dbUrl){
+  document.getElementById('dbu').value=dbParams.dbUrl;
+  document.getElementById('dbn').value=dbParams.dbUser||'';
+  document.getElementById('dbp').value=dbParams.dbPass||'';
+  document.getElementById('dbsb').disabled=false;
+  document.getElementById('db-actions').style.display='flex';
+}
 // Load chat history
 var b=document.getElementById('chb');b.innerHTML='';
 if(d.chats&&d.chats.length){d.chats.forEach(function(c){var side=c.role==='user'?'r':'l';var av=c.role==='user'?'&#x1F464;':'&#x1F40B;';b.innerHTML+='<div class="cm '+side+'"><div class="av">'+av+'</div><div class="tx">'+(c.role==='assistant'?md(c.content):c.content)+'</div><button class="cpb" onclick="copyMsg(this)" title="复制这条消息">&#x1F4CB;</button><button class="wpb" onclick="exportMsg(this)" title="导出到 Word">&#x1F4C4;</button></div>'})}else{b.innerHTML='<div class="chp">没有聊天记录，开始提问</div>'}
