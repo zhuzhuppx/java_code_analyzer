@@ -147,6 +147,9 @@ function ac(m){var b=document.getElementById('chb');b.innerHTML+='<div class="cm
 function scan(){var p=document.getElementById('pi').value.trim();if(!p)return;document.getElementById('sb').disabled=true;ph='';dd=false;cid=-1;
 document.getElementById('chq').disabled=true;document.getElementById('sbb').disabled=true;
 document.getElementById('chb').innerHTML='<div class="cm l"><div class="av">&#x1F40B;</div><div class="tx">&#x1F680; 开始扫描...</div></div>';sc();
+// 扫描前从输入框同步数据库连接参数（即使没点"连接"按钮）
+var du=document.getElementById('dbu').value.trim();
+if(du){dbParams={dbUrl:du,dbUser:document.getElementById('dbn').value.trim(),dbPass:document.getElementById('dbp').value}}
 var body={path:p};
 if(dbParams.dbUrl){body.dbUrl=dbParams.dbUrl;body.dbUser=dbParams.dbUser;body.dbPass=dbParams.dbPass}
 fetch('/scan',{method:'POST',body:JSON.stringify(body),headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{if(d.status==='started')pp()})}
