@@ -874,12 +874,17 @@ public class WebServer {
                     System.err.println("  ⚠️ Skill generation failed: " + e.getMessage());
                 }
 
-                // Save to DB
+                // Save to DB（保留已有数据库连接信息）
                 Map<String, Object> stats = new LinkedHashMap<>();
                 stats.put("classes", classes); stats.put("methods", methods);
                 stats.put("lines", lines); stats.put("apis", apis);
                 stats.put("chains", chains); stats.put("findings", findings);
                 stats.put("vulns", vulns); stats.put("health", health);
+                if (dbUrl != null && !dbUrl.isEmpty()) {
+                    stats.put("dbUrl", dbUrl);
+                    stats.put("dbUser", dbUser != null ? dbUser : "");
+                    stats.put("dbPass", dbPass != null ? dbPass : "");
+                }
                 String statsJson = gson.toJson(stats);
                 projectId = DatabaseManager.saveProject(projectPath.toString(), statsJson);
                 if (projectId > 0) {
