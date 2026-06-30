@@ -39,6 +39,14 @@ public class SqlParser {
     private static final Pattern COLUMN_ANN = Pattern.compile(
             "@Column\\s*\\(\\s*name\\s*=\\s*\"([^\"]+)\"");
 
+    // MyBatis-Plus 注解
+    private static final Pattern TABLENAME_ANN = Pattern.compile(
+            "@TableName\\s*\\(\\s*(?:value\\s*=\\s*)?\"([^\"]+)\"");
+    private static final Pattern TABLEFIELD_ANN = Pattern.compile(
+            "@TableField\\s*\\(\\s*(?:value\\s*=\\s*)?\"([^\"]+)\"");
+    private static final Pattern TABLEID_ANN = Pattern.compile(
+            "@TableId\\s*\\(\\s*(?:value\\s*=\\s*)?\"([^\"]+)\"");
+
     public SqlParser(List<ClassInfo> classes) {
         this(classes, new ArrayList<>());
     }
@@ -81,14 +89,24 @@ public class SqlParser {
     private void scanJPAEntities() {
         for (ClassInfo ci : classes) {
             String tableName = null;
+            boolean hasTableName = false;
             for (String ann : ci.getAnnotations()) {
+                // JPA @Table
                 Matcher m = ENTITY_TABLE.matcher(ann);
                 if (m.find()) {
                     tableName = m.group(1);
+                    hasTableName = true;
+                    break;
+                }
+                // MyBatis-Plus @TableName
+                Matcher mp = TABLENAME_ANN.matcher(ann);
+                if (mp.find()) {
+                    tableName = mp.group(1);
+                    hasTableName = true;
                     break;
                 }
             }
-            if (tableName == null && ci.getAnnotations().stream()
+            if (!hasTableName && ci.getAnnotations().stream()
                     .anyMatch(a -> a.equals("Entity") || a.startsWith("Entity("))) {
                 // 默认表名 = 类名小写下划线
                 tableName = toSnakeCase(ci.getSimpleName());
@@ -106,18 +124,22 @@ public class SqlParser {
                 col.setFieldName(fi.getName());
                 col.setJavaType(fi.getType());
 
-                // @Column name
+                // @Column / @TableField name
                 String colName = null;
                 for (String ann : fi.getAnnotations()) {
                     Matcher m = COLUMN_ANN.matcher(ann);
                     if (m.find()) { colName = m.group(1); break; }
+                    Matcher tf = TABLEFIELD_ANN.matcher(ann);
+                    if (tf.find()) { colName = tf.group(1); break; }
                 }
                 col.setColumnName(colName != null ? colName : toSnakeCase(fi.getName()));
 
-                // @Id
+                // @Id / @TableId
                 boolean isId = fi.getAnnotations().stream()
                         .anyMatch(a -> a.equals("Id") || a.startsWith("Id("));
-                col.setPrimaryKey(isId);
+                boolean isTableId = fi.getAnnotations().stream()
+                        .anyMatch(a -> a.startsWith("TableId("));
+                col.setPrimaryKey(isId || isTableId);
 
                 // @GeneratedValue
                 boolean autoGen = fi.getAnnotations().stream()

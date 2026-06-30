@@ -37,6 +37,14 @@ public class SchemaParser {
     private static final Pattern COLLECTION = Pattern.compile(
             "<collection\\s+[^>]*property\\s*=\\s*\"([^\"]+)\"[^>]*/?>");
 
+    // MyBatis-Plus 注解
+    private static final Pattern TABLENAME_ANN = Pattern.compile(
+            "@TableName\\s*\\(\\s*(?:value\\s*=\\s*)?\"([^\"]+)\"");
+    private static final Pattern TABLEFIELD_ANN = Pattern.compile(
+            "@TableField\\s*\\(\\s*(?:value\\s*=\\s*)?\"([^\"]+)\"");
+    private static final Pattern TABLEID_ANN = Pattern.compile(
+            "@TableId\\s*\\(\\s*(?:value\\s*=\\s*)?\"([^\"]+)\"");
+
     // Java → SQL 类型映射
     private static final Map<String, String> JAVA_TO_SQL = new LinkedHashMap<>();
     static {
@@ -76,18 +84,21 @@ public class SchemaParser {
         return tables;
     }
 
-    /** 从 JPA @Entity 类解析表结构 */
+    /** 从 JPA @Entity 或 MyBatis-Plus @TableName 解析表结构 */
     private void parseEntityClasses() {
         for (ClassInfo ci : classes) {
             boolean isEntity = false;
+            boolean hasTableOrTableName = false;
             for (String ann : ci.getAnnotations()) {
                 String clean = ann.replace("@", "");
                 if (clean.equals("Entity") || clean.startsWith("Entity(")) {
                     isEntity = true;
-                    break;
+                }
+                if (TABLENAME_ANN.matcher(ann).find() || ENTITY_TABLE.matcher(ann).find()) {
+                    hasTableOrTableName = true;
                 }
             }
-            if (!isEntity) continue;
+            if (!isEntity && !hasTableOrTableName) continue;
 
             String tableName = inferTableName(ci);
             TableInfo ti = new TableInfo();
@@ -186,7 +197,11 @@ public class SchemaParser {
         for (String ann : ci.getAnnotations()) {
             Matcher m = ENTITY_TABLE.matcher(ann);
             if (m.find()) return m.group(1);
-            // 也试 @Table(name="xxx") 无空格
+        }
+        // 再找 MyBatis-Plus @TableName("xxx")
+        for (String ann : ci.getAnnotations()) {
+            Matcher m = TABLENAME_ANN.matcher(ann);
+            if (m.find()) return m.group(1);
         }
         // 默认：类名转蛇形
         return toSnakeCase(ci.getSimpleName());
@@ -214,6 +229,10 @@ public class SchemaParser {
             Matcher cm = COLUMN_NAME.matcher(ann);
             if (cm.find()) col.setColumnName(cm.group(1));
 
+            // MyBatis-Plus @TableField("xxx")
+            Matcher tf = TABLEFIELD_ANN.matcher(ann);
+            if (tf.find()) col.setColumnName(tf.group(1));
+
             // @Column(length = xxx, nullable = false, unique = true)
             Matcher cp = COLUMN_PROPS.matcher(ann);
             if (cp.find()) {
@@ -229,6 +248,11 @@ public class SchemaParser {
 
             // @Id
             if (clean.equals("Id")) {
+                col.setPrimaryKey(true);
+            }
+
+            // MyBatis-Plus @TableId
+            if (clean.startsWith("TableId")) {
                 col.setPrimaryKey(true);
             }
 
