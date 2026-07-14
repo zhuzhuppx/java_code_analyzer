@@ -52,6 +52,29 @@ Java老狗 是一款深度理解 Java 项目的静态分析工具。它不仅能
 - **Maven 3.8+**
 - （可选）DeepSeek API Key（用于对话功能）
 
+### 启动数据库（PostgreSQL）
+
+开发环境使用 Docker 运行 PostgreSQL，无需本地安装：
+
+```bash
+# 启动 PostgreSQL 实例
+docker compose up -d
+
+# 检查是否就绪
+docker compose ps
+
+# 连接信息（LiveDatabaseReader 中使用）
+#   URL:      jdbc:postgresql://localhost:5432/java_code_analyzer
+#   用户:     postgres
+#   密码:     postgres
+
+# 停止并清除数据
+docker compose down -v
+```
+
+> 💡 如果需要自定义初始化 SQL，在 `docker-entrypoint-initdb.d/` 目录下放入 `.sql` 文件即可，
+> PostgreSQL 容器首次启动时会自动执行。
+
 ### 编译打包
 
 ```bash
@@ -193,7 +216,8 @@ java_code_analyzer/
 | Maven | 构建管理 |
 | Gson | JSON 序列化 |
 | SnakeYAML | YAML 配置解析 |
-| H2 Database | 扫描结果持久化 |
+| H2 Database | 扫描结果持久化（默认内嵌） |
+| PostgreSQL | 开发/生产环境数据库（Docker 部署） |
 | JUnit 5 | 单元测试 |
 | DeepSeek API | AI 对话集成 |
 | SSE | 流式响应传输 |
